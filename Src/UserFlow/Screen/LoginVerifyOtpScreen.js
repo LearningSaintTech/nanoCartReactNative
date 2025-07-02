@@ -17,7 +17,7 @@
 // import auth from "@react-native-firebase/auth";
 
 // const screenWidth = Dimensions.get("window").width;
-// const API_URL = "http://192.168.1.17:4000";
+// const API_URL = "http://192.168.1.20 :4000";
 
 // const LoginVerifyOtpScreen = ({ route, navigation }) => {
 //   const { fromScreen, actionAfterLogin, itemId, phone, confirmation } = route.params;
@@ -321,7 +321,7 @@ import auth from "@react-native-firebase/auth";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_URL = "http://192.168.1.17:4000";
+const API_URL = "http://192.168.1.20:4000";
 
 const LoginVerifyOtpScreen = ({ route, navigation }) => {
   const { fromScreen, actionAfterLogin, itemId, phone, confirmation } = route.params;

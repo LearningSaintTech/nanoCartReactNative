@@ -26,7 +26,7 @@ const TrackOrderScreen = ({ route, navigation }) => {
       setError(null);
       if (!token) throw new Error('No authentication token found');
 
-      const response = await fetch(`http://192.168.1.17:4000/api/user/order/${orderId}`, {
+      const response = await fetch(`http://192.168.1.20 :4000/api/user/order/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

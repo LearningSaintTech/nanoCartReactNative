@@ -75,7 +75,7 @@ const SizeChartScreen = () => {
     console.log('Add to Cart Payload', payload);
 
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/usercart/create', {
+      const response = await fetch('http://192.168.1.20 :4000/api/usercart/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -121,7 +121,7 @@ const SizeChartScreen = () => {
     console.log('Add to Wishlist Payload', payload);
 
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+      const response = await fetch('http://192.168.1.20 :4000/api/userwishlist/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

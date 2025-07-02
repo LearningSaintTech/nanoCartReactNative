@@ -38,7 +38,7 @@ const SubCategoryItem = ({ item, navigation }) => {
     }
 
     try {
-      const res = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+      const res = await fetch('http://192.168.1.20 :4000/api/userwishlist/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

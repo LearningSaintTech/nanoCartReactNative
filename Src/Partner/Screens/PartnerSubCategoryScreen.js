@@ -77,7 +77,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
       });
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `http://192.168.1.17:4000/api/items/filter${queryString}`;
+      const apiUrl = `http://192.168.1.20 :4000/api/items/filter${queryString}`;
 
       console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
 

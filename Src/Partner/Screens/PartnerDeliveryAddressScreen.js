@@ -70,7 +70,7 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching address with token:', token);
-        const response = await fetch('http://192.168.1.17:4000/api/partner/address', {
+        const response = await fetch('http://192.168.1.20 :4000/api/partner/address', {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -99,7 +99,7 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching invoice data...');
-        const res = await fetch('http://192.168.1.17:4000/api/invoice', {
+        const res = await fetch('http://192.168.1.20 :4000/api/invoice', {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });

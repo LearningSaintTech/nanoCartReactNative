@@ -43,7 +43,7 @@ const WishlistCardItem = ({ item, navigation, onRemove }) => {
         color,
       });
   
-      const response = await fetch('http://192.168.1.17:4000/api/userwishlist/remove', {
+      const response = await fetch('http://192.168.1.20 :4000/api/userwishlist/remove', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

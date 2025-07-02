@@ -61,7 +61,7 @@ const EditScreen = ({ route, navigation }) => {
     };
   
     try {
-      const res = await fetch(`http://192.168.1.17:4000/api/user/address/${addressId}`, {
+      const res = await fetch(`http://192.168.1.20 :4000/api/user/address/${addressId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

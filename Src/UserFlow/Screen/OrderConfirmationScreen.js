@@ -28,7 +28,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/items', {
+        const response = await fetch('http://192.168.1.20 :4000/api/items', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

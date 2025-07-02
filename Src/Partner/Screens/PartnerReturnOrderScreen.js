@@ -43,7 +43,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
       if (!token) throw new Error('No authentication token found');
 
       // Fetch order
-      const orderResponse = await fetch(`http://192.168.1.17:4000/api/partner/order/order/${orderId}`, {
+      const orderResponse = await fetch(`http://192.168.1.20 :4000/api/partner/order/order/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
       setOrder(orderData.data.order);
 
       // Fetch addresses
-      const addressResponse = await fetch(`http://192.168.1.17:4000/api/partner/address/`, {
+      const addressResponse = await fetch(`http://192.168.1.20 :4000/api/partner/address/`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -150,7 +150,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
           );
         }
         console.log('Submitting return for:', { orderId, itemId, color, size, skuId }); // Debug log
-        const response = await fetch(`http://192.168.1.17:4000/api/partner/order/return`, {
+        const response = await fetch(`http://192.168.1.20 :4000/api/partner/order/return`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,

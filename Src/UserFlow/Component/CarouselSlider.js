@@ -20,7 +20,7 @@
 
 //   useEffect(() => {
 //     // Fetch categories from the API
-//     fetch('http://192.168.1.17:4000/api/category')
+//     fetch('http://192.168.1.20 :4000/api/category')
 //       .then(response => response.json())
 //       .then(data => {
 //         if (data.success && data.data) {
@@ -176,7 +176,7 @@ const CarouselSlider = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    fetch('http://192.168.1.17:4000/api/category')
+    fetch('http://192.168.1.20:4000/api/category')
       .then(response => response.json())
       .then(data => {
         if (data.success && data.data) {

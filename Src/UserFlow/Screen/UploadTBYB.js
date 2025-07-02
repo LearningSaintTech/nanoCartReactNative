@@ -26,7 +26,7 @@ const UploadTBYB = () => {
   const [generatedModalVisible, setGeneratedModalVisible] = useState(false);
   const API_KEY = 'fa-6uyMG6cRoh4c-o6CPGQYyxiRtUlGxNEbhhu0S';
   const BASE_URL = 'https://api.fashn.ai/v1';
-  const TBYB_API_URL = 'http://192.168.1.17:4000/api/user/tbyb';
+  const TBYB_API_URL = 'http://192.168.1.20 :4000/api/user/tbyb';
 
   // Retrieve token from Redux store
   const token = useSelector((state) => state.auth.token);

@@ -24,7 +24,7 @@ const ProfileScreen = () => {
     const fetchProfile = async () => {
       try {
         console.log('📦 Fetching profile...');
-        const response = await fetch('http://192.168.1.17:4000/api/auth/profile', {
+        const response = await fetch('http://192.168.1.20 :4000/api/auth/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ const ProfileScreen = () => {
 
       console.log(' Updating profile with:', payload);
 
-      const response = await fetch('http://192.168.1.17:4000/api/auth/profile', {
+      const response = await fetch('http://192.168.1.20 :4000/api/auth/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ const PartnerSubCategoryItem = ({ item, navigation }) => {
 
     try {
       console.log('Sending wishlist API request:', { itemId, color }); // Log API call start
-      const res = await fetch('http://192.168.1.17:4000/api/partner/wishlist/create', {
+      const res = await fetch('http://192.168.1.20 :4000/api/partner/wishlist/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

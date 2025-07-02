@@ -9,7 +9,7 @@ const [items, setItems] = useState([]);
   const navigation = useNavigation();
     useEffect(() => {
       // Fetch items from the API
-      fetch('http://192.168.1.17:4000/api/items')
+      fetch('http://192.168.1.20 :4000/api/items')
         .then(response => response.json())
         .then(data => {
           if (data.success && data.data && data.data.items) {

@@ -25,7 +25,7 @@ const PartnerGenderTabs = () => {
   // Fetch categories on mount
   useEffect(() => {
     setLoading(true);
-    fetch('http://192.168.1.17:4000/api/category')
+    fetch('http://192.168.1.20 :4000/api/category')
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
@@ -54,7 +54,7 @@ const PartnerGenderTabs = () => {
 
     setLoading(true);
     setSubCategories([]); // Clear previous subcategories to avoid stale data
-    fetch(`http://192.168.1.17:4000/api/subcategory/categories/${activeTab}`)
+    fetch(`http://192.168.1.20 :4000/api/subcategory/categories/${activeTab}`)
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data?.subCategories) {

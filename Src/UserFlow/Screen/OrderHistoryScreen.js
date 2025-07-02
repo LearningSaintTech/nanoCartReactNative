@@ -32,7 +32,7 @@ const OrderHistoryScreen = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://192.168.1.17:4000/api/user/order', {
+      const response = await fetch('http://192.168.1.20 :4000/api/user/order', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

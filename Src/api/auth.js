@@ -1,4 +1,4 @@
-import { BASE_URL } from '../config/env';
+import { BASE_URL } from '../config/apiConfig';
 
 export const signUpUser = async (userData) => {
   try {

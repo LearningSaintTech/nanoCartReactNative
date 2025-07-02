@@ -32,8 +32,8 @@
 
 //     setLoading(true);
 //     let url = sortBy
-//       ? `http://192.168.1.17:4000/api/items/sort?sortBy=${sortBy}`
-//       : `http://192.168.1.17:4000/api/items/subcategory/${subcategoryId}`;
+//       ? `http://192.168.1.20 :4000/api/items/sort?sortBy=${sortBy}`
+//       : `http://192.168.1.20 :4000/api/items/subcategory/${subcategoryId}`;
 
 //     fetch(url)
 //       .then((res) => res.json())
@@ -267,7 +267,7 @@ const SubCategoryScreen = ({ navigation, route }) => {
       });
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `http://192.168.1.17:4000/api/items/filter${queryString}`;
+      const apiUrl = `http://192.168.1.20 :4000/api/items/filter${queryString}`;
 
       console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
 

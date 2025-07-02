@@ -41,7 +41,7 @@ const PartnerProductDetail = () => {
     const fetchProductDetails = async () => {
       console.log('Fetching product details for itemId:', itemId);
       try {
-        const res = await fetch(`http://192.168.1.17:4000/api/itemDetails/${itemId}`);
+        const res = await fetch(`http://192.168.1.20 :4000/api/itemDetails/${itemId}`);
         const json = await res.json();
         console.log('Product Details Response:', json);
         if (json.data && json.data.length > 0) {
@@ -118,7 +118,7 @@ const PartnerProductDetail = () => {
 
     console.log('Request Payload:', payload);
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/partner/wishlist/create', {
+      const response = await fetch('http://192.168.1.20 :4000/api/partner/wishlist/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -576,7 +576,7 @@ const PartnerProductDetail = () => {
 
             console.log('Cart Payload:', payload);
             try {
-              const response = await fetch('http://192.168.1.17:4000/api/partner/cart/create', {
+              const response = await fetch('http://192.168.1.20 :4000/api/partner/cart/create', {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,

@@ -98,7 +98,7 @@ const RateProductScreen = () => {
     }
   
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/user/ratingreview/create', {
+      const response = await fetch('http://192.168.1.20 :4000/api/user/ratingreview/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

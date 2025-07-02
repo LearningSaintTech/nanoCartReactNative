@@ -27,7 +27,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddress = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/user/address', {
+        const response = await fetch('http://192.168.1.20 :4000/api/user/address', {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -49,7 +49,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/invoice', {
+        const res = await fetch('http://192.168.1.20 :4000/api/invoice', {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });

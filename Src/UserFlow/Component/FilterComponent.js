@@ -28,7 +28,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/filter');
+        const res = await fetch('http://192.168.1.20:4000/api/filter');
         const json = await res.json();
         if (json?.success) {
           const mappedFilters = {};
@@ -108,7 +108,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
     });
 
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    const apiUrl = `http://192.168.1.17:4000/api/items/filter${queryString}`;
+    const apiUrl = `http://192.168.1.20 :4000/api/items/filter${queryString}`;
 
     console.log('🌐 Fetching filtered items from:', apiUrl);
 

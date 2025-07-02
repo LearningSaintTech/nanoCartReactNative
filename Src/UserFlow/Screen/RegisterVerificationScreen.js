@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 
 const screenWidth = Dimensions.get("window").width;
-const API_URL = "http://192.168.1.17:4000";
+const API_URL = "http://192.168.1.20 :4000";
 
 const RegisterVerificationScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();

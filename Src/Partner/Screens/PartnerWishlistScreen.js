@@ -28,7 +28,7 @@ const PartnerWishlistScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/partner/wishlist', {
+      const response = await fetch('http://192.168.1.20 :4000/api/partner/wishlist', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

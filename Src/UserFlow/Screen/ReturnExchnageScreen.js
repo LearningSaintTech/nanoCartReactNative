@@ -57,7 +57,7 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://192.168.1.17:4000/api/user/order/${orderId}`, {
+      const response = await fetch(`http://192.168.1.20 :4000/api/user/order/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -93,7 +93,7 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
 
   const fetchItemDetail = async (itemId) => {
     try {
-      const response = await fetch(`http://192.168.1.17:4000/api/itemDetails/${itemId}`);
+      const response = await fetch(`http://192.168.1.20 :4000/api/itemDetails/${itemId}`);
       const json = await response.json();
       if (json.data && json.data.length > 0) {
         setItemDetail(json.data[0]);
@@ -156,8 +156,8 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
       setSubmitting(true);
       let endpoint =
         returnType === 'refund'
-          ? 'http://192.168.1.17:4000/api/user/order/return-refund'
-          : 'http://192.168.1.17:4000/api/user/order/return-exchange';
+          ? 'http://192.168.1.20 :4000/api/user/order/return-refund'
+          : 'http://192.168.1.20 :4000/api/user/order/return-exchange';
 
       let body = {
         orderId,

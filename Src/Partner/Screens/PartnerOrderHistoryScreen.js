@@ -30,7 +30,7 @@ console.log("token",token)
       }
 
       // Make API request using fetch
-      const response = await fetch('http://192.168.1.17:4000/api/partner/order/', {
+      const response = await fetch('http://192.168.1.20 :4000/api/partner/order/', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

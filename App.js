@@ -115,7 +115,7 @@ const UserNavigator = () => (
     <Stack.Screen name="ReturnConfirm" component={ReturnConfirmationScreen} />
     <Stack.Screen name="TBYB" component={TBYBScreen} />
     <Stack.Screen name="PartnerRegister" component={PartnerRegisterScreen} />
-            <Stack.Screen name="UploadTBYB" component={UploadTBYB} />
+    <Stack.Screen name="UploadTBYB" component={UploadTBYB} />
 
 
   </Stack.Navigator>
@@ -160,7 +160,7 @@ const MainNavigator = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const endpoint = role === "Partner" ? 'http://192.168.1.17:4000/api/partner/cart' : 'http://192.168.1.17:4000/api/usercart';
+        const endpoint = role === "Partner" ? 'http://192.168.1.20:4000/api/partner/cart' : 'http://192.168.1.20:4000/api/usercart';
         const response = await fetch(endpoint, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
