@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/reducers/authReducer';
 import { clearCart } from '../../redux/reducers/cartSlice';
+import { BASE_URL } from '../../config/apiConfig';
 const MyAccountScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -22,7 +23,7 @@ const MyAccountScreen = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/auth/profile', {
+      const response = await fetch(`${BASE_URL}/auth/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ const MyAccountScreen = () => {
         text: 'Yes',
         onPress: async () => {
           try {
-            const response = await fetch('http://192.168.1.17:4000/api/auth', {
+            const response = await fetch(`${BASE_URL}/auth`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json',

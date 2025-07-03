@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert
@@ -9,6 +6,7 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerEditScreen = ({ route, navigation }) => {
   const token = useSelector((state) => state.auth.token);
@@ -64,7 +62,7 @@ const PartnerEditScreen = ({ route, navigation }) => {
     };
   
     try {
-      const res = await fetch(`http://192.168.1.17:4000/api/partner/address/${addressId}`, {
+      const res = await fetch(`${BASE_URL}/partner/address/${addressId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

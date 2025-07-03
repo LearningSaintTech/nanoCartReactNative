@@ -5,6 +5,7 @@ import {
 import Entypo from 'react-native-vector-icons/Entypo';
 import { useSelector, useDispatch } from 'react-redux';
 import { setCartItems } from '../../redux/reducers/cartSlice';
+import { BASE_URL } from '../../config/apiConfig';
 
 const CartScreen = ({ navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -25,7 +26,7 @@ const CartScreen = ({ navigation }) => {
 
   const fetchCartItems = async () => {
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/usercart', {
+      const response = await fetch(`${BASE_URL}/usercart`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${authToken}` },
       });
@@ -49,7 +50,7 @@ const CartScreen = ({ navigation }) => {
         color: cartItem.color,
         skuId: cartItem.skuId,
       };
-      const response = await fetch('http://192.168.1.17:4000/api/usercart/removeitem', {
+      const response = await fetch(`${BASE_URL}/usercart/removeitem`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ const CartScreen = ({ navigation }) => {
         skuId: cartItem.skuId,
         action: actionType,
       };
-      const response = await fetch('http://192.168.1.17:4000/api/usercart/update-quantity', {
+      const response = await fetch(`${BASE_URL}/usercart/update-quantity`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +111,7 @@ const CartScreen = ({ navigation }) => {
         itemId: cartItem.itemId._id,
         color: cartItem.color,
       };
-      const response = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+      const response = await fetch(`${BASE_URL}/userwishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +148,7 @@ const CartScreen = ({ navigation }) => {
 
   const fetchInvoiceData = async () => {
     try {
-      const res = await fetch('http://192.168.1.17:4000/api/invoice');
+      const res = await fetch(`${BASE_URL}/invoice`);
       const json = await res.json();
 
       if (res.ok && json.success) {

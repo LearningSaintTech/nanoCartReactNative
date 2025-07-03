@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -10,6 +9,7 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const OrderConfirmationScreen = ({ route, navigation }) => {
   // Extract order data from navigation params
@@ -28,7 +28,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/items', {
+        const response = await fetch(`${BASE_URL}/items`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

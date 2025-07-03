@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserDetails } from '../../redux/reducers/authReducer';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { BASE_URL } from '../../config/apiConfig';
 
 const BackIcon = require('../../assets/Images/Backward.png');
 
@@ -45,7 +46,7 @@ const [pollingInterval, setPollingInterval] = useState(null);
       try {
         if (!token) return;
 
-        const response = await fetch('http://192.168.1.17:4000/api/auth/profile', {
+        const response = await fetch(`${BASE_URL}/auth/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -134,7 +135,7 @@ const [pollingInterval, setPollingInterval] = useState(null);
     // Step 3: API Call
     try {
       console.log(' Sending registration request...');
-      const res = await fetch('http://192.168.1.17:4000/api/auth/partner/signup', {
+      const res = await fetch(`${BASE_URL}/auth/partner/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',

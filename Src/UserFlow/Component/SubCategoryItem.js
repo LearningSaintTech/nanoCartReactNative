@@ -16,7 +16,7 @@ const SubCategoryItem = ({ item, navigation }) => {
   const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
 
-  console.log('📦 Rendering SubCategoryItem:', JSON.stringify(item, null, 2));
+  console.log(' Rendering SubCategoryItem:', JSON.stringify(item, null, 2));
 
   const handleHeartPress = async () => {
     const itemId = item?.itemId;
@@ -38,7 +38,7 @@ const SubCategoryItem = ({ item, navigation }) => {
     }
 
     try {
-      const res = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+      const res = await fetch(`${BASE_URL}/userwishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

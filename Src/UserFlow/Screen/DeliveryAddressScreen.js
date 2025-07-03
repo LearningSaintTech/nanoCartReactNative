@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const DeliveryAddressScreen = ({ navigation }) => {
   const token = useSelector(state => state.auth.token);
@@ -27,7 +28,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddress = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/user/address', {
+        const response = await fetch(`${BASE_URL}/user/address`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -49,7 +50,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/invoice', {
+        const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -213,7 +214,7 @@ export default DeliveryAddressScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center' },
+  header: { padding: 16, flexDirection: 'row', alignItems: 'center',marginTop:10 },
   headerTitle: { marginTop: 20, fontSize: 16, fontWeight: '600', marginLeft: 10 },
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   stepActive: { color: '#f37022', fontWeight: 'bold', fontSize: 12 },

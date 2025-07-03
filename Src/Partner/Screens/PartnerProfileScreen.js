@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerProfileScreen = () => {
   const navigation = useNavigation();
@@ -28,7 +29,7 @@ const PartnerProfileScreen = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/auth/partner/profile', {
+        const response = await fetch(`${BASE_URL}/auth/partner/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

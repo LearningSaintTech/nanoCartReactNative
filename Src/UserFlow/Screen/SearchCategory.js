@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import GenderTabs from '../Component/GenderTabs';
 import SuggestionCard from '../Component/SuggestionCard';
 import { debounce } from 'lodash'; // Import lodash for debouncing
+import { BASE_URL } from '../../config/apiConfig';
 
 // Sample recent searches data
 const recentSearches = [
@@ -79,7 +80,7 @@ const SearchCategory = () => {
           setWishlistLoading(false);
           return;
         }
-        const response = await fetch('http://192.168.1.17:4000/api/userwishlist', {
+        const response = await fetch(`${BASE_URL}/userwishlist`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -110,7 +111,7 @@ const SearchCategory = () => {
           setCartLoading(false);
           return;
         }
-        const response = await fetch('http://192.168.1.17:4000/api/usercart', {
+        const response = await fetch(`${BASE_URL}/usercart`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -137,7 +138,7 @@ const SearchCategory = () => {
     const fetchFilters = async () => {
       try {
         setFilterLoading(true);
-        const apiUrl = 'http://192.168.1.17:4000/api/filter/';
+        const apiUrl = `${BASE_URL}/filter/`;
         const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
@@ -209,7 +210,7 @@ const SearchCategory = () => {
       });
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `http://192.168.1.17:4000/api/items/search${queryString}`;
+      const apiUrl = `${BASE_URL}/items/search${queryString}`;
 
       try {
         const response = await fetch(apiUrl, {
@@ -351,7 +352,7 @@ const SearchCategory = () => {
     });
 
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    const apiUrl = `http://192.168.1.17:4000/api/items/search${queryString}`;
+    const apiUrl = `${BASE_URL}/items/search${queryString}`;
 
     try {
       setFilterLoading(true);
@@ -416,7 +417,7 @@ const SearchCategory = () => {
       }
 
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+        const res = await fetch(`${BASE_URL}/userwishlist/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

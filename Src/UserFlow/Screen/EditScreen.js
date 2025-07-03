@@ -6,6 +6,7 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const EditScreen = ({ route, navigation }) => {
   const token = useSelector((state) => state.auth.token);
@@ -61,7 +62,7 @@ const EditScreen = ({ route, navigation }) => {
     };
   
     try {
-      const res = await fetch(`http://192.168.1.17:4000/api/user/address/${addressId}`, {
+      const res = await fetch(`${BASE_URL}/user/address/${addressId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

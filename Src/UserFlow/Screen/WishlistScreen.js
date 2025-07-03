@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import FilterComponent from '../Component/FilterComponent';
 import SortComponent from '../Component/SortComponent';
 import WishlistCardItem from '../Component/WishlistCardItem';
+import { BASE_URL } from '../../config/apiConfig';
 
 const WishlistScreen = () => {
   const navigation = useNavigation();
@@ -35,7 +36,7 @@ const WishlistScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/userwishlist', {
+      const response = await fetch(`${BASE_URL}/userwishlist`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -65,9 +66,7 @@ const WishlistScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {/* <TouchableOpacity >
-            <Image source={require('../../assets/Images/Back.png')} style={styles.backIcon} />
-          </TouchableOpacity> */}
+         
           <Text style={styles.headerTitle}>WISHLIST</Text>
         </View>
 

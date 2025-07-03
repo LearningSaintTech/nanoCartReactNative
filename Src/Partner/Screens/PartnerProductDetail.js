@@ -19,6 +19,7 @@ import { addToWishlist } from '../../redux/reducers/wishlistSlice';
 import { setCartItems } from '../../redux/reducers/cartSlice';
 import PartnerHeader from '../Components/PartnerHeader';
 import PartnerAccordionItem from '../Components/PartnerAccordionItem';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -41,7 +42,7 @@ const PartnerProductDetail = () => {
     const fetchProductDetails = async () => {
       console.log('Fetching product details for itemId:', itemId);
       try {
-        const res = await fetch(`http://192.168.1.17:4000/api/itemDetails/${itemId}`);
+        const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`);
         const json = await res.json();
         console.log('Product Details Response:', json);
         if (json.data && json.data.length > 0) {
@@ -118,7 +119,7 @@ const PartnerProductDetail = () => {
 
     console.log('Request Payload:', payload);
     try {
-      const response = await fetch('http://192.168.1.17:4000/api/partner/wishlist/create', {
+      const response = await fetch(`${BASE_URL}/partner/wishlist/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

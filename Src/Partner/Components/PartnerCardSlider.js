@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerCardSlider = ({ images }) => {
   const screenWidth = Dimensions.get('window').width;
@@ -9,7 +9,7 @@ const [items, setItems] = useState([]);
   const navigation = useNavigation();
     useEffect(() => {
       // Fetch items from the API
-      fetch('http://192.168.1.17:4000/api/items')
+      fetch(`${BASE_URL}/items`)
         .then(response => response.json())
         .then(data => {
           if (data.success && data.data && data.data.items) {

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PaymentScreen = ({ navigation }) => {
   const token = useSelector((state) => state.auth.token);
@@ -48,7 +49,7 @@ const PaymentScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddress = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/user/address', {
+        const response = await fetch(`${BASE_URL}/user/address`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -70,7 +71,7 @@ const PaymentScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/invoice', {
+        const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -156,7 +157,7 @@ const PaymentScreen = ({ navigation }) => {
 
       console.log('Full Payload:', JSON.stringify(payload, null, 2));
 
-      const response = await fetch('http://192.168.1.17:4000/api/user/order/create', {
+      const response = await fetch(`${BASE_URL}/user/order/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

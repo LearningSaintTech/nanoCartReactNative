@@ -14,6 +14,7 @@ import PartnerHeader from '../Components/PartnerHeader';
 import FilterComponent from '../../UserFlow/Component/FilterComponent';
 import SortComponent from '../../UserFlow/Component/SortComponent';
 import PartnerSubCategoryItem from '../Components/PartnerSubCategoryItem';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerSubCategoryScreen = ({ navigation, route }) => {
   const { subCategory, subCategoryId } = route.params;
@@ -77,7 +78,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
       });
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `http://192.168.1.17:4000/api/items/filter${queryString}`;
+      const apiUrl = `${BASE_URL}/items/filter${queryString}`;
 
       console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
 

@@ -1,115 +1,3 @@
-// import React from 'react';
-// import {
-//   View,
-//   Image,
-//   Text,
-//   TouchableOpacity,
-//   useWindowDimensions,
-//   SafeAreaView,
-//   StatusBar,
-// } from 'react-native';
-// import { useNavigation } from '@react-navigation/native';
-// import { useSelector } from 'react-redux';
-
-// const Header = () => {
-//   const { width } = useWindowDimensions();
-//   const navigation = useNavigation();
-//   const cartItems = useSelector(state => state.cart.items);
-//   const token = useSelector(state => state.auth.token);
-//   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-//   const handleCartPress = () => {
-//     if (token) {
-//       navigation.navigate('Cart');
-//     } else {
-//       navigation.navigate('Login', { fromScreen: 'Header' });
-//     }
-//   };
-
-//   return (
-//     <SafeAreaView style={{ backgroundColor: '#fff' }}>
-//       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-//       <View
-//         style={{
-//           marginTop:20,
-//           flexDirection: 'row',
-//           justifyContent: 'space-between',
-//           alignItems: 'center',
-//           paddingHorizontal: 16,
-//           paddingVertical: 16,
-//           backgroundColor: '#fff',
-//           width,
-//           borderBottomWidth: 1,
-//           borderBottomColor: '#EEEEEE',
-//         }}
-//       >
-//         {/* Logo */}
-//         <Image
-//           source={require('../../assets/Images/Headerlogo.png')}
-//           style={{ width: 120, height: 32, resizeMode: 'contain' }}
-//         />
-
-//         {/* Right icons */}
-//         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-//           <Text style={{ 
-//             marginRight: 16, 
-//             fontWeight: '600', 
-//             fontSize: 16,
-//             color: '#000000'
-//           }}>₹ INR</Text>
-
-//           {/* Search Icon */}
-//           <TouchableOpacity 
-//             style={{ marginRight: 16 }} 
-//             onPress={() => navigation.navigate('Search')}
-//           >
-//             <Image
-//               source={require('../../assets/Images/SearchIcon.png')}
-//               style={{ width: 24, height: 24, resizeMode: 'contain' }}
-//             />
-//           </TouchableOpacity>
-
-//           {/* Cart Icon with Badge */}
-//           <TouchableOpacity 
-//             onPress={handleCartPress} 
-//             style={{ position: 'relative', marginLeft: 4 }}
-//           >
-//             <Image
-//               source={require('../../assets/Images/Cart.png')}
-//               style={{ width: 24, height: 24, resizeMode: 'contain' }}
-//             />
-
-//             {/* Badge */}
-//             {totalCartCount > 0 && (
-//               <View
-//                 style={{
-//                   position: 'absolute',
-//                   top: -8,
-//                   right: -8,
-//                   backgroundColor: '#F36F25',
-//                   borderRadius: 10,
-//                   width: 18,
-//                   height: 18,
-//                   justifyContent: 'center',
-//                   alignItems: 'center',
-//                 }}
-//               >
-//                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
-//                   {totalCartCount}
-//                 </Text>
-//               </View>
-//             )}
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default Header;
-
-
-
 import React from 'react';
 import {
   View,
@@ -158,10 +46,9 @@ const Header = () => {
       >
         {/* Logo */}
         <Image
-          source={require('../../assets/Images/Headerlogo.png')}
+          source={require('../../assets/icon/icon/logo.png')}
           style={{ width: wp('30%'), height: hp('4%'), resizeMode: 'contain' }}
         />
-
         {/* Right icons */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ 

@@ -19,6 +19,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist } from '../../redux/reducers/wishlistSlice';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -70,7 +71,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const res = await fetch(`http://192.168.1.17:4000/api/itemDetails/${itemId}`);
+        const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`);
         const json = await res.json();
         if (json.data && json.data.length > 0) {
           const productData = json.data[0];
@@ -96,7 +97,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchRatingsReviews = async () => {
       try {
-        const res = await fetch(`http://192.168.1.17:4000/api/user/ratingreview/${itemId}`);
+        const res = await fetch(`${BASE_URL}/user/ratingreview/${itemId}`);
         const json = await res.json();
         if (json.success && json.data) {
           setRatingsData(json.data);
@@ -119,7 +120,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchRecommendedItems = async () => {
       try {
-        const res = await fetch(`http://192.168.1.17:4000/api/items`);
+        const res = await fetch(`${BASE_URL}/items`);
         const json = await res.json();
         if (json.success && json.data && json.data.items) {
           // Filter out the current item to avoid recommending the same product

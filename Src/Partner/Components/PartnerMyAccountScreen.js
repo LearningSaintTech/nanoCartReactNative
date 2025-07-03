@@ -11,6 +11,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../redux/reducers/authReducer';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerMyAccountScreen = () => {
   const token = useSelector(state => state.auth.token);
@@ -21,7 +22,7 @@ const PartnerMyAccountScreen = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch('http://192.168.1.17:4000/api/auth/profile', {
+        const res = await fetch(`${BASE_URL}/auth/profile`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const ReturnExchangeScreen = ({ route, navigation }) => {
   const { orderId } = route.params; // Extract orderId from navigation params
@@ -57,7 +58,7 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://192.168.1.17:4000/api/user/order/${orderId}`, {
+      const response = await fetch(`${BASE_URL}/user/order/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -93,7 +94,7 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
 
   const fetchItemDetail = async (itemId) => {
     try {
-      const response = await fetch(`http://192.168.1.17:4000/api/itemDetails/${itemId}`);
+      const response = await fetch(`${BASE_URL}/itemDetails/${itemId}`);
       const json = await response.json();
       if (json.data && json.data.length > 0) {
         setItemDetail(json.data[0]);
@@ -143,21 +144,15 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
         Alert.alert('Error', 'No item selected for exchange.');
         return;
       }
-      // if (
-      //   !['Delivered', 'Exchanged'].includes(selectedOrderItem.orderStatus) ||
-      //   selectedOrderItem.paymentStatus !== 'Paid'
-      // ) {
-      //   Alert.alert('Error', 'Exchange is only allowed for delivered and paid items.');
-      //   return;
-      // }
+      
     }
 
     try {
       setSubmitting(true);
       let endpoint =
         returnType === 'refund'
-          ? 'http://192.168.1.17:4000/api/user/order/return-refund'
-          : 'http://192.168.1.17:4000/api/user/order/return-exchange';
+          ? `${BASE_URL}/user/order/return-refund`
+          : `${BASE_URL}/user/order/return-exchange`;
 
       let body = {
         orderId,

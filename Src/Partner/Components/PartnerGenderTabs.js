@@ -25,7 +25,7 @@ const PartnerGenderTabs = () => {
   // Fetch categories on mount
   useEffect(() => {
     setLoading(true);
-    fetch('http://192.168.1.17:4000/api/category')
+    fetch(`${BASE_URL}/category`)
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {

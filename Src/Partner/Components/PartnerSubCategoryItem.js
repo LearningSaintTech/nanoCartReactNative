@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedItem } from '../../redux/reducers/itemSlice';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerSubCategoryItem = ({ item, navigation }) => {
   const token = useSelector((state) => state.auth.token);
@@ -41,7 +42,7 @@ const PartnerSubCategoryItem = ({ item, navigation }) => {
 
     try {
       console.log('Sending wishlist API request:', { itemId, color }); // Log API call start
-      const res = await fetch('http://192.168.1.17:4000/api/partner/wishlist/create', {
+      const res = await fetch(`${BASE_URL}/partner/wishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

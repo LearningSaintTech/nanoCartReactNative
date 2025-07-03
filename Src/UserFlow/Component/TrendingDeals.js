@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Entypo';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig'; //
 
 const TrendingDeals = () => {
   const navigation = useNavigation();
@@ -12,7 +13,7 @@ const TrendingDeals = () => {
   useEffect(() => {
     const fetchDeals = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/subcategory/trendy', {
+        const response = await fetch(`${BASE_URL}/subcategory/trendy`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

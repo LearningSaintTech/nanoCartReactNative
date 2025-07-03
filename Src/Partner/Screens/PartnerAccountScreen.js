@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
   const PartnerAccountScreen = () => {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ import { useSelector } from 'react-redux';
         console.log(' Starting fetchPartnerName...');
         console.log(' Token:', token);
   
-        const res = await fetch('http://192.168.1.17:4000/api/auth/partner/profile', {
+        const res = await fetch(`${BASE_URL}/auth/partner/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

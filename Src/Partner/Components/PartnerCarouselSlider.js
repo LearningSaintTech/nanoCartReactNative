@@ -21,7 +21,7 @@ const navigation = useNavigation();
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://192.168.1.17:4000/api/category');
+        const response = await fetch(`${BASE_URL}/category`);
         const result = await response.json();
         if (result.success && result.data) {
           setCategories(result.data);

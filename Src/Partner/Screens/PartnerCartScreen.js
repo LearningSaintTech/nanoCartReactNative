@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import PartnerHeader from '../Components/PartnerHeader';
 import { useSelector, useDispatch } from 'react-redux';
 import { setCartItems, clearCart } from './../../redux/reducers/cartSlice'; // Adjust path as needed
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerCartScreen = ({ navigation }) => {
   console.log('PartnerCartScreen rendered at:', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
@@ -91,7 +92,7 @@ const PartnerCartScreen = ({ navigation }) => {
       try {
         setCartLoading(true);
         console.log('Fetching cart details with token:', token);
-        const response = await fetch('http://192.168.1.17:4000/api/partner/cart', {
+        const response = await fetch(`${BASE_URL}/api/partner/cart`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -106,7 +107,7 @@ const PartnerCartScreen = ({ navigation }) => {
           dispatch(setCartItems(data.data.items));
           console.log('Dispatched setCartItems with:', data.data.items);
           const stockPromises = data.data.items.map((item) =>
-            fetch(`http://192.168.1.17:4000/api/itemDetails/${item.itemId._id}`).then((res) =>
+            fetch(`${BASE_URL}/itemDetails/${item.itemId._id}`).then((res) =>
               res.json()
             )
           );
@@ -146,7 +147,7 @@ const PartnerCartScreen = ({ navigation }) => {
       }
       try {
         console.log('Fetching wallet balance with token:', token);
-        const response = await fetch('http://192.168.1.17:4000/api/wallet', {
+        const response = await fetch(`${BASE_URL}/api/wallet`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,7 +182,7 @@ const PartnerCartScreen = ({ navigation }) => {
       }
       try {
         console.log('Fetching invoice data with token:', token);
-        const res = await fetch('http://192.168.1.17:4000/api/invoice', {
+        const res = await fetch(`${BASE_URL}/api/invoice`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -344,7 +345,7 @@ const PartnerCartScreen = ({ navigation }) => {
       };
       console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
 
-      const response = await fetch('http://192.168.1.17:4000/api/partner/cart/update', {
+      const response = await fetch(`${BASE_URL}/partner/cart/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -359,7 +360,7 @@ const PartnerCartScreen = ({ navigation }) => {
         console.error('Failed to update cart:', data.message);
         Alert.alert('Error', 'Failed to update the quantity.');
       } else {
-        const cartResponse = await fetch('http://192.168.1.17:4000/api/partner/cart', {
+        const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -398,7 +399,7 @@ const PartnerCartScreen = ({ navigation }) => {
       };
       console.log('Remove item payload:', JSON.stringify(payload, null, 2));
 
-      const response = await fetch('http://192.168.1.17:4000/api/partner/cart/removeitem', {
+      const response = await fetch(`${BASE_URL}/partner/cart/removeitem`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +432,7 @@ const PartnerCartScreen = ({ navigation }) => {
         color: item.orderDetails[0]?.color || 'default',
       };
       console.log('Move to wishlist payload:', JSON.stringify(payload, null, 2));
-      const response = await fetch('http://192.168.1.17:4000/api/partner/wishlist/create', {
+      const response = await fetch(`${BASE_URL}/partner/wishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +504,7 @@ const PartnerCartScreen = ({ navigation }) => {
     try {
       const payload = { couponCode };
       console.log('Coupon apply payload:', JSON.stringify(payload, null, 2));
-      const response = await fetch('http://192.168.1.17:4000/api/coupon/apply', {
+      const response = await fetch(`${BASE_URL}/coupon/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
