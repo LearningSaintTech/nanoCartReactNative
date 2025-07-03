@@ -95,7 +95,7 @@ import { useSelector } from 'react-redux';
           source={require('../../assets/Images/Group.png')}
           style={styles.logo}
         />
-        <Text style={styles.greeting}>Hi, {partnerName}</Text>
+        <Text style={styles.greeting}>Hi,  {partnerName}</Text>
       </View>
 
       {/* Menu Items */}
@@ -127,7 +127,7 @@ import { useSelector } from 'react-redux';
         onPress={() => navigation.navigate('Login')}
         style={styles.logoutButton}
       >
-        <Text style={styles.logoutText}>LOG OUT</Text>
+        <Text style={styles.logoutText}>LOG OUT </Text>
       </TouchableOpacity>
     </View>
   );
