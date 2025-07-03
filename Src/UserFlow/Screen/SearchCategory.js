@@ -21,12 +21,12 @@ import GenderTabs from '../Component/GenderTabs';
 import SuggestionCard from '../Component/SuggestionCard';
 import {debounce} from 'lodash'; // Import lodash for debouncing
 import {BASE_URL} from '../../config/apiConfig';
-import girl1Image from '../../assets/Images/Girl1.png'; 
-import girl2Image from '../../assets/Images/Girl2.png'; 
-import girl3Image from '../../assets/Images/Girl3.png'; 
+import girl1Image from '../../assets/Images/Girl1.png';
+import girl2Image from '../../assets/Images/Girl2.png';
+import girl3Image from '../../assets/Images/Girl3.png';
+// import Icon from 'react-native-vector-icons/Ionicons';
 
 // Sample recent searches data
-
 
 const SearchCategory = () => {
   const navigation = useNavigation();
@@ -57,8 +57,6 @@ const SearchCategory = () => {
   const [currentSort, setCurrentSort] = useState(sortBy);
   const [priceRange, setPriceRange] = useState({min: '', max: ''});
   const limit = 5;
-
- 
 
   // Sort options
   const sortOptions = [
@@ -822,6 +820,9 @@ const SearchCategory = () => {
             />
           </TouchableOpacity>
 
+          {/* <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity> */}
           <View style={styles.searchBox}>
             <Image
               source={require('../../assets/icon/SearchIcon.png')}
@@ -842,7 +843,6 @@ const SearchCategory = () => {
         </View>
 
         <Text style={styles.sectionTitle}>Recent Searches</Text>
-       
 
         <ScrollView
           horizontal
@@ -881,7 +881,7 @@ const SearchCategory = () => {
         </ScrollView>
 
         <Text style={[styles.sectionTitle, {marginTop: 20}]}>
-          Popular Categories 
+          Popular Categories
         </Text>
         <GenderTabs />
 
@@ -906,7 +906,7 @@ const SearchCategory = () => {
             )}
             rating={4.5}
             reviews="79 Ratings & 55"
-            sizes={['XS', 'S', 'M', 'L', 'XL',]}
+            sizes={['XS', 'S', 'M', 'L', 'XL']}
             colors={[wishlistItem.color.toLowerCase()]}
             buttonLabel="VIEW WISHLIST"
             onButtonPress={() => navigation.navigate('Wishlist')}

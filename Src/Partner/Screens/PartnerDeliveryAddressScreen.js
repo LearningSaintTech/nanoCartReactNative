@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
   const token = useSelector((state) => state.auth.token);
@@ -70,7 +71,7 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching address with token:', token);
-        const response = await fetch('${BASE_URL}/partner/address', {
+        const response = await fetch(`${BASE_URL}/partner/address`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -99,7 +100,7 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching invoice data...');
-        const res = await fetch('${BASE_URL}/invoice', {
+        const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });

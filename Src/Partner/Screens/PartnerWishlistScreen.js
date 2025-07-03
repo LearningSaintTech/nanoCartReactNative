@@ -11,6 +11,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import PartnerWishlistCardItem from '../Components/PartnerWishlistCardItem';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerWishlistScreen = () => {
   const navigation = useNavigation();
@@ -57,9 +59,12 @@ const PartnerWishlistScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
+          {/* <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
             <Image source={require('../../assets/icon/BackIcon.png')} style={styles.backIcon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+           <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Icon name="arrow-back" size={22} color="#000" />
+                  </TouchableOpacity>
           <Text style={styles.headerTitle}>PARTNER WISHLIST</Text>
         </View>
         <View style={styles.rightIcons}>

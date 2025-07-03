@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { Picker } from '@react-native-picker/picker';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerReturnOrderScreen = ({ route, navigation }) => {
   const { orderId } = route.params;

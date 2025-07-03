@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 const { width } = Dimensions.get('window');
 
 const PartnerCarouselSlider = () => {
@@ -21,7 +22,7 @@ const navigation = useNavigation();
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('${BASE_URL}/category');
+        const response = await fetch(`${BASE_URL}/category`);
         const result = await response.json();
         if (result.success && result.data) {
           setCategories(result.data);

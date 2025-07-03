@@ -161,6 +161,7 @@ import {
   Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
   const dispatch = useDispatch();
@@ -183,7 +184,7 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
     }
 
     try {
-      const response = await fetch('${BASE_URL}/partner/wishlist/removeitem', {
+      const response = await fetch(`${BASE_URL}/partner/wishlist/removeitem`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

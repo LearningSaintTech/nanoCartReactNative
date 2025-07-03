@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import * as ImagePicker from 'react-native-image-picker';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerPaymentScreen = ({ navigation, route }) => {
   const token = useSelector((state) => state.auth.token);
@@ -135,7 +136,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching address with token:', token);
-        const response = await fetch('${BASE_URL}/partner/address', {
+        const response = await fetch(`${BASE_URL}/partner/address`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -263,7 +264,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         codCharges: invoiceData.codCharges,
       });
 
-      const response = await fetch('${BASE_URL}/partner/order/create', {
+      const response = await fetch(`${BASE_URL}/partner/order/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

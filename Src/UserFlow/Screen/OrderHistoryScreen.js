@@ -215,7 +215,7 @@ const OrderHistoryScreen = () => {
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.headerText}>ORDER</Text>
+        <Text style={styles.headerText}>ORDER </Text>
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>

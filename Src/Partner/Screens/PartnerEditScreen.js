@@ -9,6 +9,7 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerEditScreen = ({ route, navigation }) => {
   const token = useSelector((state) => state.auth.token);

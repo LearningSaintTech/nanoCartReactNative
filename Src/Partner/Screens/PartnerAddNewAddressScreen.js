@@ -13,6 +13,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector } from 'react-redux';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -80,7 +81,7 @@ const PartnerAddNewAddressScreen = () => {
 
     const url = isEdit
       ? `${BASE_URL}/partner/address/${addressId}` //  use addressId
-      : '${BASE_URL}/partner/address/create';
+      : `${BASE_URL}/partner/address/create`;
 
     try {
       const response = await fetch(url, {

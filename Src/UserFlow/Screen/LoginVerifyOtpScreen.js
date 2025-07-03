@@ -596,17 +596,17 @@ const styles = StyleSheet.create({
     marginRight: wp('2%'), // Responsive margin (2% of screen width)
   },
   arrowIcon: {
-    width: wp('4%'), // Responsive icon size (4% of screen width)
+    width: wp('4%'), 
     height: wp('4%'),
     tintColor: "#fff",
     resizeMode: "contain",
   },
   footerText: {
-    fontSize: wp('3.2%'), // Responsive font size (3.2% of screen width)
+    fontSize: wp('3.2%'),
     color: "#666",
     textAlign: "center",
-    width: wp('80%'), // Constrain width for readability
-    maxWidth: 400, // Prevent excessive stretching
+    width: wp('80%'),
+    maxWidth: 400, 
   },
   whatsappText: {
     color: "#D86427",

@@ -19,6 +19,7 @@ import { addToWishlist } from '../../redux/reducers/wishlistSlice';
 import { setCartItems } from '../../redux/reducers/cartSlice';
 import PartnerHeader from '../Components/PartnerHeader';
 import PartnerAccordionItem from '../Components/PartnerAccordionItem';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -118,7 +119,7 @@ const PartnerProductDetail = () => {
 
     console.log('Request Payload:', payload);
     try {
-      const response = await fetch('${BASE_URL}/partner/wishlist/create', {
+      const response = await fetch(`${BASE_URL}/partner/wishlist/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -576,7 +577,7 @@ const PartnerProductDetail = () => {
 
             console.log('Cart Payload:', payload);
             try {
-              const response = await fetch('${BASE_URL}/partner/cart/create', {
+              const response = await fetch(`${BASE_URL}/partner/cart/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,

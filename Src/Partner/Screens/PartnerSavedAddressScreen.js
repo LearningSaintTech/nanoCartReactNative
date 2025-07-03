@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerSavedAddressScreen = ({ navigation }) => {
   const token = useSelector(state => state.auth.token);
@@ -17,7 +18,7 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const response = await fetch('${BASE_URL}/partner/address', {
+        const response = await fetch(`${BASE_URL}/partner/address`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,

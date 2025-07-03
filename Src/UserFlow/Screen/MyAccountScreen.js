@@ -153,13 +153,17 @@ const MyAccountScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
           <Image
             source={require('../../assets/icon/BackIcon.png')}
             style={styles.backIcon}
           />
+        </TouchableOpacity> */}
+
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>MY ACCOUNT</Text>
         <View style={styles.rightIcons}>
@@ -180,7 +184,7 @@ const MyAccountScreen = () => {
                 );
             }}>
             <Image
-              source={require('../../assets/Images/CartIcon.png')}
+              source={require('../../assets/icon/CartIcon.png')}
               style={styles.icon}
             />
             {cartCount > 0 && (
@@ -204,7 +208,6 @@ const MyAccountScreen = () => {
         </View>
 
         <View style={styles.menuContainer}>
-         
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('Profile')}>
@@ -220,7 +223,7 @@ const MyAccountScreen = () => {
             style={styles.menuItem}
             onPress={() => navigation.navigate('OrderHistory')}>
             <Text style={styles.menuText}>Order History</Text>
-          
+
             <Icon
               name="chevron-forward"
               size={scaleFont(20)}
@@ -233,7 +236,7 @@ const MyAccountScreen = () => {
             style={styles.menuItem}
             onPress={() => navigation.navigate('Saved')}>
             <Text style={styles.menuText}>Saved Address</Text>
-         
+
             <Icon
               name="chevron-forward"
               size={scaleFont(20)}
@@ -244,7 +247,7 @@ const MyAccountScreen = () => {
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Try Before You Buy (TBYB)</Text>
-           <Icon
+            <Icon
               name="chevron-forward"
               size={scaleFont(20)}
               color="#333"
@@ -256,7 +259,7 @@ const MyAccountScreen = () => {
             style={styles.menuItem}
             onPress={() => navigation.navigate('PartnerRegister')}>
             <Text style={styles.menuText}>Become Partner</Text>
-          <Icon
+            <Icon
               name="chevron-forward"
               size={scaleFont(20)}
               color="#333"
@@ -266,7 +269,7 @@ const MyAccountScreen = () => {
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Settings</Text>
-           <Icon
+            <Icon
               name="chevron-forward"
               size={scaleFont(20)}
               color="#333"
@@ -276,7 +279,7 @@ const MyAccountScreen = () => {
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Help Centre</Text>
-           <Icon
+            <Icon
               name="chevron-forward"
               size={scaleFont(20)}
               color="#333"

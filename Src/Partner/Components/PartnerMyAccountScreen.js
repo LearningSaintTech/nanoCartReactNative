@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../redux/reducers/authReducer';
-import { useNavigation } from '@react-navigation/native';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout} from '../../redux/reducers/authReducer';
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerMyAccountScreen = () => {
   const token = useSelector(state => state.auth.token);
@@ -21,9 +23,9 @@ const PartnerMyAccountScreen = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch('${BASE_URL}/auth/profile', {
+        const res = await fetch(`${BASE_URL}/auth/profile`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         });
         const json = await res.json();
         if (res.ok && json?.data?.name) {
@@ -43,35 +45,47 @@ const PartnerMyAccountScreen = () => {
   };
 
   const menuItems = [
-    { label: 'Profile', route: 'PartnerProfile' },
-    { label: 'Order History', route: 'PartnerOrderHistory' },
-    { label: 'Saved Address', route: 'PartnerSavedAddress' },
-    { label: 'My Wallet', route: 'PartnerWallet' },
-    { label: 'Settings', route: 'Settings' },
-    { label: 'Help Centre', route: 'HelpCentre' },
+    {label: 'Profile', route: 'PartnerProfile'},
+    {label: 'Order History', route: 'PartnerOrderHistory'},
+    {label: 'Saved Address', route: 'PartnerSavedAddress'},
+    {label: 'My Wallet', route: 'PartnerWallet'},
+    {label: 'Settings', route: 'Settings'},
+    {label: 'Help Centre', route: 'HelpCentre'},
   ];
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        {/* <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image source={require('../../assets/icon/BackIcon.png')} style={styles.icon} />
+        </TouchableOpacity> */}
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}> MY ACCOUNT </Text>
         <View style={styles.headerRight}>
           <TouchableOpacity>
-            <Image source={require('../../assets/Images/SearchIcon.png')} style={styles.icon} />
+            <Image
+              source={require('../../assets/Images/SearchIcon.png')}
+              style={styles.icon}
+            />
           </TouchableOpacity>
           <TouchableOpacity>
-            <Image source={require('../../assets/Images/Cart.png')} style={styles.icon} />
+            <Image
+              source={require('../../assets/Images/Cart.png')}
+              style={styles.icon}
+            />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Profile Row */}
       <View style={styles.profileRow}>
-        <Image source={require('../../assets/Images/Group.png')} style={styles.logo} />
+        <Image
+          source={require('../../assets/Images/Group.png')}
+          style={styles.logo}
+        />
         <Text style={styles.nameText}>Hi, {name || 'User'}</Text>
       </View>
 
@@ -81,10 +95,12 @@ const PartnerMyAccountScreen = () => {
           <TouchableOpacity
             key={index}
             style={styles.menuRow}
-            onPress={() => navigation.navigate(item.route)}
-          >
+            onPress={() => navigation.navigate(item.route)}>
             <Text style={styles.menuLabel}>{item.label}</Text>
-            <Image source={require('../../assets/Images/arrowright.png')} style={styles.arrowIcon} />
+            <Image
+              source={require('../../assets/Images/arrowright.png')}
+              style={styles.arrowIcon}
+            />
           </TouchableOpacity>
         ))}
 

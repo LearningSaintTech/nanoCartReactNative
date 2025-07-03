@@ -11,6 +11,7 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 import PartnerCategoryGrid from './PartnerCategoryGrid';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 const TAB_WIDTH = (width - 32) / 2; // 32 is total horizontal padding (16 * 2)
@@ -25,7 +26,7 @@ const PartnerGenderTabs = () => {
   // Fetch categories on mount
   useEffect(() => {
     setLoading(true);
-    fetch('${BASE_URL}/category')
+    fetch(`${BASE_URL}/category`)
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {

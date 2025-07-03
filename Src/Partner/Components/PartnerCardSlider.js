@@ -9,7 +9,7 @@ const [items, setItems] = useState([]);
   const navigation = useNavigation();
     useEffect(() => {
       // Fetch items from the API
-      fetch('${BASE_URL}/items')
+      fetch(`${BASE_URL}/items`)
         .then(response => response.json())
         .then(data => {
           if (data.success && data.data && data.data.items) {

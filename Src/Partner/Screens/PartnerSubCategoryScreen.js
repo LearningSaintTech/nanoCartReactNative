@@ -14,6 +14,7 @@ import PartnerHeader from '../Components/PartnerHeader';
 import FilterComponent from '../../UserFlow/Component/FilterComponent';
 import SortComponent from '../../UserFlow/Component/SortComponent';
 import PartnerSubCategoryItem from '../Components/PartnerSubCategoryItem';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerSubCategoryScreen = ({ navigation, route }) => {
   const { subCategory, subCategoryId } = route.params;

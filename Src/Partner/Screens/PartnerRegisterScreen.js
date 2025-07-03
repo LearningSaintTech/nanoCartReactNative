@@ -19,6 +19,8 @@ import {setUserDetails} from '../../redux/reducers/authReducer';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { BASE_URL } from '../../config/apiConfig';
+// import Icon from 'react-native-vector-icons/Ionicons';
+
 
 const {width} = Dimensions.get('window');
 const scaleFont = size => (width / 414) * size; // Scale font based on 414px reference (e.g., iPhone 11 Pro)

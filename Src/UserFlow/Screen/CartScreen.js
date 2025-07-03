@@ -12,6 +12,7 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import {useSelector, useDispatch} from 'react-redux';
 import {setCartItems} from '../../redux/reducers/cartSlice';
 import {BASE_URL} from '../../config/apiConfig';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const CartScreen = ({navigation}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -205,11 +206,14 @@ const CartScreen = ({navigation}) => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            {/* <TouchableOpacity onPress={() => navigation.goBack()}>
               <Image
                 source={require('../../assets/icon/BackIcon.png')}
                 style={styles.backIcon}
               />
+            </TouchableOpacity> */}
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Icon name="arrow-back" size={22} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Cart</Text>
           </View>
@@ -614,7 +618,7 @@ const styles = StyleSheet.create({
   },
   priceCard: {
     backgroundColor: '#fff',
-    
+
     marginTop: 1,
   },
   priceTitle: {

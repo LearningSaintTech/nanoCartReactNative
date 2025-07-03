@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerOrderHistoryScreen = () => {
   const navigation = useNavigation();
@@ -30,7 +31,7 @@ console.log("token",token)
       }
 
       // Make API request using fetch
-      const response = await fetch('${BASE_URL}/partner/order/', {
+      const response = await fetch(`${BASE_URL}/partner/order/`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
