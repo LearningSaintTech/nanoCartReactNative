@@ -112,7 +112,7 @@ const MyAccountScreen = () => {
           <View style={styles.rightIcons}>
             <TouchableOpacity>
               <Image
-                source={require('../../assets/Images/SearchIcon.png')}
+                source={require('../../assets/icon/SearchIcon.png')}
                 style={styles.icon}
               />
             </TouchableOpacity>
@@ -120,7 +120,7 @@ const MyAccountScreen = () => {
               onPress={() => navigation.navigate('Login')}
               style={styles.cartIconWrapper}>
               <Image
-                source={require('../../assets/Images/Cart.png')}
+                source={require('../../assets/icon/CartIcon.png')}
                 style={styles.icon}
               />
             </TouchableOpacity>

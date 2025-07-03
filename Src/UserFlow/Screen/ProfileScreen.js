@@ -94,7 +94,7 @@ const ProfileScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Image source={require('../../assets/Images/Back.png')} style={styles.backIcon} />
+          <Image source={require('../../assets/icon/BackIcon.png')} style={styles.backIcon} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>PROFILE</Text>
       </View>

@@ -20,21 +20,13 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import GenderTabs from '../Component/GenderTabs';
 import SuggestionCard from '../Component/SuggestionCard';
 import {debounce} from 'lodash'; // Import lodash for debouncing
-
 import {BASE_URL} from '../../config/apiConfig';
 import girl1Image from '../../assets/Images/Girl1.png'; 
 import girl2Image from '../../assets/Images/Girl2.png'; 
 import girl3Image from '../../assets/Images/Girl3.png'; 
 
 // Sample recent searches data
-// const recentSearches = [
-//   {label: 'Chiffon Saree', image: require('../../assets/Images/Girl1.png')},
-//   {label: 'Formal Shirt', image: require('../../assets/Images/Girl2.png')},
-//   {label: 'Cargo Pants', image: require('../../assets/Images/Girl3.png')},
-//   {label: 'Chiffon Saree', image: require('../../assets/Images/Girl1.png')},
-//   {label: 'Formal Shirt', image: require('../../assets/Images/Girl2.png')},
-//   {label: 'Cargo Pants', image: require('../../assets/Images/Girl3.png')},
-// ];
+
 
 const SearchCategory = () => {
   const navigation = useNavigation();
@@ -850,32 +842,7 @@ const SearchCategory = () => {
         </View>
 
         <Text style={styles.sectionTitle}>Recent Searches</Text>
-        {/* <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.recentSearchesContainer}>
-          {recentSearches.map((item, index) => {
-              console.log('Rendering item:', item);
-
-            return(
-               <TouchableOpacity
-              key={index}
-              style={styles.recentItem}
-              onPress={() => {
-                setSearchQuery(item.label);
-                setPage(1);
-                setProducts([]);
-              }}
-              >
-              <Image source={item.image} style={styles.recentImage} />
-              <Text style={styles.recentLabel}>{item.label}</Text>
-            </TouchableOpacity>
-            )
-          }
-             
-           
-          )}
-        </ScrollView> */}
+       
 
         <ScrollView
           horizontal
@@ -914,7 +881,7 @@ const SearchCategory = () => {
         </ScrollView>
 
         <Text style={[styles.sectionTitle, {marginTop: 20}]}>
-          Popular Categories
+          Popular Categories 
         </Text>
         <GenderTabs />
 

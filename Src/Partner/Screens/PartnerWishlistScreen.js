@@ -28,7 +28,7 @@ const PartnerWishlistScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('${BASE_URL}/partner/wishlist', {
+      const response = await fetch(`${BASE_URL}/partner/wishlist`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,18 +58,17 @@ const PartnerWishlistScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
-            <Image source={require('../../assets/Images/Back.png')} style={styles.backIcon} />
+            <Image source={require('../../assets/icon/BackIcon.png')} style={styles.backIcon} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>PARTNER WISHLIST</Text>
         </View>
-
         <View style={styles.rightIcons}>
           <TouchableOpacity>
-            <Image source={require('../../assets/Images/SearchIcon.png')} style={styles.icon} />
+            <Image source={require('../../assets/icon/SearchIcon.png')} style={styles.icon} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.cartIconWrapper} onPress={() => navigation.navigate('Cart')}>
-            <Image source={require('../../assets/Images/Cart.png')} style={styles.icon} />
+            <Image source={require('../../assets/Images/CartIcon.png')} style={styles.icon} />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount}</Text>

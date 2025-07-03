@@ -4,8 +4,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'rea
 const CategoryGrid = ({ data, onItemPress }) => {
   const numColumns = 3;
   const screenWidth = Dimensions.get('window').width;
-  const itemWidth = (screenWidth - 48) / numColumns; // 48 = padding (16 * 2) + gaps (8 * 2)
-
+  const itemWidth = (screenWidth - 48) / numColumns; 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
