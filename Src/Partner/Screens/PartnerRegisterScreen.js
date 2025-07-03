@@ -45,7 +45,7 @@ const [pollingInterval, setPollingInterval] = useState(null);
       try {
         if (!token) return;
 
-        const response = await fetch('http://192.168.1.20 :4000/api/auth/profile', {
+        const response = await fetch('${BASE_URL}/auth/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ const [pollingInterval, setPollingInterval] = useState(null);
     // Step 3: API Call
     try {
       console.log(' Sending registration request...');
-      const res = await fetch('http://192.168.1.20 :4000/api/auth/partner/signup', {
+      const res = await fetch('${BASE_URL}/auth/partner/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',

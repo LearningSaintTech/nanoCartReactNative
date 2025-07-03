@@ -13,6 +13,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector } from 'react-redux';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -92,8 +93,8 @@ const AddNewAddressScreen = () => {
     console.log(isEdit ? ' Editing Address:' : '➕ Creating Address:', payload);
 
     const url = isEdit
-      ? `http://192.168.1.20 :4000/api/user/address/${addressId}` //  use addressId
-      : 'http://192.168.1.20 :4000/api/user/address/create';
+      ? `${BASE_URL}/user/address/${addressId}` //  use addressId
+      : `${BASE_URL}/user/address/create`;
 
     try {
       const response = await fetch(url, {

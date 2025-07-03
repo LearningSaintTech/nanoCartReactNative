@@ -15,9 +15,10 @@ import { setAuthToken } from "../../redux/reducers/authReducer";
 import { persistor } from "../../redux/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
+import { BASE_URL } from "../../config/apiConfig";
 
 const screenWidth = Dimensions.get("window").width;
-const API_URL = "http://192.168.1.20 :4000";
+const API_URL = "http://192.168.1.20:4000";
 
 const RegisterVerificationScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
@@ -92,7 +93,7 @@ const RegisterVerificationScreen = ({ route, navigation }) => {
       const idToken = await userCredential.user.getIdToken();
       console.log("Firebase OTP verified, ID token:", idToken);
 
-      const signupResponse = await fetch(`${API_URL}/api/auth/signup`, {
+      const signupResponse = await fetch(`${BASE_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

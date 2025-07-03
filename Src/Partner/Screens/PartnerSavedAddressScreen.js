@@ -17,7 +17,7 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const response = await fetch('http://192.168.1.20 :4000/api/partner/address', {
+        const response = await fetch('${BASE_URL}/partner/address', {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,

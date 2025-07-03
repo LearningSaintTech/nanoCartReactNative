@@ -10,6 +10,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedItem } from '../../redux/reducers/itemSlice';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { BASE_URL } from '../../config/apiConfig';
 
 const SubCategoryItem = ({ item, navigation }) => {
   const token = useSelector((state) => state.auth.token);
@@ -38,7 +39,7 @@ const SubCategoryItem = ({ item, navigation }) => {
     }
 
     try {
-      const res = await fetch('http://192.168.1.20 :4000/api/userwishlist/create', {
+      const res = await fetch(`${BASE_URL}/userwishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

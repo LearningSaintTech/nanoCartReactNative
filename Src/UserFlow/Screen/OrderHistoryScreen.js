@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const OrderHistoryScreen = () => {
   const navigation = useNavigation();
@@ -32,7 +33,7 @@ const OrderHistoryScreen = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://192.168.1.20 :4000/api/user/order', {
+      const response = await fetch(`${BASE_URL}/user/order`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

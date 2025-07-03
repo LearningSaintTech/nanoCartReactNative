@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 
 const ProfileScreen = () => {
   const navigation=useNavigation();
@@ -24,7 +25,7 @@ const ProfileScreen = () => {
     const fetchProfile = async () => {
       try {
         console.log('📦 Fetching profile...');
-        const response = await fetch('http://192.168.1.20 :4000/api/auth/profile', {
+        const response = await fetch(`${BASE_URL}/auth/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -65,7 +66,7 @@ const ProfileScreen = () => {
 
       console.log(' Updating profile with:', payload);
 
-      const response = await fetch('http://192.168.1.20 :4000/api/auth/profile', {
+      const response = await fetch(`${BASE_URL}/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

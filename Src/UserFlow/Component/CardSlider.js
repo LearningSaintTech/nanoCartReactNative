@@ -54,7 +54,7 @@ const CardSlider = ({images}) => {
                 onPress={() =>
                   navigation.navigate('ProductDetail', {itemId: item._id})
                 }>
-                <Text style={styles.shopButtonText}>SHOP NOW</Text>
+                <Text style={styles.shopButtonText}>SHOP NOW </Text>
               </TouchableOpacity>
             </View>
           </View>

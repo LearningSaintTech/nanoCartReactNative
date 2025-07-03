@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const DeliveryAddressScreen = ({ navigation }) => {
   const token = useSelector(state => state.auth.token);
@@ -27,7 +28,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchAddress = async () => {
       try {
-        const response = await fetch('http://192.168.1.20 :4000/api/user/address', {
+        const response = await fetch(`${BASE_URL}/user/address`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -49,7 +50,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
-        const res = await fetch('http://192.168.1.20 :4000/api/invoice', {
+        const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -107,15 +108,19 @@ const DeliveryAddressScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>DELIVERY ADDRESS</Text>
+        <Text style={styles.headerTitle}>DELIVERY ADDRESS </Text>
       </View>
 
       {/* Steps */}
       <View style={styles.stepIndicator}>
         <Text style={styles.stepActive}>■ CART DETAILS</Text>
+        <Text style={styles.stepActive}>─────</Text>
         <Text style={styles.stepActive}>■ ADDRESS</Text>
+        <Text style={styles.stepInactive}>─────</Text>
         <Text style={styles.stepInactive}>■ PAYMENT</Text>
       </View>
+
+     
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Address Logic */}
@@ -212,9 +217,9 @@ const DeliveryAddressScreen = ({ navigation }) => {
 export default DeliveryAddressScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { marginTop: 20, fontSize: 16, fontWeight: '600', marginLeft: 10 },
+  container: { flex: 1, backgroundColor: '#fff' ,paddingTop:32},
+  header: { padding: 16, flexDirection: 'row', alignItems: 'center',display:"flex",  elevation: 2,},
+  headerTitle: {  fontSize: 16, fontWeight: '600', marginLeft: 10 },
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   stepActive: { color: '#f37022', fontWeight: 'bold', fontSize: 12 },
   stepInactive: { color: '#ccc', fontSize: 12 },
@@ -290,4 +295,5 @@ const styles = StyleSheet.create({
   continueText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   emptyCartMessage: { padding: 16, alignItems: 'center' },
   emptyCartText: { fontSize: 16, color: '#666' },
+  
 });

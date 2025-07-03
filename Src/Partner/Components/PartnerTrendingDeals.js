@@ -12,7 +12,7 @@ const TrendingDeals = () => {
   useEffect(() => {
     const fetchDeals = async () => {
       try {
-        const response = await fetch('http://192.168.1.20 :4000/api/subcategory/trendy', {
+        const response = await fetch('${BASE_URL}/subcategory/trendy', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

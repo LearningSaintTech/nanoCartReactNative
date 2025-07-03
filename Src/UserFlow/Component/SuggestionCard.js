@@ -17,6 +17,9 @@ const SuggestionCard = ({
   buttonLabel,
   onButtonPress,
 }) => {
+
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>

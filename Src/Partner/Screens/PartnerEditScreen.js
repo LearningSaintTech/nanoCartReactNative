@@ -64,7 +64,7 @@ const PartnerEditScreen = ({ route, navigation }) => {
     };
   
     try {
-      const res = await fetch(`http://192.168.1.20 :4000/api/partner/address/${addressId}`, {
+      const res = await fetch(`${BASE_URL}/partner/address/${addressId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

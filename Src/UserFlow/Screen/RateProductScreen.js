@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { useSelector } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -98,7 +99,7 @@ const RateProductScreen = () => {
     }
   
     try {
-      const response = await fetch('http://192.168.1.20 :4000/api/user/ratingreview/create', {
+      const response = await fetch(`${BASE_URL}/user/ratingreview/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

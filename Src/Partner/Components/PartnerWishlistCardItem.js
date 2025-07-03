@@ -28,7 +28,7 @@
 //     }
 
 //     try {
-//       const response = await fetch('http://192.168.1.20 :4000/api/partner/wishlist/removeitem', {
+//       const response = await fetch('${BASE_URL}/partner/wishlist/removeitem', {
 //         method: 'PUT',
 //         headers: {
 //           Authorization: `Bearer ${token}`,
@@ -183,7 +183,7 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.1.20 :4000/api/partner/wishlist/removeitem', {
+      const response = await fetch('${BASE_URL}/partner/wishlist/removeitem', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

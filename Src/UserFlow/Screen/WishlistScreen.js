@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   FlatList,
@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 import FilterComponent from '../Component/FilterComponent';
 import SortComponent from '../Component/SortComponent';
 import WishlistCardItem from '../Component/WishlistCardItem';
-
+import {BASE_URL} from '../../config/apiConfig';
 const WishlistScreen = () => {
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.token);
@@ -35,22 +35,22 @@ const WishlistScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.1.20 :4000/api/userwishlist', {
+      const response = await fetch(`${BASE_URL}/userwishlist`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-
+      console.log('this is  response wish ', response);
       const data = await response.json();
       if (response.ok) {
         setWishlist(data?.data?.items || []);
       } else {
-        console.warn("Failed to load wishlist:", data.message);
+        console.warn('Failed to load wishlist:', data.message);
       }
     } catch (err) {
-      console.error("Error fetching wishlist:", err);
+      console.error('Error fetching wishlist:', err);
     } finally {
       setLoading(false);
     }
@@ -65,15 +65,21 @@ const WishlistScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {/* <TouchableOpacity >
-            <Image source={require('../../assets/Images/Back.png')} style={styles.backIcon} />
-          </TouchableOpacity> */}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../assets/icon/BackIcon.png')}
+              style={styles.backIcon}
+            />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>WISHLIST</Text>
         </View>
 
         <View style={styles.rightIcons}>
           <TouchableOpacity>
-            <Image source={require('../../assets/Images/SearchIcon.png')} style={styles.icon} />
+            <Image
+              source={require('../../assets/icon/SearchIcon.png')}
+              style={styles.icon}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -84,9 +90,11 @@ const WishlistScreen = () => {
               } else {
                 setShowLoginModal(true);
               }
-            }}
-          >
-            <Image source={require('../../assets/Images/Cart.png')} style={styles.icon} />
+            }}>
+            <Image
+              source={require('../../assets/icon/CartIcon.png')}
+              style={styles.icon}
+            />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount}</Text>
@@ -98,14 +106,14 @@ const WishlistScreen = () => {
 
       {/* Wishlist Grid */}
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" style={{marginTop: 40}} />
       ) : (
         <FlatList
           data={wishlist}
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
+          renderItem={({item}) => (
             <WishlistCardItem
               item={item}
               navigation={navigation}
@@ -117,10 +125,18 @@ const WishlistScreen = () => {
       )}
 
       {/* Filter and Sort Modals */}
-      <Modal animationType="slide" transparent visible={isFilterModalVisible} onRequestClose={() => setFilterModalVisible(false)}>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isFilterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}>
         <FilterComponent onClose={() => setFilterModalVisible(false)} />
       </Modal>
-      <Modal animationType="slide" transparent visible={isSortModalVisible} onRequestClose={() => setSortModalVisible(false)}>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isSortModalVisible}
+        onRequestClose={() => setSortModalVisible(false)}>
         <SortComponent onClose={() => setSortModalVisible(false)} />
       </Modal>
 
@@ -134,7 +150,7 @@ const WishlistScreen = () => {
               style={styles.loginButton}
               onPress={() => {
                 setShowLoginModal(false);
-                navigation.navigate('Login', { fromScreen: 'Wishlist' });
+                navigation.navigate('Login', {fromScreen: 'Wishlist'});
               }}>
               <Text style={styles.loginButtonText}>Go to Login</Text>
             </TouchableOpacity>
@@ -148,7 +164,7 @@ const WishlistScreen = () => {
 export default WishlistScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f6f6' },
+  container: {flex: 1, backgroundColor: '#f6f6f6'},
   header: {
     marginTop: 20,
     flexDirection: 'row',
@@ -159,12 +175,18 @@ const styles = StyleSheet.create({
     elevation: 2,
     justifyContent: 'space-between',
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  backIcon: { width: 24, height: 24, resizeMode: 'contain', marginRight: 8 },
-  headerTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', textTransform: 'uppercase',marginLeft:30 },
-  rightIcons: { flexDirection: 'row', alignItems: 'center' },
-  icon: { width: 22, height: 22, resizeMode: 'contain', marginHorizontal: 8 },
-  cartIconWrapper: { position: 'relative' },
+  headerLeft: {flexDirection: 'row', alignItems: 'center'},
+  backIcon: {width: 24, height: 24, resizeMode: 'contain', marginRight: 8},
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textTransform: 'uppercase',
+    marginLeft: 30,
+  },
+  rightIcons: {flexDirection: 'row', alignItems: 'center'},
+  icon: {width: 22, height: 22, resizeMode: 'contain', marginHorizontal: 8},
+  cartIconWrapper: {position: 'relative'},
   cartBadge: {
     position: 'absolute',
     top: -6,
@@ -176,7 +198,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  cartBadgeText: {color: '#fff', fontSize: 10, fontWeight: 'bold'},
 
   // Modal Styles
   modalOverlay: {

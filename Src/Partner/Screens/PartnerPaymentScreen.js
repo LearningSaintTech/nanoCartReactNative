@@ -135,7 +135,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       }
       try {
         console.log('Fetching address with token:', token);
-        const response = await fetch('http://192.168.1.20 :4000/api/partner/address', {
+        const response = await fetch('${BASE_URL}/partner/address', {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -263,7 +263,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         codCharges: invoiceData.codCharges,
       });
 
-      const response = await fetch('http://192.168.1.20 :4000/api/partner/order/create', {
+      const response = await fetch('${BASE_URL}/partner/order/create', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

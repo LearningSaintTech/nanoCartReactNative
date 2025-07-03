@@ -320,6 +320,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from "@react-native-firebase/auth";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BASE_URL } from "../../config/apiConfig";
 
 const API_URL = "http://192.168.1.20:4000";
 
@@ -396,7 +397,7 @@ const LoginVerifyOtpScreen = ({ route, navigation }) => {
       const idToken = await userCredential.user.getIdToken();
       console.log("Firebase OTP verified, ID token:", idToken);
 
-      const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+      const loginResponse = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phoneNumber: phone, idToken }),

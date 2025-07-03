@@ -19,7 +19,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist } from '../../redux/reducers/wishlistSlice';
-
+import { BASE_URL } from '../../config/apiConfig';
 const { width } = Dimensions.get('window');
 
 const ProductDetailScreen = () => {
@@ -70,7 +70,9 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const res = await fetch(`http://192.168.1.20 :4000/api/itemDetails/${itemId}`);
+        const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`);
+
+        console.log("details",res)
         const json = await res.json();
         if (json.data && json.data.length > 0) {
           const productData = json.data[0];
@@ -83,7 +85,7 @@ const ProductDetailScreen = () => {
           }
         }
       } catch (err) {
-        console.error('Error fetching product details:', err);
+        // console.error('Error fetching product details:', err);
       } finally {
         setLoading(false);
       }
@@ -96,7 +98,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchRatingsReviews = async () => {
       try {
-        const res = await fetch(`http://192.168.1.20 :4000/api/user/ratingreview/${itemId}`);
+        const res = await fetch(`${BASE_URL}/user/ratingreview/${itemId}`);
         const json = await res.json();
         if (json.success && json.data) {
           setRatingsData(json.data);
@@ -119,7 +121,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     const fetchRecommendedItems = async () => {
       try {
-        const res = await fetch(`http://192.168.1.20 :4000/api/items`);
+        const res = await fetch(`${BASE_URL}/items`);
         const json = await res.json();
         if (json.success && json.data && json.data.items) {
           // Filter out the current item to avoid recommending the same product
@@ -130,7 +132,7 @@ const ProductDetailScreen = () => {
           setRecommendedItems([]);
         }
       } catch (err) {
-        console.error('Error fetching recommended items:', err);
+        // console.error('Error fetching recommended items:', err);
         setRecommendedItems([]);
       } finally {
         setRecommendedLoading(false);
@@ -527,7 +529,7 @@ const ProductDetailScreen = () => {
             console.log('Request Payload:', payload);
 
             try {
-              const response = await fetch('http://192.168.1.20 :4000/api/userwishlist/create', {
+              const response = await fetch(`${BASE_URL}/userwishlist/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -599,7 +601,7 @@ const ProductDetailScreen = () => {
             console.log('Cart Payload:', payload);
 
             try {
-              const response = await fetch('http://192.168.1.20 :4000/api/usercart/create', {
+              const response = await fetch(`${BASE_URL}/usercart/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,

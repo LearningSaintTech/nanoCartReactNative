@@ -24,7 +24,7 @@ import { useSelector } from 'react-redux';
         console.log(' Starting fetchPartnerName...');
         console.log(' Token:', token);
   
-        const res = await fetch('http://192.168.1.20 :4000/api/auth/partner/profile', {
+        const res = await fetch('${BASE_URL}/auth/partner/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

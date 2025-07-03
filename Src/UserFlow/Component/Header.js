@@ -64,7 +64,7 @@ const Header = () => {
             onPress={() => navigation.navigate('Search')}
           >
             <Image
-              source={require('../../assets/Images/SearchIcon.png')}
+              source={require('../../assets/icon/SearchIcon.png')}
               style={{ width: wp('6%'), height: wp('6%'), resizeMode: 'contain' }}
             />
           </TouchableOpacity>
@@ -75,7 +75,7 @@ const Header = () => {
             style={{ position: 'relative', marginLeft: wp('1%') }}
           >
             <Image
-              source={require('../../assets/Images/Cart.png')}
+              source={require('../../assets/icon/CartIcon.png')}
               style={{ width: wp('6%'), height: wp('6%'), resizeMode: 'contain' }}
             />
 

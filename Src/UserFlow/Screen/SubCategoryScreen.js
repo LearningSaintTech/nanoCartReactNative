@@ -32,8 +32,8 @@
 
 //     setLoading(true);
 //     let url = sortBy
-//       ? `http://192.168.1.20 :4000/api/items/sort?sortBy=${sortBy}`
-//       : `http://192.168.1.20 :4000/api/items/subcategory/${subcategoryId}`;
+//       ? `${BASE_URL}/items/sort?sortBy=${sortBy}`
+//       : `${BASE_URL}/items/subcategory/${subcategoryId}`;
 
 //     fetch(url)
 //       .then((res) => res.json())
@@ -209,6 +209,7 @@ import Header from '../Component/Header';
 import SubCategoryItem from '../Component/SubCategoryItem';
 import FilterComponent from '../Component/FilterComponent';
 import SortComponent from '../Component/SortComponent';
+import { BASE_URL } from '../../config/apiConfig';
 
 const SubCategoryScreen = ({ navigation, route }) => {
   const { subCategory, subCategoryId } = route.params;
@@ -267,7 +268,7 @@ const SubCategoryScreen = ({ navigation, route }) => {
       });
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `http://192.168.1.20 :4000/api/items/filter${queryString}`;
+      const apiUrl = `${BASE_URL}/items/filter${queryString}`;
 
       console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
 

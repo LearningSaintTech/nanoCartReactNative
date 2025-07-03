@@ -28,7 +28,7 @@ const PartnerProfileScreen = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('http://192.168.1.20 :4000/api/auth/partner/profile', {
+        const response = await fetch('${BASE_URL}/auth/partner/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
