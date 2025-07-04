@@ -27,6 +27,7 @@ const WishlistScreen = () => {
   const [isSortModalVisible, setSortModalVisible] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+
   const fetchWishlist = async () => {
     if (!token) {
       setShowLoginModal(true); //  Show login modal if token is missing
@@ -43,6 +44,7 @@ const WishlistScreen = () => {
         },
       });
       console.log('this is  response wish ', response);
+
       const data = await response.json();
       if (response.ok) {
         setWishlist(data?.data?.items || []);

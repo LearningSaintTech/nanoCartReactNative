@@ -1,4 +1,4 @@
-// import React, {useEffect, useState} from 'react';
+// import React, { useEffect, useState } from 'react';
 // import {
 //   View,
 //   Text,
@@ -13,20 +13,17 @@
 //   Modal,
 //   SafeAreaView,
 // } from 'react-native';
-// import {useSelector, useDispatch} from 'react-redux';
-// import {setSelectedItem} from '../../redux/reducers/itemSlice';
-// import {useNavigation} from '@react-navigation/native';
+// import { useSelector, useDispatch } from 'react-redux';
+// import { setSelectedItem } from '../../redux/reducers/itemSlice';
+// import { useNavigation } from '@react-navigation/native';
 // import Icon from 'react-native-vector-icons/FontAwesome';
 // import GenderTabs from '../Component/GenderTabs';
 // import SuggestionCard from '../Component/SuggestionCard';
-// import {debounce} from 'lodash'; // Import lodash for debouncing
-// import {BASE_URL} from '../../config/apiConfig';
+// import { debounce } from 'lodash';
+// import { BASE_URL } from '../../config/apiConfig';
 // import girl1Image from '../../assets/Images/Girl1.png';
 // import girl2Image from '../../assets/Images/Girl2.png';
 // import girl3Image from '../../assets/Images/Girl3.png';
-// // import Icon from 'react-native-vector-icons/Ionicons';
-
-// // Sample recent searches data
 
 // const SearchCategory = () => {
 //   const navigation = useNavigation();
@@ -55,27 +52,42 @@
 //   const [filterLoading, setFilterLoading] = useState(true);
 //   const [filterError, setFilterError] = useState(null);
 //   const [currentSort, setCurrentSort] = useState(sortBy);
-//   const [priceRange, setPriceRange] = useState({min: '', max: ''});
+//   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 //   const limit = 5;
 
-//   // Sort options
 //   const sortOptions = [
-//     {label: 'Latest', value: 'latest'},
-//     {label: 'Popularity', value: 'popularity'},
-//     {label: 'Price: High to Low', value: 'priceHighToLow'},
-//     {label: 'Price: Low to High', value: 'priceLowToHigh'},
-//     {label: 'Offers & Discount', value: 'offer'},
+//     { label: 'Latest', value: 'latest' },
+//     { label: 'Popularity', value: 'popularity' },
+//     { label: 'Price: High to Low', value: 'priceHighToLow' },
+//     { label: 'Price: Low to High', value: 'priceLowToHigh' },
+//     { label: 'Offers & Discount', value: 'offer' },
 //   ];
 
 //   // Fetch wishlist data
 //   useEffect(() => {
 //     const fetchWishlist = async () => {
 //       try {
+//         setWishlistLoading(true);
+//         setWishlistError(null);
+
 //         if (!token) {
-//           setWishlistError('Please log in to view wishlist');
-//           setWishlistLoading(false);
+//           Alert.alert(
+//             'Login Required',
+//             'Please log in to view your wishlist.',
+//             [
+//               {
+//                 text: 'OK',
+//                 onPress: () => navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'view_wishlist',
+//                 }),
+//               },
+//             ],
+//             { cancelable: false }
+//           );
 //           return;
 //         }
+
 //         const response = await fetch(`${BASE_URL}/userwishlist`, {
 //           method: 'GET',
 //           headers: {
@@ -83,30 +95,77 @@
 //             'Content-Type': 'application/json',
 //           },
 //         });
+
+//         if (!response.ok) {
+//           const errorText = await response.text();
+//           console.error('❌ Wishlist server response:', errorText);
+//           const errorData = response.headers.get('content-type')?.includes('application/json')
+//             ? JSON.parse(errorText)
+//             : {};
+//           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+//         }
+
 //         const data = await response.json();
-//         if (response.ok && data.success && data.data?.items?.length > 0) {
+//         console.log('🌐 Wishlist response:', data);
+
+//         if (data.success && data.data?.items?.length > 0) {
 //           setWishlistItem(data.data.items[0]);
 //         } else {
 //           setWishlistError(data.message || 'No wishlist items found');
 //         }
 //       } catch (err) {
-//         setWishlistError('Failed to fetch wishlist');
+//         const errorMessage = err.message.includes('401')
+//           ? 'Session expired. Please log in again.'
+//           : 'Failed to fetch wishlist. Please try again.';
+//         setWishlistError(errorMessage);
+//         if (err.message.includes('401')) {
+//           Alert.alert(
+//             'Session Expired',
+//             'Your session has expired. Please log in again.',
+//             [
+//               {
+//                 text: 'OK',
+//                 onPress: () => navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'view_wishlist',
+//                 }),
+//               },
+//             ],
+//             { cancelable: false }
+//           );
+//         }
 //       } finally {
 //         setWishlistLoading(false);
 //       }
 //     };
 //     fetchWishlist();
-//   }, [token]);
+//   }, [token, navigation]);
 
 //   // Fetch cart data
 //   useEffect(() => {
 //     const fetchCart = async () => {
 //       try {
+//         setCartLoading(true);
+//         setCartError(null);
+
 //         if (!token) {
-//           setCartError('Please log in to view cart');
-//           setCartLoading(false);
+//           Alert.alert(
+//             'Login Required',
+//             'Please log in to view your cart.',
+//             [
+//               {
+//                 text: 'OK',
+//                 onPress: () => navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'view_cart',
+//                 }),
+//               },
+//             ],
+//             { cancelable: false }
+//           );
 //           return;
 //         }
+
 //         const response = await fetch(`${BASE_URL}/usercart`, {
 //           method: 'GET',
 //           headers: {
@@ -115,37 +174,95 @@
 //           },
 //         });
 
-//         console.log('api response', response);
+//         console.log('🌐 Cart response:', response);
+//         if (!response.ok) {
+//           const errorText = await response.text();
+//           console.error('❌ Cart server response:', errorText);
+//           const errorData = response.headers.get('content-type')?.includes('application/json')
+//             ? JSON.parse(errorText)
+//             : {};
+//           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+//         }
+
 //         const data = await response.json();
-//         if (response.ok && data.success && data.data?.items?.length > 0) {
+//         if (data.success && data.data?.items?.length > 0) {
 //           setCartItem(data.data.items[0]);
 //         } else {
 //           setCartError(data.message || 'No cart items found');
 //         }
 //       } catch (err) {
-//         setCartError('Failed to fetch cart');
+//         const errorMessage = err.message.includes('401')
+//           ? 'Session expired. Please log in again.'
+//           : 'Failed to fetch cart. Please try again.';
+//         setCartError(errorMessage);
+//         if (err.message.includes('401')) {
+//           Alert.alert(
+//             'Session Expired',
+//             'Your session has expired. Please log in again.',
+//             [
+//               {
+//                 text: 'OK',
+//                 onPress: () => navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'view_cart',
+//                 }),
+//               },
+//             ],
+//             { cancelable: false }
+//           );
+//         }
 //       } finally {
 //         setCartLoading(false);
 //       }
 //     };
 //     fetchCart();
-//   }, [token]);
+//   }, [token, navigation]);
 
 //   // Fetch filters
 //   useEffect(() => {
 //     const fetchFilters = async () => {
 //       try {
 //         setFilterLoading(true);
+//         setFilterError(null);
+
+//         if (!token) {
+//           Alert.alert(
+//             'Login Required',
+//             'Please log in to access filters.',
+//             [
+//               {
+//                 text: 'OK',
+//                 onPress: () => navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'view_filters',
+//                 }),
+//               },
+//             ],
+//             { cancelable: false }
+//           );
+//           return;
+//         }
 
 //         const apiUrl = `${BASE_URL}/filter`;
 //         const response = await fetch(apiUrl, {
 //           headers: {
 //             'Content-Type': 'application/json',
-//             ...(token && {Authorization: `Bearer ${token}`}),
+//             Authorization: `Bearer ${token}`,
 //           },
 //         });
+
+//         if (!response.ok) {
+//           const errorText = await response.text();
+//           console.error('❌ Filter server response:', errorText);
+//           const errorData = response.headers.get('content-type')?.includes('application/json')
+//             ? JSON.parse(errorText)
+//             : {};
+//           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+//         }
+
 //         const json = await response.json();
-//         console.log('json', json);
+//         console.log('🌐 Filters response:', json);
+
 //         if (json?.success && Array.isArray(json.data)) {
 //           const mappedFilters = {};
 //           json.data.forEach(filter => {
@@ -157,24 +274,43 @@
 //               });
 //             }
 //           });
-//           mappedFilters['Price range'] = {enabled: false};
-//           setFiltersData([...json.data, {key: 'Price range', values: []}]);
+//           mappedFilters['Price range'] = { enabled: false };
+//           setFiltersData([...json.data, { key: 'Price range', values: [] }]);
 //           setFilters(mappedFilters);
 //           setSelectedCategory(json.data[0]?.key || 'Price range');
 //         } else {
-//           setFilterError(json?.message || 'No filters available');
-//           Alert.alert('Error', json?.message || 'No filters available');
+//           throw new Error(json?.message || 'No filters available');
 //         }
 //       } catch (error) {
-//         setFilterError('Error fetching filters');
-//         Alert.alert('Error', 'Error fetching filters');
+//         const errorMessage = error.message.includes('401')
+//           ? 'Session expired. Please log in again.'
+//           : 'Error fetching filters. Please try again.';
+//         setFilterError(errorMessage);
+//         Alert.alert(
+//           'Error',
+//           errorMessage,
+//           [
+//             {
+//               text: 'OK',
+//               onPress: () => {
+//                 if (errorMessage.includes('401')) {
+//                   navigation.navigate('Login', {
+//                     fromScreen: 'SearchCategory',
+//                     actionAfterLogin: 'view_filters',
+//                   });
+//                 }
+//               },
+//             },
+//           ],
+//           { cancelable: false }
+//         );
 //       } finally {
 //         setFilterLoading(false);
 //       }
 //     };
 
 //     fetchFilters();
-//   }, [token]);
+//   }, [token, navigation, appliedFilters]);
 
 //   // Fetch search results
 //   useEffect(() => {
@@ -225,7 +361,19 @@
 //             'Content-Type': 'application/json',
 //           },
 //         });
+
+//         if (!response.ok) {
+//           const errorText = await response.text();
+//           console.error('❌ Search server response:', errorText);
+//           const errorData = response.headers.get('content-type')?.includes('application/json')
+//             ? JSON.parse(errorText)
+//             : {};
+//           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+//         }
+
 //         const json = await response.json();
+//         console.log('🌐 Search response:', json);
+
 //         if (json?.success) {
 //           const formattedItems = (json.data?.items || []).map(item => ({
 //             name: item.name || 'Unnamed Item',
@@ -233,7 +381,7 @@
 //             mrp: item.MRP || 0,
 //             price: item.discountedPrice || 0,
 //             discount: item.discountPercentage || 0,
-//             image: {uri: item.image || ''},
+//             image: { uri: item.image || '' },
 //             itemId: item._id || '',
 //             defaultColor: item.defaultColor || '',
 //             userAverageRating: item.userAverageRating || 4.5,
@@ -247,15 +395,30 @@
 //             Alert.alert('No Results', 'No items found for your search');
 //           }
 //         } else {
-//           Alert.alert(
-//             'Error',
-//             json?.message || 'Failed to load search results',
-//           );
-//           setProducts([]);
-//           setListKey(Date.now().toString());
+//           throw new Error(json?.message || 'Failed to load search results');
 //         }
 //       } catch (error) {
-//         Alert.alert('Error', 'Failed to fetch search results');
+//         const errorMessage = error.message.includes('401')
+//           ? 'Session expired. Please log in again.'
+//           : 'Failed to fetch search results. Please try again.';
+//         Alert.alert(
+//           'Error',
+//           errorMessage,
+//           [
+//             {
+//               text: 'OK',
+//               onPress: () => {
+//                 if (errorMessage.includes('401')) {
+//                   navigation.navigate('Login', {
+//                     fromScreen: 'SearchCategory',
+//                     actionAfterLogin: 'search',
+//                   });
+//                 }
+//               },
+//             },
+//           ],
+//           { cancelable: false }
+//         );
 //         setProducts([]);
 //         setListKey(Date.now().toString());
 //       } finally {
@@ -266,7 +429,7 @@
 //     const debouncedFetchProducts = debounce(fetchProducts, 500);
 //     debouncedFetchProducts();
 //     return () => debouncedFetchProducts.cancel();
-//   }, [searchQuery, appliedFilters, sortBy, page, token]);
+//   }, [searchQuery, appliedFilters, sortBy, page, token, navigation]);
 
 //   // Update active filter count
 //   useEffect(() => {
@@ -326,7 +489,7 @@
 //       }
 //     });
 //     setFilters(cleared);
-//     setPriceRange({min: '', max: ''});
+//     setPriceRange({ min: '', max: '' });
 //     handleApplyFilters([], cleared, {
 //       currentPage: 1,
 //       totalPages: 1,
@@ -345,6 +508,24 @@
 //         );
 //         return;
 //       }
+//     }
+
+//     if (!token) {
+//       Alert.alert(
+//         'Login Required',
+//         'Please log in to apply filters.',
+//         [
+//           {
+//             text: 'OK',
+//             onPress: () => navigation.navigate('Login', {
+//               fromScreen: 'SearchCategory',
+//               actionAfterLogin: 'apply_filters',
+//             }),
+//           },
+//         ],
+//         { cancelable: false }
+//       );
+//       return;
 //     }
 
 //     const queryParams = [
@@ -374,20 +555,29 @@
 //         }
 //       }
 //     });
-
-//     const queryString =
-//       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+//     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
 //     const apiUrl = `${BASE_URL}/items/search${queryString}`;
-
 //     try {
 //       setFilterLoading(true);
 //       const response = await fetch(apiUrl, {
 //         headers: {
-//           Authorization: token ? `Bearer ${token}` : undefined,
+//           Authorization: `Bearer ${token}`,
 //           'Content-Type': 'application/json',
 //         },
 //       });
+
+//       if (!response.ok) {
+//         const errorText = await response.text();
+//         console.error('❌ Filter apply server response:', errorText);
+//         const errorData = response.headers.get('content-type')?.includes('application/json')
+//           ? JSON.parse(errorText)
+//           : {};
+//         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+//       }
+
 //       const data = await response.json();
+//       console.log('🌐 Filter apply response:', data);
+
 //       if (data?.success) {
 //         const formattedItems = (data.data?.items || []).map(item => ({
 //           name: item.name || 'Unnamed Item',
@@ -395,7 +585,7 @@
 //           mrp: item.MRP || 0,
 //           price: item.discountedPrice || 0,
 //           discount: item.discountPercentage || 0,
-//           image: {uri: item.image || ''},
+//           image: { uri: item.image || '' },
 //           itemId: item._id || '',
 //           defaultColor: item.defaultColor || '',
 //           userAverageRating: item.userAverageRating || 4.5,
@@ -409,19 +599,38 @@
 //           Alert.alert('No Results', 'No items match the selected filters');
 //         }
 //       } else {
-//         setFilterError(data?.message || 'Failed to apply filters');
-//         Alert.alert('Error', data?.message || 'Failed to apply filters');
+//         throw new Error(data?.message || 'Failed to apply filters');
 //       }
 //     } catch (error) {
-//       setFilterError('Error applying filters');
-//       Alert.alert('Error', 'Error applying filters');
+//       const errorMessage = error.message.includes('401')
+//         ? 'Session expired. Please log in again.'
+//         : 'Error applying filters. Please try again.';
+//       setFilterError(errorMessage);
+//       Alert.alert(
+//         'Error',
+//         errorMessage,
+//         [
+//           {
+//             text: 'OK',
+//             onPress: () => {
+//               if (errorMessage.includes('401')) {
+//                 navigation.navigate('Login', {
+//                   fromScreen: 'SearchCategory',
+//                   actionAfterLogin: 'apply_filters',
+//                 });
+//               }
+//             },
+//           },
+//         ],
+//         { cancelable: false }
+//       );
 //     } finally {
 //       setFilterLoading(false);
 //     }
 //   };
 
 //   // SubCategoryItem logic
-//   const renderSubCategoryItem = ({item}) => {
+//   const renderSubCategoryItem = ({ item }) => {
 //     const handleHeartPress = async () => {
 //       const itemId = item?.itemId;
 //       const color = item?.defaultColor || 'Black';
@@ -432,7 +641,7 @@
 //       }
 
 //       if (!token) {
-//         dispatch(setSelectedItem({itemId, color}));
+//         dispatch(setSelectedItem({ itemId, color }));
 //         navigation.navigate('Login', {
 //           fromScreen: 'SearchCategory',
 //           actionAfterLogin: 'like_item',
@@ -448,18 +657,50 @@
 //             'Content-Type': 'application/json',
 //             Authorization: `Bearer ${token}`,
 //           },
-//           body: JSON.stringify({itemId, color}),
+//           body: JSON.stringify({ itemId, color }),
 //         });
 
+//         if (!res.ok) {
+//           const errorText = await res.text();
+//           console.error('❌ Wishlist create server response:', errorText);
+//           const errorData = res.headers.get('content-type')?.includes('application/json')
+//             ? JSON.parse(errorText)
+//             : {};
+//           throw new Error(errorData.message || `HTTP error! Status: ${res.status}`);
+//         }
+
 //         const data = await res.json();
-//         if (res.ok && data.success) {
+//         console.log('🌐 Wishlist create response:', data);
+
+//         if (data.success) {
 //           Alert.alert('Success', 'Item added to wishlist!');
 //           navigation.navigate('Wishlist');
 //         } else {
-//           Alert.alert('Error', data.message || 'Failed to add to wishlist');
+//           throw new Error(data.message || 'Failed to add to wishlist');
 //         }
 //       } catch (error) {
-//         Alert.alert('Error', 'Something went wrong while adding to wishlist');
+//         const errorMessage = error.message.includes('401')
+//           ? 'Session expired. Please log in again.'
+//           : 'Something went wrong while adding to wishlist';
+//         Alert.alert(
+//           'Error',
+//           errorMessage,
+//           [
+//             {
+//               text: 'OK',
+//               onPress: () => {
+//                 if (errorMessage.includes('401')) {
+//                   navigation.navigate('Login', {
+//                     fromScreen: 'SearchCategory',
+//                     actionAfterLogin: 'like_item',
+//                     itemId,
+//                   });
+//                 }
+//               },
+//             },
+//           ],
+//           { cancelable: false }
+//         );
 //       }
 //     };
 
@@ -471,11 +712,11 @@
 //       <TouchableOpacity
 //         style={styles.card}
 //         onPress={() =>
-//           navigation.navigate('ProductDetail', {itemId: item.itemId})
+//           navigation.navigate('ProductDetail', { itemId: item.itemId })
 //         }>
 //         <View style={styles.imageContainer}>
 //           <Image
-//             source={{uri: item.image?.uri || 'https://via.placeholder.com/150'}}
+//             source={{ uri: item.image?.uri || 'https://via.placeholder.com/150' }}
 //             style={styles.image}
 //             onError={e => console.log('Image load error:', e.nativeEvent.error)}
 //           />
@@ -531,7 +772,7 @@
 //   };
 
 //   // Filter modal logic
-//   const CustomCheckbox = ({value, onValueChange}) => (
+//   const CustomCheckbox = ({ value, onValueChange }) => (
 //     <TouchableOpacity
 //       onPress={onValueChange}
 //       style={[styles.checkboxBase, value && styles.checkboxChecked]}>
@@ -553,7 +794,7 @@
 //               keyboardType="numeric"
 //               value={priceRange.min}
 //               onChangeText={text =>
-//                 setPriceRange(prev => ({...prev, min: text}))
+//                 setPriceRange(prev => ({ ...prev, min: text }))
 //               }
 //             />
 //             <Text style={styles.priceDash}> - </Text>
@@ -563,7 +804,7 @@
 //               keyboardType="numeric"
 //               value={priceRange.max}
 //               onChangeText={text =>
-//                 setPriceRange(prev => ({...prev, max: text}))
+//                 setPriceRange(prev => ({ ...prev, max: text }))
 //               }
 //             />
 //           </View>
@@ -750,7 +991,7 @@
 //               <ActivityIndicator
 //                 size="large"
 //                 color="#9B5AF5"
-//                 style={{marginTop: 20}}
+//                 style={{ marginTop: 20 }}
 //               />
 //             ) : products.length === 0 ? (
 //               <Text style={styles.noItemsText}>No items found</Text>
@@ -770,7 +1011,7 @@
 //                     <ActivityIndicator
 //                       size="small"
 //                       color="#9B5AF5"
-//                       style={{marginVertical: 10}}
+//                       style={{ marginVertical: 10 }}
 //                     />
 //                   ) : page === totalPages && products.length > 0 ? (
 //                     <Text style={styles.noMoreText}>No more items to load</Text>
@@ -839,104 +1080,107 @@
 //           </View>
 //         </View>
 
-//         <Text style={styles.sectionTitle}>Recent Searches</Text>
+//         <ScrollView contentContainerStyle={styles.mainContentContainer}>
+//           <Text style={styles.sectionTitle}>Recent Searches </Text>
+//           <ScrollView
+//             horizontal
+//             showsHorizontalScrollIndicator={false}
+//             contentContainerStyle={styles.recentSearchesContainer}>
+//             <TouchableOpacity
+//               style={styles.recentItem}
+//               onPress={() => {
+//                 setSearchQuery('Chiffon Saree');
+//                 setPage(1);
+//                 setProducts([]);
+//               }}>
+//               <Image source={girl1Image} style={styles.recentImage} />
+//               <Text style={styles.recentLabel}>Chiffon Saree</Text>
+//             </TouchableOpacity>
+//             <TouchableOpacity
+//               style={styles.recentItem}
+//               onPress={() => {
+//                 setSearchQuery('Chiffon Saree');
+//                 setPage(1);
+//                 setProducts([]);
+//               }}>
+//               <Image source={girl2Image} style={styles.recentImage} />
+//               <Text style={styles.recentLabel}>Formal Shirt</Text>
+//             </TouchableOpacity>
+//             <TouchableOpacity
+//               style={styles.recentItem}
+//               onPress={() => {
+//                 setSearchQuery('Chiffon Saree');
+//                 setPage(1);
+//                 setProducts([]);
+//               }}>
+//               <Image source={girl3Image} style={styles.recentImage} />
+//               <Text style={styles.recentLabel}>Formal Shirt</Text>
+//             </TouchableOpacity>
+//           </ScrollView>
 
-//         <ScrollView
-//           horizontal
-//           showsHorizontalScrollIndicator={false}
-//           contentContainerStyle={styles.recentSearchesContainer}>
-//           <TouchableOpacity
-//             style={styles.recentItem}
-//             onPress={() => {
-//               setSearchQuery('Chiffon Saree');
-//               setPage(1);
-//               setProducts([]);
-//             }}>
-//             <Image source={girl1Image} style={styles.recentImage} />
-//             <Text style={styles.recentLabel}>Chiffon Saree</Text>
-//           </TouchableOpacity>
-//           <TouchableOpacity
-//             style={styles.recentItem}
-//             onPress={() => {
-//               setSearchQuery('Chiffon Saree');
-//               setPage(1);
-//               setProducts([]);
-//             }}>
-//             <Image source={girl2Image} style={styles.recentImage} />
-//             <Text style={styles.recentLabel}>Formal Shirt</Text>
-//           </TouchableOpacity>
-//           <TouchableOpacity
-//             style={styles.recentItem}
-//             onPress={() => {
-//               setSearchQuery('Chiffon Saree');
-//               setPage(1);
-//               setProducts([]);
-//             }}>
-//             <Image source={girl3Image} style={styles.recentImage} />
-//             <Text style={styles.recentLabel}>Formal Shirt</Text>
-//           </TouchableOpacity>
+//           <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
+//             Popular Categories
+//           </Text>
+//           <GenderTabs />
+
+//           <ScrollView contentContainerStyle={styles.suggestionContainer}>
+//             {wishlistLoading ? (
+//               <Text style={styles.loadingText}>Loading wishlist...</Text>
+//             ) : wishlistError || !wishlistItem ? (
+//               <Text style={styles.errorText}>
+//                 {wishlistError || 'No wishlist items available'}
+//               </Text>
+//             ) : (
+//               <SuggestionCard
+//                 title="Searching from wishlist?"
+//                 productImage={{ uri: wishlistItem.url }}
+//                 productName={wishlistItem.itemId.name}
+//                 productDesc={wishlistItem.itemId.description}
+//                 price={wishlistItem.itemId.discountedPrice}
+//                 oldPrice={wishlistItem.itemId.MRP}
+//                 discount={Math.round(
+//                   ((wishlistItem.itemId.MRP - wishlistItem.itemId.discountedPrice) /
+//                     wishlistItem.itemId.MRP) *
+//                     100,
+//                 )}
+//                 rating={4.5}
+//                 reviews="79 Ratings & 55"
+//                 sizes={['XS', 'S', 'M', 'L', 'XL']}
+//                 colors={[wishlistItem.color.toLowerCase()]}
+//                 buttonLabel="VIEW WISHLIST"
+//                 onButtonPress={() => navigation.navigate('Wishlist')}
+//               />
+//             )}
+
+//             {cartLoading ? (
+//               <Text style={styles.loadingText}>Loading cart...</Text>
+//             ) : cartError || !cartItem ? (
+//               <Text style={styles.errorText}>
+//                 {cartError || 'No cart items available'}
+//               </Text>
+//             ) : (
+//               <SuggestionCard
+//                 title="Missing anything from bag?"
+//                 productImage={{ uri: cartItem.itemId.image }}
+//                 productName={cartItem.itemId.name}
+//                 productDesc={cartItem.itemId.description}
+//                 price={cartItem.itemId.discountedPrice}
+//                 oldPrice={cartItem.itemId.MRP}
+//                 discount={Math.round(
+//                   ((cartItem.itemId.MRP - cartItem.itemId.discountedPrice) /
+//                     cartItem.itemId.MRP) *
+//                     100,
+//                 )}
+//                 rating={4.5}
+//                 reviews="121 Ratings & 59"
+//                 sizes={[cartItem.size]}
+//                 colors={[cartItem.color.toLowerCase()]}
+//                 buttonLabel="VIEW CART"
+//                 onButtonPress={() => navigation.navigate('Cart')}
+//               />
+//             )}
+//           </ScrollView>
 //         </ScrollView>
-
-//         <Text style={[styles.sectionTitle, {marginTop: 20}]}>
-//           Popular Categories
-//         </Text>
-//         <GenderTabs />
-
-//         {wishlistLoading ? (
-//           <Text style={styles.loadingText}>Loading wishlist...</Text>
-//         ) : wishlistError || !wishlistItem ? (
-//           <Text style={styles.errorText}>
-//             {wishlistError || 'No wishlist items available'}
-//           </Text>
-//         ) : (
-//           <SuggestionCard
-//             title="Searching from wishlist?"
-//             productImage={{uri: wishlistItem.url}}
-//             productName={wishlistItem.itemId.name}
-//             productDesc={wishlistItem.itemId.description}
-//             price={wishlistItem.itemId.discountedPrice}
-//             oldPrice={wishlistItem.itemId.MRP}
-//             discount={Math.round(
-//               ((wishlistItem.itemId.MRP - wishlistItem.itemId.discountedPrice) /
-//                 wishlistItem.itemId.MRP) *
-//                 100,
-//             )}
-//             rating={4.5}
-//             reviews="79 Ratings & 55"
-//             sizes={['XS', 'S', 'M', 'L', 'XL']}
-//             colors={[wishlistItem.color.toLowerCase()]}
-//             buttonLabel="VIEW WISHLIST"
-//             onButtonPress={() => navigation.navigate('Wishlist')}
-//           />
-//         )}
-
-//         {cartLoading ? (
-//           <Text style={styles.loadingText}>Loading cart...</Text>
-//         ) : cartError || !cartItem ? (
-//           <Text style={styles.errorText}>
-//             {cartError || 'No cart items available'}
-//           </Text>
-//         ) : (
-//           <SuggestionCard
-//             title="Missing anything from bag?"
-//             productImage={{uri: cartItem.itemId.image}}
-//             productName={cartItem.itemId.name}
-//             productDesc={cartItem.itemId.description}
-//             price={cartItem.itemId.discountedPrice}
-//             oldPrice={cartItem.itemId.MRP}
-//             discount={Math.round(
-//               ((cartItem.itemId.MRP - cartItem.itemId.discountedPrice) /
-//                 cartItem.itemId.MRP) *
-//                 100,
-//             )}
-//             rating={4.5}
-//             reviews="121 Ratings & 59"
-//             sizes={[cartItem.size]}
-//             colors={[cartItem.color.toLowerCase()]}
-//             buttonLabel="VIEW CART"
-//             onButtonPress={() => navigation.navigate('Cart')}
-//           />
-//         )}
 //       </SafeAreaView>
 //     );
 //   };
@@ -966,6 +1210,13 @@
 //   container: {
 //     flex: 1,
 //     backgroundColor: '#fff',
+//   },
+//   mainContentContainer: {
+//     paddingBottom: 20,
+//   },
+//   suggestionContainer: {
+//     paddingHorizontal: 16,
+//     paddingBottom: 20,
 //   },
 //   resultsContainer: {
 //     flex: 1,
@@ -1147,7 +1398,7 @@
 //     borderRadius: 50,
 //     padding: 6,
 //     shadowColor: '#000',
-//     shadowOffset: {width: 0, height: 2},
+//     shadowOffset: { width: 0, height: 2 },
 //     shadowOpacity: 0.2,
 //     shadowRadius: 2,
 //     elevation: 2,
@@ -1443,7 +1694,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Modal,
   SafeAreaView,
 } from 'react-native';
@@ -1500,27 +1750,15 @@ const SearchCategory = () => {
   // Fetch wishlist data
   useEffect(() => {
     const fetchWishlist = async () => {
+      if (!token) {
+        setWishlistError('Login required to see details');
+        setWishlistLoading(false);
+        return;
+      }
+
       try {
         setWishlistLoading(true);
         setWishlistError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to view your wishlist.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_wishlist',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const response = await fetch(`${BASE_URL}/userwishlist`, {
           method: 'GET',
@@ -1549,56 +1787,28 @@ const SearchCategory = () => {
         }
       } catch (err) {
         const errorMessage = err.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch wishlist. Please try again.';
         setWishlistError(errorMessage);
-        if (err.message.includes('401')) {
-          Alert.alert(
-            'Session Expired',
-            'Your session has expired. Please log in again.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_wishlist',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-        }
       } finally {
         setWishlistLoading(false);
       }
     };
     fetchWishlist();
-  }, [token, navigation]);
+  }, [token]);
 
   // Fetch cart data
   useEffect(() => {
     const fetchCart = async () => {
+      if (!token) {
+        setCartError('Login required to see details');
+        setCartLoading(false);
+        return;
+      }
+
       try {
         setCartLoading(true);
         setCartError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to view your cart.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_cart',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const response = await fetch(`${BASE_URL}/usercart`, {
           method: 'GET',
@@ -1626,56 +1836,28 @@ const SearchCategory = () => {
         }
       } catch (err) {
         const errorMessage = err.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch cart. Please try again.';
         setCartError(errorMessage);
-        if (err.message.includes('401')) {
-          Alert.alert(
-            'Session Expired',
-            'Your session has expired. Please log in again.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_cart',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-        }
       } finally {
         setCartLoading(false);
       }
     };
     fetchCart();
-  }, [token, navigation]);
+  }, [token]);
 
   // Fetch filters
   useEffect(() => {
     const fetchFilters = async () => {
+      if (!token) {
+        setFilterError('Login required to see details');
+        setFilterLoading(false);
+        return;
+      }
+
       try {
         setFilterLoading(true);
         setFilterError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to access filters.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_filters',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const apiUrl = `${BASE_URL}/filter`;
         const response = await fetch(apiUrl, {
@@ -1717,34 +1899,16 @@ const SearchCategory = () => {
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Error fetching filters. Please try again.';
         setFilterError(errorMessage);
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'view_filters',
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
       } finally {
         setFilterLoading(false);
       }
     };
 
     fetchFilters();
-  }, [token, navigation, appliedFilters]);
+  }, [token, appliedFilters]);
 
   // Fetch search results
   useEffect(() => {
@@ -1826,33 +1990,16 @@ const SearchCategory = () => {
           setTotalPages(json.data?.totalPages || 1);
           setListKey(Date.now().toString());
           if (formattedItems.length === 0 && page === 1) {
-            Alert.alert('No Results', 'No items found for your search');
+            setProducts([]);
           }
         } else {
           throw new Error(json?.message || 'Failed to load search results');
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch search results. Please try again.';
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'search',
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
+        console.error(errorMessage);
         setProducts([]);
         setListKey(Date.now().toString());
       } finally {
@@ -1863,7 +2010,7 @@ const SearchCategory = () => {
     const debouncedFetchProducts = debounce(fetchProducts, 500);
     debouncedFetchProducts();
     return () => debouncedFetchProducts.cancel();
-  }, [searchQuery, appliedFilters, sortBy, page, token, navigation]);
+  }, [searchQuery, appliedFilters, sortBy, page, token]);
 
   // Update active filter count
   useEffect(() => {
@@ -1891,7 +2038,15 @@ const SearchCategory = () => {
     setSortModalVisible(false);
   };
 
-  const openFilterModal = () => setFilterModalVisible(true);
+  const openFilterModal = () => {
+    if (!token) {
+      setFilterError('Login required to see details');
+      setFilterModalVisible(true);
+      return;
+    }
+    setFilterModalVisible(true);
+  };
+
   const closeFilterModal = () => setFilterModalVisible(false);
   const openSortModal = () => setSortModalVisible(true);
   const closeSortModal = () => setSortModalVisible(false);
@@ -1932,6 +2087,11 @@ const SearchCategory = () => {
   };
 
   const applyFilters = async (filterState = filters) => {
+    if (!token) {
+      setFilterError('Login required to see details');
+      return;
+    }
+
     if (priceRange.min && priceRange.max) {
       const min = Number(priceRange.min);
       const max = Number(priceRange.max);
@@ -1942,24 +2102,6 @@ const SearchCategory = () => {
         );
         return;
       }
-    }
-
-    if (!token) {
-      Alert.alert(
-        'Login Required',
-        'Please log in to apply filters.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login', {
-              fromScreen: 'SearchCategory',
-              actionAfterLogin: 'apply_filters',
-            }),
-          },
-        ],
-        { cancelable: false }
-      );
-      return;
     }
 
     const queryParams = [
@@ -1989,10 +2131,8 @@ const SearchCategory = () => {
         }
       }
     });
-
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const apiUrl = `${BASE_URL}/items/search${queryString}`;
-
     try {
       setFilterLoading(true);
       const response = await fetch(apiUrl, {
@@ -2032,34 +2172,16 @@ const SearchCategory = () => {
           totalItems: data.data?.totalItems || 0,
         });
         if (formattedItems.length === 0) {
-          Alert.alert('No Results', 'No items match the selected filters');
+          setProducts([]);
         }
       } else {
         throw new Error(data?.message || 'Failed to apply filters');
       }
     } catch (error) {
       const errorMessage = error.message.includes('401')
-        ? 'Session expired. Please log in again.'
+        ? 'Login required to see details'
         : 'Error applying filters. Please try again.';
       setFilterError(errorMessage);
-      Alert.alert(
-        'Error',
-        errorMessage,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (errorMessage.includes('401')) {
-                navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'apply_filters',
-                });
-              }
-            },
-          },
-        ],
-        { cancelable: false }
-      );
     } finally {
       setFilterLoading(false);
     }
@@ -2109,34 +2231,15 @@ const SearchCategory = () => {
         console.log('🌐 Wishlist create response:', data);
 
         if (data.success) {
-          Alert.alert('Success', 'Item added to wishlist!');
           navigation.navigate('Wishlist');
         } else {
           throw new Error(data.message || 'Failed to add to wishlist');
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Something went wrong while adding to wishlist';
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'like_item',
-                    itemId,
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
+        console.error(errorMessage);
       }
     };
 
@@ -2279,9 +2382,20 @@ const SearchCategory = () => {
         <View style={styles.filterModalContainer}>
           <Text style={styles.errorText}>{filterError}</Text>
           <TouchableOpacity
-            onPress={closeFilterModal}
+            onPress={() => {
+              if (filterError.includes('Login required')) {
+                navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_filters',
+                });
+              } else {
+                closeFilterModal();
+              }
+            }}
             style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
+            <Text style={styles.closeButtonText}>
+              {filterError.includes('Login required') ? 'Login' : 'Close'}
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -2459,16 +2573,17 @@ const SearchCategory = () => {
 
           <View style={styles.footerButtons}>
             <TouchableOpacity
-              style={styles.filterBtn}
+              style={[styles.filterBtn, !token && styles.disabledBtn]}
               onPress={openFilterModal}
+              disabled={!token}
               accessibilityLabel={`Filter products${
                 activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''
               }`}>
               <Image
                 source={require('../../assets/Images/Filter.png')}
-                style={styles.icon}
+                style={[styles.icon, !token && styles.disabledIcon]}
               />
-              <Text style={styles.iconText}>
+              <Text style={[styles.iconText, !token && styles.disabledText]}>
                 FILTER{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
               </Text>
             </TouchableOpacity>
@@ -2535,7 +2650,7 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.recentItem}
               onPress={() => {
-                setSearchQuery('Chiffon Saree');
+                setSearchQuery('Formal Shirt');
                 setPage(1);
                 setProducts([]);
               }}>
@@ -2545,7 +2660,7 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.recentItem}
               onPress={() => {
-                setSearchQuery('Chiffon Saree');
+                setSearchQuery('Formal Shirt');
                 setPage(1);
                 setProducts([]);
               }}>
@@ -2563,9 +2678,18 @@ const SearchCategory = () => {
             {wishlistLoading ? (
               <Text style={styles.loadingText}>Loading wishlist...</Text>
             ) : wishlistError || !wishlistItem ? (
-              <Text style={styles.errorText}>
-                {wishlistError || 'No wishlist items available'}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  wishlistError.includes('Login required') &&
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'view_wishlist',
+                  })
+                }>
+                <Text style={styles.errorText}>
+                  {wishlistError || 'No wishlist items available'}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <SuggestionCard
                 title="Searching from wishlist?"
@@ -2591,9 +2715,18 @@ const SearchCategory = () => {
             {cartLoading ? (
               <Text style={styles.loadingText}>Loading cart...</Text>
             ) : cartError || !cartItem ? (
-              <Text style={styles.errorText}>
-                {cartError || 'No cart items available'}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  cartError.includes('Login required') &&
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'view_cart',
+                  })
+                }>
+                <Text style={styles.errorText}>
+                  {cartError || 'No cart items available'}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <SuggestionCard
                 title="Missing anything from bag?"
@@ -2737,9 +2870,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: 'red',
+    color: '#666666',
     textAlign: 'center',
     marginVertical: 20,
+    textDecorationLine: 'underline',
   },
   grid: {
     padding: 10,
@@ -2787,15 +2921,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
+  disabledBtn: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#e0e0e0',
+  },
   icon: {
     width: 18,
     height: 18,
     marginRight: 6,
     resizeMode: 'contain',
   },
+  disabledIcon: {
+    opacity: 0.5,
+  },
   iconText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  disabledText: {
+    color: '#999',
   },
   noMoreText: {
     textAlign: 'center',

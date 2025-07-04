@@ -1298,12 +1298,12 @@ const TrackOrderScreen = ({ route, navigation }) => {
           ]}
         >
           <TouchableOpacity
-            onPress={() => navigation.navigate('PartnerOrderHistory')}
+            onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-back" size={scale(22)} color="#000" />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { marginLeft: scale(8) }]}>
-            ORDER TRACKING
+            ORDER TRACKING 
           </Text>
         </View>
       </SafeAreaView>

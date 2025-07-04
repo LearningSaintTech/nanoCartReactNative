@@ -103,7 +103,7 @@ const PartnerOrderHistoryScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>ORDER HISTORY</Text>
+        <Text style={styles.headerTitle}>ORDER HISTORY </Text>
       </View>
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         {orders.length === 0 ? (
@@ -149,7 +149,7 @@ const PartnerOrderHistoryScreen = () => {
                   <Text style={styles.label}>{order.id}</Text>
                 </View>
                 <View style={styles.orderIdText}>
-                  <Text style={styles.label}>Order Date</Text>
+                  <Text style={styles.label}>Order Date </Text>
                   <Text style={styles.label}>{order.date}</Text>
                 </View>
                 <View style={styles.separator} />
