@@ -6,73 +6,88 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWindowDimensions } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 const PartnerSizeChartScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { sizeChart = [], howToMeasure = [] } = route.params || {};
-
   const [unit, setUnit] = useState('inches');
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  // Scaling function based on reference width (375px, e.g., iPhone SE)
+  const scale = (size) => (width / 375) * size;
+
+  // Log insets for debugging
+  console.log('PartnerSizeChartScreen - Safe Area Insets:', insets);
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={20} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>SIZE CHART</Text>
-      </View>
-
-      {/* Unit Toggle */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, unit === 'inches' && styles.activeTab]}
-          onPress={() => setUnit('inches')}>
-          <Text style={[styles.tabText, unit === 'inches' && styles.activeTabText]}>In Inches</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, unit === 'cm' && styles.activeTab]}
-          onPress={() => setUnit('cm')}>
-          <Text style={[styles.tabText, unit === 'cm' && styles.activeTabText]}>In CM</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Size Table */}
-      <View style={styles.table}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>Size</Text>
-          <Text style={styles.tableHeaderText}>Chest</Text>
-          <Text style={styles.tableHeaderText}>Shoulder</Text>
-          <Text style={styles.tableHeaderText}>Length</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={{ backgroundColor: '#fff', flex: 0 }}>
+        <View style={[styles.header, {  paddingHorizontal: scale(16), paddingVertical: scale(12) }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={scale(22)} color="#333" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { marginLeft: scale(8) }]}>SIZE CHART</Text>
         </View>
-        {sizeChart.map((row, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.tableCell}>{row.size}</Text>
-            <Text style={styles.tableCell}>{row[unit]?.chest}</Text>
-            <Text style={styles.tableCell}>{row[unit]?.shoulder}</Text>
-            <Text style={styles.tableCell}>{row[unit]?.length}</Text>
+      </SafeAreaView>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Unit Toggle */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, unit === 'inches' && styles.activeTab]}
+            onPress={() => setUnit('inches')}
+          >
+            <Text style={[styles.tabText, unit === 'inches' && styles.activeTabText]}>In Inches</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, unit === 'cm' && styles.activeTab]}
+            onPress={() => setUnit('cm')}
+          >
+            <Text style={[styles.tabText, unit === 'cm' && styles.activeTabText]}>In CM</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Size Table */}
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.tableHeaderText}>Size</Text>
+            <Text style={styles.tableHeaderText}>Chest</Text>
+            <Text style={styles.tableHeaderText}>Shoulder</Text>
+            <Text style={styles.tableHeaderText}>Length</Text>
           </View>
-        ))}
-      </View>
-
-      {/* How To Measure */}
-      <View style={styles.howToMeasureSection}>
-        <View style={styles.howToMeasureHeader}>
-          <Text style={styles.howToMeasureTitle}>How to Measure</Text>
-        </View>
-        {howToMeasure.map((item, idx) => {
-          const [key] = Object.keys(item);
-          return (
-            <View key={idx} style={styles.measureItem}>
-              <Text style={styles.measureKey}>{key.charAt(0).toUpperCase() + key.slice(1)}:</Text>
-              <Text style={styles.measureValue}>{item[key]}</Text>
+          {sizeChart.map((row, index) => (
+            <View key={index} style={styles.tableRow}>
+              <Text style={styles.tableCell}>{row.size}</Text>
+              <Text style={styles.tableCell}>{row[unit]?.chest}</Text>
+              <Text style={styles.tableCell}>{row[unit]?.shoulder}</Text>
+              <Text style={styles.tableCell}>{row[unit]?.length}</Text>
             </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+          ))}
+        </View>
+
+        {/* How To Measure */}
+        <View style={styles.howToMeasureSection}>
+          <View style={styles.howToMeasureHeader}>
+            <Text style={styles.howToMeasureTitle}>How to Measure</Text>
+          </View>
+          {howToMeasure.map((item, idx) => {
+            const [key] = Object.keys(item);
+            return (
+              <View key={idx} style={styles.measureItem}>
+                <Text style={styles.measureKey}>{key.charAt(0).toUpperCase() + key.slice(1)}:</Text>
+                <Text style={styles.measureValue}>{item[key]}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -82,21 +97,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 10,
+  },
+  scrollContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
-    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 10,
     color: '#333',
+    textTransform: 'uppercase',
   },
   tabContainer: {
     flexDirection: 'row',

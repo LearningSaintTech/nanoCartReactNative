@@ -224,7 +224,7 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
 
       <TouchableOpacity style={styles.heartIcon} onPress={handleHeartPress}>
         <Image
-          source={require('../../assets/Images/Heart.png')}
+          source={require('../../assets/icon/heart.png')}
           style={{ width: 18, height: 18 }}
         />
       </TouchableOpacity>

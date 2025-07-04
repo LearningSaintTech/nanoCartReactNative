@@ -102,150 +102,81 @@ const PartnerRegisterScreen = ({navigation}) => {
     ]);
   };
 
-  // const handleRegister = async () => {
-  //   console.log('Starting handleRegister');
-
-  //   // Step 1: Validation
-  //   console.log('Checking required fields...');
-  //   if (!name || !email || !shopName || !shopAddress || !pan || !pincode) {
-  //     console.warn('Validation failed');
-  //     Alert.alert('Validation Error', 'Please fill all required fields');
-  //     return;
-  //   }
-
-  //   // Step 2: FormData
-  //   console.log('Creating FormData...');
-  //   const formData = new FormData();
-  //   formData.append('name', name);
-  //   formData.append('email', email);
-  //   formData.append('phoneNumber', phoneNumber);
-  //   formData.append('shopName', shopName);
-  //   formData.append('gstNumber', gst);
-  //   formData.append('shopAddress', shopAddress);
-  //   formData.append('panNumber', pan);
-  //   formData.append('pincode', pincode);
-
-  //   if (imageShop) {
-  //     formData.append('imageShop', {
-  //       uri: imageShop.uri,
-  //       type: imageShop.type,
-  //       name: imageShop.fileName || 'shop-image.jpg',
-  //     });
-  //   }
-
-  //   // Step 3: API Call
-  //   try {
-  //     console.log('Sending registration request...');
-  //     const res = await fetch(`${BASE_URL}/auth/partner/signup`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //       body: formData,
-  //     });
-
-  //     const data = await res.json();
-  //     console.log('API Response:', data);
-
-  //     if (res.ok && data.success) {
-  //       const isVerified = data?.data?.isVerified;
-  //       const isActive = data?.data?.isActive;
-  //       const message = data.message;
-
-  //       if (!isVerified || !isActive) {
-  //         console.log(
-  //           'Partner is not verified or not active. Awaiting admin approval.',
-  //         );
-  //         Alert.alert(
-  //           'Success',
-  //           `${message}\n\nPlease wait for admin approval before logging in.`,
-  //         );
-  //         return;
-  //       } else {
-  //         console.log('✅ Partner is verified and active. Navigating to Home.');
-  //         Alert.alert('Success', 'Registration complete and approved!');
-  //         navigation.navigate('PartnerHome');
-  //       }
-  //     } else {
-  //       console.warn('Registration failed:', data.message);
-  //       Alert.alert('Error', data.message || 'Something went wrong');
-  //     }
-  //   } catch (err) {
-  //     console.error('Network Error:', err);
-  //     Alert.alert('Error', 'Registration failed');
-  //   }
-  // };
-
-
-
   const handleRegister = async () => {
-  console.log('Starting handleRegister');
+    console.log('Starting handleRegister');
 
-  if (!name || !email || !shopName || !shopAddress || !pan || !pincode) {
-    Alert.alert('Validation Error', 'Please fill all required fields');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('phoneNumber', phoneNumber);
-  formData.append('shopName', shopName);
-  formData.append('gstNumber', gst);
-  formData.append('shopAddress', shopAddress);
-  formData.append('panNumber', pan);
-  formData.append('pincode', pincode);
-
-  if (imageShop) {
-    formData.append('imageShop', {
-      uri: imageShop.uri,
-      type: imageShop.type,
-      name: imageShop.fileName || 'shop-image.jpg',
-    });
-  }
-
-  try {
-    console.log('Submitting with token:', token);
-if (formData._parts) {
-  console.log('FormData fields:');
-  formData._parts.forEach(field => console.log(field[0], ':', field[1]));
-}
-
-    const res = await fetch(`${BASE_URL}/auth/partner/signup`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ include token
-        // ❌ Do not include 'Content-Type' for multipart/form-data
-      },
-      body: formData,
-    });
-
-    const data = await res.json();
-    console.log('API Response:', data);
-
-    if (res.ok && data.success) {
-      const isVerified = data?.data?.isVerified;
-      const isActive = data?.data?.isActive;
-      const message = data.message;
-
-      if (!isVerified || !isActive) {
-        Alert.alert(
-          'Success',
-          `${message}\n\nPlease wait for admin approval before logging in.`
-        );
-        return;
-      }
-
-      Alert.alert('Success', 'Registration complete and approved!');
-      navigation.navigate('PartnerHome');
-    } else {
-      Alert.alert('Error', data.message || 'Something went wrong');
+    // Step 1: Validation
+    console.log('Checking required fields...');
+    if (!name || !email || !shopName || !shopAddress || !pan || !pincode) {
+      console.warn('Validation failed');
+      Alert.alert('Validation Error', 'Please fill all required fields');
+      return;
     }
-  } catch (err) {
-    console.error('Network Error:', err);
-    Alert.alert('Error', 'Registration failed');
-  }
-};
+
+    // Step 2: FormData
+    console.log('Creating FormData...');
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('phoneNumber', phoneNumber);
+    formData.append('shopName', shopName);
+    formData.append('gstNumber', gst);
+    formData.append('shopAddress', shopAddress);
+    formData.append('panNumber', pan);
+    formData.append('pincode', pincode);
+
+    if (imageShop) {
+      formData.append('imageShop', {
+        uri: imageShop.uri,
+        type: imageShop.type,
+        name: imageShop.fileName || 'shop-image.jpg',
+      });
+    }
+
+    // Step 3: API Call
+    try {
+      console.log('Sending registration request...');
+      const res = await fetch(`${BASE_URL}/auth/partner/signup1`, {
+        method: 'POST',
+        // headers: {
+        //   'Content-Type': 'multipart/form-data',
+        // },
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log('API Response:', data);
+
+      if (res.ok && data.success) {
+        const isVerified = data?.data?.isVerified;
+        const isActive = data?.data?.isActive;
+        const message = data.message;
+
+        if (!isVerified || !isActive) {
+          console.log(
+            'Partner is not verified or not active. Awaiting admin approval.',
+          );
+          Alert.alert(
+            'Success',
+            `${message}\n\nPlease wait for admin approval before logging in.`,
+          );
+          return;
+        } else {
+          console.log('✅ Partner is verified and active. Navigating to Home.');
+          Alert.alert('Success', 'Registration complete and approved!');
+          navigation.navigate('PartnerHome');
+        }
+      } else {
+        console.warn('Registration failed:', data.message);
+        Alert.alert('Error', data.message || 'Something went wrong');
+      }
+    } catch (err) {
+      console.error('Network Error:', err);
+      Alert.alert('Error', 'Registration failed');
+    }
+  };
+
+
 
   return (
     <SafeAreaView style={styles.container}>

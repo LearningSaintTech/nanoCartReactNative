@@ -12,8 +12,9 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import Icon from 'react-native-vector-icons/Ionicons';
 import PartnerGenderTabs from '../Components/PartnerGenderTabs';
 import SuggestionCard from '../../UserFlow/Component/SuggestionCard';
 
@@ -29,9 +30,34 @@ const recentSearches = [
 const PartnerSearchCategory = () => {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
+  const token = useSelector(state => state.auth.token);
+  const cartItems = useSelector(state => state.cart.items);
 
   // Scaling function based on reference width (375px, e.g., iPhone SE)
   const scale = (size) => (width / 375) * size;
+
+  // Calculate total cart count
+  const totalCartCount = cartItems.reduce((sum, item) => {
+    const count = item.orderDetails.reduce(
+      (colorSum, colorObj) =>
+        colorSum + colorObj.sizeAndQuantity.reduce((sizeSum, s) => sizeSum + s.quantity, 0),
+      0
+    );
+    return sum + count;
+  }, 0);
+
+  // Log for debugging
+  console.log('PartnerSearchCategory - Cart Items:', cartItems);
+  console.log('PartnerSearchCategory - Total Cart Count:', totalCartCount);
+  console.log('PartnerSearchCategory - Navigation State:', navigation.getState());
+
+  const handleCartPress = () => {
+    if (token) {
+      navigation.navigate('PartnerCart');
+    } else {
+      navigation.navigate('Login', { fromScreen: 'PartnerSearchCategory' });
+    }
+  };
 
   const renderContent = () => (
     <View style={styles.container}>
@@ -59,17 +85,14 @@ const PartnerSearchCategory = () => {
               onPress={() => navigation.goBack()}
               style={[styles.backButton, { padding: scale(4), marginRight: scale(12) }]}
             >
-              <Image
-                source={require('../../assets/Images/Backward.png')}
-                style={[styles.backIcon, { width: scale(24), height: scale(24) }]}
-              />
+              <Icon name="arrow-back" size={scale(24)} color="#000" />
             </TouchableOpacity>
 
             <View
               style={[styles.searchBox, { paddingHorizontal: scale(16), height: scale(48), borderRadius: scale(4) }]}
             >
               <Image
-                source={require('../../assets/Images/SearchIcon.png')}
+                source={require('../../assets/icon/SearchIcon.png')}
                 style={[styles.searchIcon, { width: scale(20), height: scale(20), marginRight: scale(12) }]}
               />
               <TextInput
@@ -78,6 +101,41 @@ const PartnerSearchCategory = () => {
                 style={[styles.searchInput, { fontSize: scale(16), paddingVertical: scale(8) }]}
               />
             </View>
+
+            <TouchableOpacity
+              onPress={handleCartPress}
+              style={[styles.cartIconWrapper, { marginLeft: scale(12) }]}
+            >
+              <Image
+                source={require('../../assets/icon/CartIcon.png')}
+                style={[styles.cartIcon, { width: scale(24), height: scale(24) }]}
+              />
+              {totalCartCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: scale(-6),
+                    right: scale(-8),
+                    backgroundColor: '#F36F25',
+                    borderRadius: scale(10),
+                    width: scale(18),
+                    height: scale(18),
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#fff',
+                      fontSize: scale(10),
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {totalCartCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
@@ -87,7 +145,7 @@ const PartnerSearchCategory = () => {
         <Text style={styles.sectionTitle}>Recent Searches</Text>
         <View style={styles.recentSearchesContainer}>
           <FlatList
-            data={recentSearches.slice(0, 3)} // Show only first 3 items
+            data={recentSearches.slice(0, 3)}
             keyExtractor={(item, index) => index.toString()}
             horizontal={false}
             scrollEnabled={false}
@@ -119,7 +177,7 @@ const PartnerSearchCategory = () => {
           sizes={['XS', 'S', 'M', 'L', 'XL']}
           colors={['black', 'green', 'white', 'gray']}
           buttonLabel="VIEW WISHLIST"
-          onButtonPress={() => navigation.navigate('Wishlist')}
+          onButtonPress={() => navigation.navigate('PartnnerHome', { screen: 'wishlist' })}
         />
         <SuggestionCard
           title="Missing anything from bag?"
@@ -134,7 +192,7 @@ const PartnerSearchCategory = () => {
           sizes={['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']}
           colors={['brown', 'black', 'blue', 'yellow']}
           buttonLabel="VIEW CART"
-          onButtonPress={() => console.log('Cart clicked')}
+          onButtonPress={() => navigation.navigate('PartnerCart')}
         />
       </View>
     </View>
@@ -184,9 +242,6 @@ const styles = StyleSheet.create({
   backButton: {
     // padding adjusted via scale
   },
-  backIcon: {
-    // width and height adjusted via scale
-  },
   searchBox: {
     flex: 1,
     flexDirection: 'row',
@@ -198,7 +253,13 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     // width, height, and marginRight adjusted via scale
-    tintColor: '#999999',
+    // tintColor: '#999999',
+  },
+  cartIconWrapper: {
+    position: 'relative',
+  },
+  cartIcon: {
+    // width and height adjusted via scale
   },
   searchInput: {
     flex: 1,

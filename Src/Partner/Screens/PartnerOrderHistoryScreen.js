@@ -5,33 +5,33 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerOrderHistoryScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = useSelector((state) => state.auth.token);
-console.log("token",token)
-  // Function to fetch orders from the API using fetch
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Check for token
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      // Make API request using fetch
-      const response = await fetch(`${BASE_URL}/partner/order/`, {
+      const response = await fetch(`${BASE_URL}/partner/order`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -39,17 +39,14 @@ console.log("token",token)
         },
       });
 
-      // Check if the response is successful
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.text();
+        console.error('Non-OK response:', response.status, errorData);
         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("data orderhistoryscreen",data)
-      // Check if the response is successful
       if (data.success) {
-        // Transform API data to match frontend format
         const transformedOrders = data.data.orderSummaries.map((summary) => ({
           id: summary.orderId,
           date: new Date(summary.orderDate).toLocaleString('en-GB', {
@@ -59,7 +56,7 @@ console.log("token",token)
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
-          }).replace(/,/, ''), // Format like "13 Jun 2025 07:36 pm"
+          }).replace(/,/, ''),
           itemCount: summary.numberOfItems,
           items: summary.itemNames.join(', '),
           status: data.data.orders.find((o) => o.orderId === summary.orderId)?.orderStatus || 'Unknown',
@@ -77,90 +74,93 @@ console.log("token",token)
     }
   };
 
-  // Fetch orders when the component mounts
   useEffect(() => {
     fetchOrders();
   }, []);
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <SafeAreaView style={styles.centered}>
         <ActivityIndicator size="large" color="#D2691E" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centered}>
+      <SafeAreaView style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity onPress={fetchOrders} style={styles.retryButton}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-          <Icon name="chevron-back-outline" size={24} color="#000" />
+    <SafeAreaView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>ORDER HISTORY</Text>
       </View>
-      {orders.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.noOrdersText}>No orders found</Text>
-        </View>
-      ) : (
-        orders.map((order, index) => (
-          <View key={index} style={styles.orderContainer}>
-            <View style={styles.orderHeader}>
-              <Text
-                style={[
-                  styles.statusText,
-                  {
-                    backgroundColor:
-                      order.status === 'Confirmed'
-                        ? '#FFFFFF'
-                        : order.status === 'Delivered'
-                        ? 'rgba(210, 105, 30, 1)'
-                        : order.status === 'In transit'
-                        ? '#FFD700' // Gold for In transit
-                        : '#000000', // Default for others like Returned
-                    color:
-                      order.status === 'Confirmed'
-                        ? 'rgba(210, 105, 30, 1)'
-                        : order.status === 'In transit'
-                        ? '#000000' // Black text for In transit
-                        : '#FFFFFF',
-                  },
-                ]}
-              >
-                {order.status.toUpperCase()}
-              </Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('PartnerTrackOrderScreen', { orderId: order.id })}
-              >
-                <Icon name="chevron-forward-outline" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.orderDetails}>
-              <View style={styles.orderIdText}>
-                <Text style={styles.label}>Order ID</Text>
-                <Text style={styles.label}>{order.id}</Text>
-              </View>
-              <View style={styles.orderIdText}>
-                <Text style={styles.label}>Order Date</Text>
-                <Text style={styles.label}>{order.date}</Text>
-              </View>
-              <View style={styles.separator} />
-              <Text style={styles.itemCountText}>{order.itemCount} ITEMS</Text>
-              <Text style={styles.itemsText}>{order.items}</Text>
-            </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        {orders.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.noOrdersText}>No orders found</Text>
           </View>
-        ))
-      )}
-    </ScrollView>
+        ) : (
+          orders.map((order, index) => (
+            <View key={index} style={styles.orderContainer}>
+              <View style={styles.orderHeader}>
+                <Text
+                  style={[
+                    styles.statusText,
+                    {
+                      backgroundColor:
+                        order.status === 'Confirmed'
+                          ? '#FFFFFF'
+                          : order.status === 'Delivered'
+                          ? 'rgba(210, 105, 30, 1)'
+                          : order.status === 'In transit'
+                          ? '#FFD700'
+                          : '#000000',
+                      color:
+                        order.status === 'Confirmed'
+                          ? 'rgba(210, 105, 30, 1)'
+                          : order.status === 'In transit'
+                          ? '#000000'
+                          : '#FFFFFF',
+                    },
+                  ]}
+                >
+                  {order.status.toUpperCase()}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PartnerTrackOrderScreen', { orderId: order.id })}
+                >
+                  <Icon name="chevron-forward-outline" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.orderDetails}>
+                <View style={styles.orderIdText}>
+                  <Text style={styles.label}>Order ID</Text>
+                  <Text style={styles.label}>{order.id}</Text>
+                </View>
+                <View style={styles.orderIdText}>
+                  <Text style={styles.label}>Order Date</Text>
+                  <Text style={styles.label}>{order.date}</Text>
+                </View>
+                <View style={styles.separator} />
+                <Text style={styles.itemCountText}>{order.itemCount} ITEMS</Text>
+                <Text style={styles.itemsText}>{order.items}</Text>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -175,15 +175,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 20,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
+    color: '#000',
+    textTransform: 'uppercase',
   },
   orderContainer: {
     margin: 10,

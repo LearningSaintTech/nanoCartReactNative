@@ -11,10 +11,14 @@ import {
   Alert,
 } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BASE_URL } from '../../config/apiConfig';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const CancelOrderScreen = ({ route, navigation }) => {
+const CancelOrderScreen = ({ route }) => {
   const { orderId } = route.params; // Extract orderId from navigation params
+  const navigation = useNavigation();
   const token = useSelector((state) => state.auth.token); // Get JWT token from Redux
   const [order, setOrder] = useState(null);
   const [reason, setReason] = useState('');
@@ -29,7 +33,21 @@ const CancelOrderScreen = ({ route, navigation }) => {
       setError(null);
 
       if (!token) {
-        throw new Error('No authentication token found');
+        Alert.alert(
+          'Login Required',
+          'Please log in to view order details.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Login', {
+                fromScreen: 'CancelOrderScreen',
+                orderId,
+              }),
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
       }
 
       const response = await fetch(`${BASE_URL}/user/order/${orderId}`, {
@@ -41,11 +59,17 @@ const CancelOrderScreen = ({ route, navigation }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error('❌ Server response:', errorText);
+        const errorData = response.headers.get('content-type')?.includes('application/json')
+          ? JSON.parse(errorText)
+          : {};
         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
       }
 
       const responseData = await response.json();
+      console.log('🌐 Order details response:', responseData);
+
       if (!responseData.success) {
         throw new Error(responseData.message || 'Failed to fetch order details');
       }
@@ -53,13 +77,25 @@ const CancelOrderScreen = ({ route, navigation }) => {
       setOrder(responseData.data);
     } catch (err) {
       console.error('Error fetching order details:', err.message);
-      setError(
-        err.message.includes('401')
-          ? 'Session expired. Please log in again.'
-          : 'Failed to load order details. Please check your network and try again.'
-      );
+      const errorMessage = err.message.includes('401')
+        ? 'Session expired. Please log in again.'
+        : 'Failed to load order details. Please check your network and try again.';
+      setError(errorMessage);
       if (err.message.includes('401')) {
-        navigation.navigate('Login');
+        Alert.alert(
+          'Session Expired',
+          'Your session has expired. Please log in again.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Login', {
+                fromScreen: 'CancelOrderScreen',
+                orderId,
+              }),
+            },
+          ],
+          { cancelable: false }
+        );
       }
     } finally {
       setLoading(false);
@@ -68,6 +104,24 @@ const CancelOrderScreen = ({ route, navigation }) => {
 
   // Submit cancellation request
   const handleCancelOrder = async () => {
+    if (!token) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to cancel the order.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Login', {
+              fromScreen: 'CancelOrderScreen',
+              orderId,
+            }),
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
     if (!reason.trim()) {
       Alert.alert('Error', 'Please provide a reason for cancellation.');
       return;
@@ -87,7 +141,18 @@ const CancelOrderScreen = ({ route, navigation }) => {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Server response:', errorText);
+        const errorData = response.headers.get('content-type')?.includes('application/json')
+          ? JSON.parse(errorText)
+          : {};
+        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+      }
+
       const responseData = await response.json();
+      console.log('🌐 Cancel order response:', responseData);
+
       if (!responseData.success) {
         throw new Error(responseData.message || 'Failed to cancel order');
       }
@@ -97,7 +162,27 @@ const CancelOrderScreen = ({ route, navigation }) => {
       ]);
     } catch (err) {
       console.error('Error cancelling order:', err.message);
-      Alert.alert('Error', err.message || 'Failed to cancel order. Please try again.');
+      const errorMessage = err.message.includes('401')
+        ? 'Session expired. Please log in again.'
+        : err.message || 'Failed to cancel order. Please try again.';
+      Alert.alert(
+        'Error',
+        errorMessage,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (errorMessage.includes('401')) {
+                navigation.navigate('Login', {
+                  fromScreen: 'CancelOrderScreen',
+                  orderId,
+                });
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     } finally {
       setSubmitting(false);
     }
@@ -105,106 +190,121 @@ const CancelOrderScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     fetchOrderDetails();
-  }, [orderId]);
+  }, [orderId, token, navigation]);
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#D6722F" />
-        <Text style={styles.loadingText}>Loading order details...</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D6722F" />
+          <Text style={styles.loadingText}>Loading order details...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchOrderDetails}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchOrderDetails}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!order) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Order not found.</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Order not found.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>CANCEL ORDER</Text>
-      </View>
-
-      <ScrollView style={styles.scroll}>
-        {/* Order Details */}
-        <View style={styles.subSection}>
-          <Text style={styles.subTitle}>Order Items</Text>
-          {order.orderDetails.map((item, index) => (
-            <View key={index} style={styles.itemRow}>
-              <Image
-                source={
-                  item.itemId.image
-                    ? { uri: item.itemId.image }
-                    : { uri: 'https://via.placeholder.com/60' }
-                }
-                style={styles.image}
-              />
-              <View style={styles.details}>
-                <Text style={styles.name}>{item.itemId.name || 'Unknown Item'}</Text>
-                <Text style={styles.category}>Category: N/A</Text>
-                <Text style={styles.detail}>
-                  Size: {item.size || 'N/A'} Color: {item.color || 'N/A'} Qty: {item.quantity || 1}
-                </Text>
-                <Text style={styles.price}>
-                  MRP <Text style={styles.strike}>₹{item.itemId.MRP.toFixed(2)}</Text>{' '}
-                  <Text style={styles.bold}>₹{item.itemId.discountedPrice.toFixed(2)}</Text>
-                </Text>
-              </View>
-            </View>
-          ))}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+  <Ionicons name="arrow-back" size={24} color="#333" />
+</TouchableOpacity>
+          <Text style={styles.headerTitle}>CANCEL ORDER</Text>
         </View>
 
-        {/* Reason Input */}
-        <Text style={styles.reasonLabel}>
-          Reason for cancellation <Text style={{ color: 'red' }}>*</Text>
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={reason}
-          onChangeText={setReason}
-          placeholder="Enter your reason..."
-          multiline
-          accessibilityLabel="Cancellation reason"
-        />
-      </ScrollView>
+        <ScrollView style={styles.scroll}>
+          {/* Order Details */}
+          <View style={styles.subSection}>
+            <Text style={styles.subTitle}>Order Items</Text>
+            {order.orderDetails.map((item, index) => (
+              <View key={index} style={styles.itemRow}>
+                <Image
+                  source={
+                    item.itemId.image
+                      ? { uri: item.itemId.image }
+                      : { uri: 'https://via.placeholder.com/60' }
+                  }
+                  style={styles.image}
+                />
+                <View style={styles.details}>
+                  <Text style={styles.name}>{item.itemId.name || 'Unknown Item'}</Text>
+                  <Text style={styles.category}>Category: {item.itemId.category || 'N/A'}</Text>
+                  <Text style={styles.detail}>
+                    Size: {item.size || 'N/A'} Color: {item.color || 'N/A'} Qty: {item.quantity || 1}
+                  </Text>
+                  <Text style={styles.price}>
+                    MRP <Text style={styles.strike}>₹{item.itemId.MRP.toFixed(2)}</Text>{' '}
+                    <Text style={styles.bold}>₹{item.itemId.discountedPrice.toFixed(2)}</Text>
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
 
-      {/* Cancel Button */}
-      <TouchableOpacity
-        style={[styles.cancelButton, submitting && { opacity: 0.6 }]}
-        onPress={handleCancelOrder}
-        disabled={submitting}
-        accessibilityLabel="Cancel order"
-      >
-        <Text style={styles.cancelButtonText}>
-          {submitting ? 'CANCELLING...' : 'CANCEL ORDER'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          {/* Reason Input */}
+          <Text style={styles.reasonLabel}>
+            Reason for cancellation <Text style={{ color: 'red' }}>*</Text>
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={reason}
+            onChangeText={setReason}
+            placeholder="Enter your reason..."
+            multiline
+            accessibilityLabel="Cancellation reason"
+          />
+        </ScrollView>
+
+        {/* Cancel Button */}
+        <TouchableOpacity
+          style={[styles.cancelButton, submitting && { opacity: 0.6 }]}
+          onPress={handleCancelOrder}
+          disabled={submitting}
+          accessibilityLabel="Cancel order"
+        >
+          <Text style={styles.cancelButtonText}>
+            {submitting ? 'CANCELLING...' : 'CANCEL ORDER'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,11 +312,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ccc',
   },
-  backArrow: { fontSize: 18, marginRight: 10 },
-  headerTitle: { fontWeight: 'bold', fontSize: 16 },
-  scroll: { padding: 14 },
-  subSection: { marginBottom: 16 },
-  subTitle: { fontWeight: 'bold', fontSize: 14, marginBottom: 6 },
+  backArrow: {
+    fontSize: 18,
+    marginRight: 10,
+  },
+  headerTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  scroll: {
+    padding: 14,
+  },
+  subSection: {
+    marginBottom: 16,
+  },
+  subTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginBottom: 6,
+  },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -225,14 +339,38 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
-  image: { width: 60, height: 70, borderRadius: 4 },
-  details: { flex: 1, marginHorizontal: 10 },
-  name: { fontWeight: 'bold', fontSize: 13 },
-  category: { fontSize: 11, color: '#555' },
-  detail: { fontSize: 12, color: '#555' },
-  price: { fontSize: 12, marginTop: 4 },
-  strike: { textDecorationLine: 'line-through', color: '#999' },
-  bold: { fontWeight: 'bold' },
+  image: {
+    width: 60,
+    height: 70,
+    borderRadius: 4,
+  },
+  details: {
+    flex: 1,
+    marginHorizontal: 10,
+  },
+  name: {
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  category: {
+    fontSize: 11,
+    color: '#555',
+  },
+  detail: {
+    fontSize: 12,
+    color: '#555',
+  },
+  price: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  strike: {
+    textDecorationLine: 'line-through',
+    color: '#999',
+  },
+  bold: {
+    fontWeight: 'bold',
+  },
   reasonLabel: {
     fontSize: 13,
     fontWeight: '500',

@@ -15,13 +15,13 @@ const PartnerHomeScreen = () => {
     require('../../assets/Images/card1.png'),
   ];
 
-  console.log( 'partner HomeScreen images of [partner flow]:', images);
+  console.log('partner HomeScreen images of [partner flow]:', images);
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}>
-    <PartnerHeader/>
+      <PartnerHeader />
       <PartnerCarouselSlider />
       <PartnerPromoBanner />
       <View style={styles.sliderWrapper}>

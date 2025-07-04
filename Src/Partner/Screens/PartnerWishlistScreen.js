@@ -7,9 +7,12 @@ import {
   Text,
   Image,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWindowDimensions } from 'react-native';
 import PartnerWishlistCardItem from '../Components/PartnerWishlistCardItem';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { BASE_URL } from '../../config/apiConfig';
@@ -18,7 +21,25 @@ const PartnerWishlistScreen = () => {
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.token);
   const cartItems = useSelector(state => state.cart.items);
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  // Calculate scaling factor based on reference width (e.g., 375 for iPhone SE)
+  const scale = (size) => (width / 375) * size;
+
+  // Calculate total cart count
+  const totalCartCount = cartItems.reduce((sum, item) => {
+    const count = item.orderDetails.reduce(
+      (colorSum, colorObj) =>
+        colorSum + colorObj.sizeAndQuantity.reduce((sizeSum, s) => sizeSum + s.quantity, 0),
+      0
+    );
+    return sum + count;
+  }, 0);
+
+  // Log for debugging
+  console.log('PartnerWishlistScreen - Cart Items:', cartItems);
+  console.log('PartnerWishlistScreen - Total Cart Count:', totalCartCount);
 
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -55,28 +76,52 @@ const PartnerWishlistScreen = () => {
     fetchWishlist();
   }, []);
 
+  const handleCartPress = () => {
+    if (token) {
+      navigation.navigate('PartnerCart');
+    } else {
+      navigation.navigate('Login', { fromScreen: 'PartnerWishlistScreen' });
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerLeft}>
-          {/* <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
-            <Image source={require('../../assets/icon/BackIcon.png')} style={styles.backIcon} />
-          </TouchableOpacity> */}
-           <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-back" size={22} color="#000" />
-                  </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>PARTNER WISHLIST</Text>
         </View>
         <View style={styles.rightIcons}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
             <Image source={require('../../assets/icon/SearchIcon.png')} style={styles.icon} />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.cartIconWrapper} onPress={() => navigation.navigate('Cart')}>
-            <Image source={require('../../assets/Images/CartIcon.png')} style={styles.icon} />
-            {cartCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartCount}</Text>
+          <TouchableOpacity style={styles.cartIconWrapper} onPress={handleCartPress}>
+            <Image source={require('../../assets/icon/CartIcon.png')} style={styles.icon} />
+            {totalCartCount > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: scale(-6),
+                  right: scale(-8),
+                  backgroundColor: '#F36F25',
+                  borderRadius: scale(10),
+                  width: scale(18),
+                  height: scale(18),
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontSize: scale(10),
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {totalCartCount}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -101,42 +146,54 @@ const PartnerWishlistScreen = () => {
           contentContainerStyle={styles.grid}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 export default PartnerWishlistScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f6f6' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f6f6f6',
+  },
   header: {
-    marginTop: 2,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 32,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     justifyContent: 'space-between',
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  backIcon: { width: 24, height: 24, resizeMode: 'contain', marginRight: 8 },
-  headerTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', textTransform: 'uppercase' },
-  rightIcons: { flexDirection: 'row', alignItems: 'center' },
-  icon: { width: 22, height: 22, resizeMode: 'contain', marginHorizontal: 8 },
-  cartIconWrapper: { position: 'relative' },
-  cartBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: 'orange',
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    minWidth: 16,
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textTransform: 'uppercase',
+    marginLeft: 8,
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 22,
+    height: 22,
+    resizeMode: 'contain',
+    marginHorizontal: 8,
+  },
+  cartIconWrapper: {
+    position: 'relative',
+  },
   grid: {
     paddingHorizontal: 8,
     paddingBottom: 16,

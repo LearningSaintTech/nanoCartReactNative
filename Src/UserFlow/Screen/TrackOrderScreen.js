@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const TrackOrderScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -179,9 +180,12 @@ const TrackOrderScreen = ({ route, navigation }) => {
       {/* Header */}
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        {/* <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+  <Ionicons name="arrow-back" size={24} color="#333" />
+</TouchableOpacity>
         <Text style={styles.headerTitle}>ORDER HISTORY</Text>
       </View>
 

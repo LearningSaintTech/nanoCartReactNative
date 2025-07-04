@@ -6,15 +6,19 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerProfileScreen = () => {
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.token);
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -61,18 +65,17 @@ const PartnerProfileScreen = () => {
   }, [token]);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}> PROFILE</Text>
+        <Text style={styles.headerTitle}>PROFILE</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <InputLabel title="Name" value={name} />
-        <InputLabel title="Mobile" value={`+91-${mobile}`} />
+        <InputLabel title="Mobile" value={`${mobile}`} />
         <InputLabel title="Email ID" value={email} />
         <InputLabel title="Shop Name" value={shopName} />
         <InputLabel title="GST No" value={gstNo} />
@@ -80,7 +83,7 @@ const PartnerProfileScreen = () => {
         <InputLabel title="Shop Address" value={shopAddress} />
         <InputLabel title="Pincode" value={pincode} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -98,18 +101,30 @@ const InputLabel = ({ title, value }) => (
 export default PartnerProfileScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     borderBottomWidth: 0.8,
     borderColor: '#ccc',
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 10,
+    color: '#000',
+    textTransform: 'uppercase',
   },
   scrollContent: {
     paddingHorizontal: 16,

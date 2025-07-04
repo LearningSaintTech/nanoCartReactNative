@@ -55,7 +55,7 @@ const PartnerPromoBanner = () => {
       <Text style={styles.title}>Deals you don't want to miss</Text>
       <View style={styles.bannerCard}>
         <Image
-          source={require('../../assets/Images/Promo.png')}
+          source={require('../../assets/Images/Summer.png')}
           style={styles.bannerImage}
           resizeMode="stretch"
         />
