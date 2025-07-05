@@ -849,7 +849,7 @@ const PartnerSearchCategory = () => {
           </View>
 
           <Text style={[styles.sectionTitle, { fontSize: scale(20) }]}>
-            Popular Categories
+            Popular Categories 
           </Text>
           <PartnerGenderTabs />
           <SuggestionCard

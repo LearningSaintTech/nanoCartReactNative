@@ -448,7 +448,6 @@ const PartnerCartScreen = ({navigation}) => {
         })),
       };
       console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
-
       const response = await fetch(`${BASE_URL}/partner/cart/update`, {
         method: 'PUT',
         headers: {
@@ -817,7 +816,7 @@ const PartnerCartScreen = ({navigation}) => {
               <TouchableOpacity
                 onPress={() => toggleExpand(index)}
                 style={styles.accordionToggle}>
-                <Text style={styles.accordionTitle}>Check Order Details</Text>
+                <Text style={styles.accordionTitle}>Check Order Details </Text>
                 <Icon
                   name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
                   size={20}

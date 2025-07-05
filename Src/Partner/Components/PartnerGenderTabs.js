@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,11 @@ import {
   Dimensions,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import PartnerCategoryGrid from './PartnerCategoryGrid';
-import { BASE_URL } from '../../config/apiConfig';
+import {BASE_URL} from '../../config/apiConfig';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 const TAB_WIDTH = (width - 32) / 2; // 32 is total horizontal padding (16 * 2)
 
 const PartnerGenderTabs = () => {
@@ -27,8 +27,8 @@ const PartnerGenderTabs = () => {
   useEffect(() => {
     setLoading(true);
     fetch(`${BASE_URL}/category`)
-      .then((res) => res.json())
-      .then((json) => {
+      .then(res => res.json())
+      .then(json => {
         if (json.success && Array.isArray(json.data)) {
           setCategories(json.data);
 
@@ -43,7 +43,7 @@ const PartnerGenderTabs = () => {
           console.warn('Failed to load categories:', json.message);
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Error fetching categories:', err);
       })
       .finally(() => setLoading(false));
@@ -56,8 +56,8 @@ const PartnerGenderTabs = () => {
     setLoading(true);
     setSubCategories([]); // Clear previous subcategories to avoid stale data
     fetch(`${BASE_URL}/subcategory/categories/${activeTab}`)
-      .then((res) => res.json())
-      .then((json) => {
+      .then(res => res.json())
+      .then(json => {
         if (json.success && json.data?.subCategories) {
           setSubCategories(json.data.subCategories);
         } else {
@@ -65,46 +65,40 @@ const PartnerGenderTabs = () => {
           setSubCategories([]); // Ensure subCategories is empty if fetch fails
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Error fetching subcategories:', err);
         setSubCategories([]); // Ensure subCategories is empty on error
       })
       .finally(() => setLoading(false));
   }, [activeTab]);
 
-  const handleTabPress = (categoryId) => {
+  const handleTabPress = categoryId => {
     if (categoryId !== activeTab) {
       setActiveTab(categoryId);
     }
   };
 
-  const handleItemPress = (item) => {
-    navigation.navigate('PartnerSubCategory', { subCategory: item });
+  const handleItemPress = item => {
+    navigation.navigate('PartnerSubCategory', {subCategory: item});
   };
 
   return (
     <View style={styles.container}>
       {/* Scrollable Tabs */}
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsContainer}
-      >
+        contentContainerStyle={styles.tabsContainer}>
         {categories.map((category, index) => (
           <TouchableOpacity
             key={category._id}
             onPress={() => handleTabPress(category._id)}
-            style={[
-              styles.tab,
-              { width: TAB_WIDTH }
-            ]}
-          >
+            style={[styles.tab, {width: TAB_WIDTH}]}>
             <Text
               style={[
                 styles.tabText,
                 activeTab === category._id && styles.activeTabText,
-              ]}
-            >
+              ]}>
               For {category.name}
             </Text>
             {activeTab === category._id && (
@@ -120,7 +114,10 @@ const PartnerGenderTabs = () => {
       ) : subCategories.length === 0 ? (
         <Text style={styles.noDataText}>No subcategories available</Text>
       ) : (
-        <PartnerCategoryGrid data={subCategories} onItemPress={handleItemPress} />
+        <PartnerCategoryGrid
+          data={subCategories}
+          onItemPress={handleItemPress}
+        />
       )}
     </View>
   );

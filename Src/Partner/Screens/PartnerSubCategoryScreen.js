@@ -79,7 +79,6 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
 
       const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
       const apiUrl = `${BASE_URL}/items/filter${queryString}`;
-
       console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
 
       try {
@@ -153,6 +152,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <PartnerHeader />
+      <Text> Hello </Text>
       {loading && page === 1 ? (
         <ActivityIndicator size="large" color="#9B5AF5" style={{ marginTop: 20 }} />
       ) : (
