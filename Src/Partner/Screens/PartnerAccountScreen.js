@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { BASE_URL } from '../../config/apiConfig';
 
   const PartnerAccountScreen = () => {
   const navigation = useNavigation();
@@ -25,7 +24,7 @@ import { BASE_URL } from '../../config/apiConfig';
         console.log(' Starting fetchPartnerName...');
         console.log(' Token:', token);
   
-        const res = await fetch(`${BASE_URL}/auth/partner/profile`, {
+        const res = await fetch('${BASE_URL}/auth/partner/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -96,7 +95,7 @@ import { BASE_URL } from '../../config/apiConfig';
           source={require('../../assets/Images/Group.png')}
           style={styles.logo}
         />
-        <Text style={styles.greeting}>Hi, {partnerName}</Text>
+        <Text style={styles.greeting}>Hi,  {partnerName}</Text>
       </View>
 
       {/* Menu Items */}
@@ -128,7 +127,7 @@ import { BASE_URL } from '../../config/apiConfig';
         onPress={() => navigation.navigate('Login')}
         style={styles.logoutButton}
       >
-        <Text style={styles.logoutText}>LOG OUT</Text>
+        <Text style={styles.logoutText}>LOG OUT </Text>
       </TouchableOpacity>
     </View>
   );

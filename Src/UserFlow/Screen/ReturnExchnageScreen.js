@@ -13,6 +13,8 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ReturnExchangeScreen = ({ route, navigation }) => {
   const { orderId } = route.params; // Extract orderId from navigation params
@@ -144,7 +146,13 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
         Alert.alert('Error', 'No item selected for exchange.');
         return;
       }
-      
+      // if (
+      //   !['Delivered', 'Exchanged'].includes(selectedOrderItem.orderStatus) ||
+      //   selectedOrderItem.paymentStatus !== 'Paid'
+      // ) {
+      //   Alert.alert('Error', 'Exchange is only allowed for delivered and paid items.');
+      //   return;
+      // }
     }
 
     try {
@@ -280,13 +288,16 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>RETURN / EXCHANGE</Text>
-      </View>
+     
+
+       <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>RETURN / EXCHANGE</Text>
+        </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scroll}>
         {/* Select All */}
@@ -524,12 +535,20 @@ const ReturnExchangeScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: {
+   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderColor: '#ccc',
+    borderBottomColor: '#E0E0E0',
+  },
+  headerTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
   },
   backArrow: { fontSize: 18, marginRight: 10,marginTop:25 },
   title: { fontWeight: 'bold', fontSize: 16,marginTop:25 },

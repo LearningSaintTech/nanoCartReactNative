@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,8 @@ import {
   Dimensions,
 } from 'react-native';
 import CategoryGrid from './CategoryGrid';
-import { useNavigation } from '@react-navigation/native';
-import { BASE_URL } from '../../config/apiConfig';
+import {useNavigation} from '@react-navigation/native';
+import {BASE_URL} from '../../config/apiConfig';
 
 const GenderTabs = () => {
   const [categories, setCategories] = useState([]);
@@ -23,8 +23,8 @@ const GenderTabs = () => {
   useEffect(() => {
     setLoading(true);
     fetch(`${BASE_URL}/category`)
-      .then((res) => res.json())
-      .then((json) => {
+      .then(res => res.json())
+      .then(json => {
         if (json.success && Array.isArray(json.data)) {
           setCategories(json.data);
 
@@ -39,7 +39,7 @@ const GenderTabs = () => {
           console.warn('Failed to load categories:', json.message);
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Error fetching categories:', err);
       })
       .finally(() => setLoading(false));
@@ -48,12 +48,12 @@ const GenderTabs = () => {
   // Fetch subcategories when activeTab changes
   useEffect(() => {
     if (!activeTab) return;
-
+    console.log('categories', activeTab);
     setLoading(true);
     setSubCategories([]); // Clear previous subcategories to avoid stale data
     fetch(`${BASE_URL}/subcategory/categories/${activeTab}`)
-      .then((res) => res.json())
-      .then((json) => {
+      .then(res => res.json())
+      .then(json => {
         if (json.success && json.data?.subCategories) {
           setSubCategories(json.data.subCategories);
         } else {
@@ -61,21 +61,21 @@ const GenderTabs = () => {
           setSubCategories([]); // Ensure subCategories is empty if fetch fails
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Error fetching subcategories:', err);
         setSubCategories([]); // Ensure subCategories is empty on error
       })
       .finally(() => setLoading(false));
   }, [activeTab]);
 
-  const handleTabPress = (categoryId) => {
+  const handleTabPress = categoryId => {
     if (categoryId !== activeTab) {
       setActiveTab(categoryId);
     }
   };
 
-  const handleItemPress = (item) => {
-    navigation.navigate('SubCategory', { subCategory: item });
+  const handleItemPress = item => {
+    navigation.navigate('SubCategory', {subCategory: item});
   };
 
   return (
@@ -84,21 +84,19 @@ const GenderTabs = () => {
       <View style={styles.tabWrapper}>
         <FlatList
           data={categories}
-          keyExtractor={(item) => item._id}
+          keyExtractor={item => item._id}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabContainer}
-          renderItem={({ item: category }) => (
+          renderItem={({item: category}) => (
             <TouchableOpacity
               onPress={() => handleTabPress(category._id)}
-              style={styles.tab}
-            >
+              style={styles.tab}>
               <Text
                 style={[
                   styles.tabText,
                   activeTab === category._id && styles.activeTabText,
-                ]}
-              >
+                ]}>
                 For {category.name}
               </Text>
               {activeTab === category._id && <View style={styles.underline} />}
@@ -126,7 +124,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     paddingHorizontal: 16,
-marginBottom:12,
+    marginBottom: 12,
   },
   tab: {
     width: Dimensions.get('window').width / 2 - 16,

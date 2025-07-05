@@ -1,5 +1,3 @@
-
-
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -11,7 +9,7 @@ import {
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { useNavigation } from '@react-navigation/native';
-import { BASE_URL } from '../../config/apiConfig'; //
+import { BASE_URL } from '../../config/apiConfig';
 
 const CarouselSlider = () => {
   const flatListRef = useRef(null);
@@ -24,6 +22,7 @@ const CarouselSlider = () => {
       .then(response => response.json())
       .then(data => {
         if (data.success && data.data) {
+         
           setCategories(data.data);
         }
       })

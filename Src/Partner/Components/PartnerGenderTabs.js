@@ -11,6 +11,7 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 import PartnerCategoryGrid from './PartnerCategoryGrid';
+import { BASE_URL } from '../../config/apiConfig';
 
 const { width } = Dimensions.get('window');
 const TAB_WIDTH = (width - 32) / 2; // 32 is total horizontal padding (16 * 2)
@@ -54,7 +55,7 @@ const PartnerGenderTabs = () => {
 
     setLoading(true);
     setSubCategories([]); // Clear previous subcategories to avoid stale data
-    fetch(`http://192.168.1.17:4000/api/subcategory/categories/${activeTab}`)
+    fetch(`${BASE_URL}/subcategory/categories/${activeTab}`)
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data?.subCategories) {

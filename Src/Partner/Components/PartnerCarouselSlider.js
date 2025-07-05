@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../../config/apiConfig';
 const { width } = Dimensions.get('window');
 
 const PartnerCarouselSlider = () => {

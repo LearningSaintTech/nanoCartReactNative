@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -20,7 +21,7 @@ const OrderHistoryScreen = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const token = useSelector((state) => state.auth.token);
+  const token = useSelector(state => state.auth.token);
   const { itemId } = route.params || {};
 
   // Function to fetch orders from the backend
@@ -43,7 +44,9 @@ const OrderHistoryScreen = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! Status: ${response.status}`,
+        );
       }
 
       const responseData = await response.json();
@@ -69,7 +72,11 @@ const OrderHistoryScreen = () => {
         }),
         status: order.orderStatus || 'Unknown',
         image: order.orderDetails[0]?.itemId?.image || 'https://via.placeholder.com/70',
-        itemId: order.orderDetails[0]?.itemId?._id || '', // Add itemId for Rate & Review
+        itemId: order.orderDetails[0]?.itemId?._id || '',
+        size: order.orderDetails[0]?.size || 'N/A',
+        color: order.orderDetails[0]?.color || 'N/A',
+        MRP: order.orderDetails[0]?.itemId?.MRP || 0,
+        discountedPrice: order.orderDetails[0]?.itemId?.discountedPrice || 0,
         button: getButtonText(order.orderStatus),
         buttonColor: getButtonColor(order.orderStatus),
         borderColor: getBorderColor(order.orderStatus),
@@ -77,12 +84,13 @@ const OrderHistoryScreen = () => {
       }));
 
       setOrders(transformedOrders);
+      console.log('Transformed Orders:', transformedOrders); // Debug log
     } catch (err) {
       console.error('Error fetching orders:', err.message);
       setError(
         err.message.includes('401')
           ? 'Session expired. Please log in again.'
-          : 'Failed to load orders. Please try again.'
+          : 'Failed to load orders. Please try again.',
       );
       if (err.message.includes('401')) {
         navigation.navigate('Login');
@@ -93,7 +101,7 @@ const OrderHistoryScreen = () => {
   };
 
   // Helper functions for button properties
-  const getButtonText = (status) => {
+  const getButtonText = status => {
     switch (status) {
       case 'Confirmed':
       case 'Dispatched':
@@ -107,7 +115,7 @@ const OrderHistoryScreen = () => {
     }
   };
 
-  const getButtonColor = (status) => {
+  const getButtonColor = status => {
     switch (status) {
       case 'Confirmed':
       case 'Dispatched':
@@ -120,7 +128,7 @@ const OrderHistoryScreen = () => {
     }
   };
 
-  const getBorderColor = (status) => {
+  const getBorderColor = status => {
     switch (status) {
       case 'Confirmed':
       case 'Dispatched':
@@ -133,7 +141,7 @@ const OrderHistoryScreen = () => {
     }
   };
 
-  const getTextColor = (status) => {
+  const getTextColor = status => {
     switch (status) {
       case 'Confirmed':
       case 'Dispatched':
@@ -147,13 +155,25 @@ const OrderHistoryScreen = () => {
   };
 
   // Handle button press
-  const handleButtonPress = (button, orderId, itemId) => {
+  const handleButtonPress = (button, orderId, item) => {
+    console.log('handleButtonPress - Button:', button, 'OrderId:', orderId, 'Item:', item); // Debug log
     switch (button) {
       case 'Track Order':
         navigation.navigate('TrackOrder', { orderId });
         break;
       case 'Rate & Review':
-        navigation.navigate('RateProduct', { orderId, itemId });
+        navigation.navigate('RateProduct', {
+          orderId,
+          itemId: item.itemId,
+          item: {
+            name: item.name,
+            size: item.size,
+            color: item.color,
+            MRP: item.MRP,
+            discountedPrice: item.discountedPrice,
+            image: item.image,
+          },
+        });
         break;
       case 'View Details':
         navigation.navigate('TrackOrder', { orderId });
@@ -173,19 +193,24 @@ const OrderHistoryScreen = () => {
       style={styles.card}
       onPress={() => navigation.navigate('TrackOrder', { orderId: item.orderId })}
       accessibilityLabel={`View tracking details for order ${item.orderId}`}
-      activeOpacity={0.8}
-    >
+      activeOpacity={0.8}>
       <Text style={styles.orderId}>Order ID: {item.orderId}</Text>
       <View style={styles.row}>
         <Image
-          source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+          source={
+            typeof item.image === 'string' ? { uri: item.image } : item.image
+          }
           style={styles.image}
         />
         <View style={styles.info}>
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.category}>{item.category}</Text>
           <Text style={styles.date}>{item.date}</Text>
-          <Text style={[styles.status, item.status === 'Cancelled' && { color: '#E86363' }]}>
+          <Text
+            style={[
+              styles.status,
+              item.status === 'Cancelled' && { color: '#E86363' },
+            ]}>
             ● {item.status}
           </Text>
         </View>
@@ -199,13 +224,14 @@ const OrderHistoryScreen = () => {
               borderColor: item.borderColor,
             },
           ]}
-          onPress={(e) => {
+          onPress={e => {
             e.stopPropagation(); // Prevent card's onPress from firing
-            handleButtonPress(item.button, item.orderId, item.itemId);
+            handleButtonPress(item.button, item.orderId, item);
           }}
-          accessibilityLabel={item.button}
-        >
-          <Text style={[styles.buttonText, { color: item.textColor }]}>{item.button}</Text>
+          accessibilityLabel={item.button}>
+          <Text style={[styles.buttonText, { color: item.textColor }]}>
+            {item.button}
+          </Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -236,7 +262,7 @@ const OrderHistoryScreen = () => {
       ) : (
         <FlatList
           data={orders}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}

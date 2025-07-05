@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import * as ImagePicker from 'react-native-image-picker';
 import { BASE_URL } from '../../config/apiConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PartnerPaymentScreen = ({ navigation, route }) => {
   const token = useSelector((state) => state.auth.token);
@@ -359,12 +360,12 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
   }
 
   return (
-    <View style={styles.container}>
+   <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>PAYMENT</Text>
+        <Text style={styles.headerTitle}>PAYMENT </Text>
       </View>
 
       <View style={styles.stepRow}>
@@ -512,7 +513,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
-    </View>
+   </SafeAreaView>
   );
 };
 

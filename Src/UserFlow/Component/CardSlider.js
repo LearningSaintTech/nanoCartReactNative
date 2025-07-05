@@ -1,21 +1,32 @@
+import React, {useState, useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
+import {BASE_URL} from '../../config/apiConfig';
 
-import React, { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { BASE_URL } from '../../config/apiConfig'; //
-
-const CardSlider = ({ images }) => {
+const CardSlider = ({images}) => {
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    
-    fetch( `${BASE_URL}/items`)
+    fetch(`${BASE_URL}/items`)
       .then(response => response.json())
       .then(data => {
+        console.log('API Response:', data); // 👈 Correct logging here
         if (data.success && data.data && data.data.items) {
           setItems(data.data.items);
+        } else {
+          console.warn('Unexpected API structure:', data);
         }
       })
       .catch(error => {
@@ -28,18 +39,22 @@ const CardSlider = ({ images }) => {
       horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.sliderContainer}
-      contentContainerStyle={styles.contentContainer}
-    >
+      contentContainerStyle={styles.contentContainer}>
       {items && items.length > 0 ? (
         items.map((item, index) => (
-          <View key={item._id} style={[styles.card, { width: wp('80%') }]}>
-            <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+          <View key={item._id} style={[styles.card, {width: wp('80%')}]}>
+            <Image
+              source={{uri: item.image}}
+              style={styles.image}
+              resizeMode="cover"
+            />
             <View style={styles.overlay}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.shopButton}
-                onPress={() => navigation.navigate('ProductDetail', { itemId: item._id })}
-              >
-                <Text style={styles.shopButtonText}>SHOP NOW</Text>
+                onPress={() =>
+                  navigation.navigate('ProductDetail', {itemId: item._id})
+                }>
+                <Text style={styles.shopButtonText}>SHOP NOW </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -86,7 +101,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp('1.5%'),
     minWidth: wp('35%'),
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: '#0000',
   },
   shopButtonText: {
     color: '#FFFFFF',

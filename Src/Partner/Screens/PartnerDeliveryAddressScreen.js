@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,12 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
-import { BASE_URL } from '../../config/apiConfig';
-import { BaseGesture } from 'react-native-gesture-handler/lib/typescript/handlers/gestures/gesture';
+import {useSelector} from 'react-redux';
+import {BASE_URL} from '../../config/apiConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
-  const token = useSelector((state) => state.auth.token);
+const PartnerDeliveryAddressScreen = ({navigation, route}) => {
+  const token = useSelector(state => state.auth.token);
   const [address, setAddress] = useState(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
   const [invoiceData, setInvoiceData] = useState({
@@ -39,15 +39,16 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
 
   // Set initial invoiceData with passed values
   useEffect(() => {
-    setInvoiceData((prev) => ({ ...prev, ...passedInvoiceData }));
+    setInvoiceData(prev => ({...prev, ...passedInvoiceData}));
   }, [passedInvoiceData]);
 
   // Calculation functions (aligned with PartnerCartScreen)
-  const calculateTotalQty = (orderDetails) =>
+  const calculateTotalQty = orderDetails =>
     orderDetails.reduce(
       (total, colorObj) =>
-        total + colorObj.sizeAndQuantity.reduce((sum, s) => sum + s.quantity, 0),
-      0
+        total +
+        colorObj.sizeAndQuantity.reduce((sum, s) => sum + s.quantity, 0),
+      0,
     );
 
   const calculateTotalPrice = (orderDetails, pricePerUnit) =>
@@ -56,11 +57,11 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
   // Calculate cartTotal and discountedPrice
   const cartTotal = cartItems.reduce(
     (sum, item) => sum + calculateTotalQty(item.orderDetails) * item.itemId.MRP,
-    0
+    0,
   );
   const discountedPrice = cartItems.reduce(
     (sum, item) => sum + item.totalPrice,
-    0
+    0,
   );
 
   useEffect(() => {
@@ -74,13 +75,15 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
         console.log('Fetching address with token:', token);
         const response = await fetch(`${BASE_URL}/partner/address`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         });
 
         const json = await response.json();
         console.log('Address API response:', JSON.stringify(json, null, 2));
         if (response.ok && json.addresses?.addressDetail?.length > 0) {
-          const defaultAddress = json.addresses.addressDetail.find((a) => a.isDefault) || json.addresses.addressDetail[0];
+          const defaultAddress =
+            json.addresses.addressDetail.find(a => a.isDefault) ||
+            json.addresses.addressDetail[0];
           setAddress(defaultAddress);
         } else {
           console.warn('No addresses found');
@@ -103,25 +106,45 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
         console.log('Fetching invoice data...');
         const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         });
         const json = await res.json();
         console.log('Invoice API response:', JSON.stringify(json, null, 2));
 
-        if (res.ok && json.success && Array.isArray(json.data) && json.data[0]?.invoice) {
+        if (
+          res.ok &&
+          json.success &&
+          Array.isArray(json.data) &&
+          json.data[0]?.invoice
+        ) {
           const invoice = json.data[0].invoice;
-          const getLatestValue = (key) => {
-            const items = invoice.filter((item) => item.key.toLowerCase() === key.toLowerCase());
-            return items.length > 0 ? parseFloat(items[items.length - 1].value) || 0 : 0;
+          const getLatestValue = key => {
+            const items = invoice.filter(
+              item => item.key.toLowerCase() === key.toLowerCase(),
+            );
+            return items.length > 0
+              ? parseFloat(items[items.length - 1].value) || 0
+              : 0;
           };
 
-          const walletMoney = getLatestValue('wallet money') || appliedWalletAmount;
-          const couponDiscountValue = getLatestValue('coupon discount') || couponDiscount;
+          const walletMoney =
+            getLatestValue('wallet money') || appliedWalletAmount;
+          const couponDiscountValue =
+            getLatestValue('coupon discount') || couponDiscount;
           const codCharges = getLatestValue('cod charges') || 0;
           const gstValue = getLatestValue('gst') || 0;
-          const shippingCharges = getLatestValue('shipping charges') || getLatestValue('shipping charge') || 0;
-          const totalAmount = discountedPrice - walletMoney - couponDiscountValue + codCharges + gstValue;
-          const savings = (cartTotal - discountedPrice) + couponDiscountValue + walletMoney;
+          const shippingCharges =
+            getLatestValue('shipping charges') ||
+            getLatestValue('shipping charge') ||
+            0;
+          const totalAmount =
+            discountedPrice -
+            walletMoney -
+            couponDiscountValue +
+            codCharges +
+            gstValue;
+          const savings =
+            cartTotal - discountedPrice + couponDiscountValue + walletMoney;
 
           setInvoiceData({
             cartTotal: cartTotal.toFixed(2),
@@ -130,7 +153,8 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
             couponDiscount: couponDiscountValue.toFixed(2),
             codCharges: codCharges.toFixed(2),
             gst: gstValue.toFixed(1),
-            shippingCharges: shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
+            shippingCharges:
+              shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
             totalAmount: totalAmount.toFixed(1),
             savings: savings.toFixed(2),
           });
@@ -141,8 +165,14 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
           const codCharges = 0;
           const gstValue = 0;
           const shippingCharges = 0;
-          const totalAmount = discountedPrice - walletMoney - couponDiscountValue + codCharges + gstValue;
-          const savings = (cartTotal - discountedPrice) + couponDiscountValue + walletMoney;
+          const totalAmount =
+            discountedPrice -
+            walletMoney -
+            couponDiscountValue +
+            codCharges +
+            gstValue;
+          const savings =
+            cartTotal - discountedPrice + couponDiscountValue + walletMoney;
 
           setInvoiceData({
             cartTotal: cartTotal.toFixed(2),
@@ -151,7 +181,8 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
             couponDiscount: couponDiscountValue.toFixed(2),
             codCharges: codCharges.toFixed(2),
             gst: gstValue.toFixed(1),
-            shippingCharges: shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
+            shippingCharges:
+              shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
             totalAmount: totalAmount.toFixed(1),
             savings: savings.toFixed(2),
           });
@@ -163,8 +194,14 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
         const codCharges = 0;
         const gstValue = 0;
         const shippingCharges = 0;
-        const totalAmount = discountedPrice - walletMoney - couponDiscountValue + codCharges + gstValue;
-        const savings = (cartTotal - discountedPrice) + couponDiscountValue + walletMoney;
+        const totalAmount =
+          discountedPrice -
+          walletMoney -
+          couponDiscountValue +
+          codCharges +
+          gstValue;
+        const savings =
+          cartTotal - discountedPrice + couponDiscountValue + walletMoney;
 
         setInvoiceData({
           cartTotal: cartTotal.toFixed(2),
@@ -173,7 +210,8 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
           couponDiscount: couponDiscountValue.toFixed(2),
           codCharges: codCharges.toFixed(2),
           gst: gstValue.toFixed(1),
-          shippingCharges: shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
+          shippingCharges:
+            shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
           totalAmount: totalAmount.toFixed(1),
           savings: savings.toFixed(2),
         });
@@ -202,11 +240,12 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
   if (!token) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Authentication Required. Please log in.</Text>
+        <Text style={styles.errorText}>
+          Authentication Required. Please log in.
+        </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Login')}
-          style={styles.backBtn}
-        >
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go to Login</Text>
         </TouchableOpacity>
       </View>
@@ -216,11 +255,12 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
   if (!totalItems || !Array.isArray(cartItems) || !cartItems.length) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: Cart details are missing. Please return to the cart.</Text>
+        <Text style={styles.errorText}>
+          Error: Cart details are missing. Please return to the cart.
+        </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('PartnerCart')}
-          style={styles.backBtn}
-        >
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>Back to Cart</Text>
         </TouchableOpacity>
       </View>
@@ -228,13 +268,13 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
-          <Icon name="arrow-back" size={22} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>PARTNER DELIVERY ADDRESS</Text>
-      </View>
+      <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
+        <Icon name="arrow-back" size={22} color="#000" />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>PARTNER DELIVERY ADDRESS </Text>
+    </View>
 
       <View style={styles.stepRow}>
         <View style={styles.stepContainer}>
@@ -266,8 +306,7 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
                     address,
                   });
                 }}
-                style={styles.changeButton}
-              >
+                style={styles.changeButton}>
                 <Text style={styles.changeText}>CHANGE</Text>
               </TouchableOpacity>
             )}
@@ -277,7 +316,10 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
           ) : address ? (
             <>
               <Text style={styles.deliverToName}>{address.name}</Text>
-              <Text style={styles.deliverToAddress}>{`${address.cityTown}, ${address.pincode}`}</Text>
+              <Text
+                style={
+                  styles.deliverToAddress
+                }>{`${address.cityTown}, ${address.pincode}`}</Text>
               <Text style={styles.deliverToAddress}>{address.state}</Text>
             </>
           ) : (
@@ -288,15 +330,16 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
         {!address && !loadingAddress && (
           <TouchableOpacity
             onPress={() => navigation.navigate('PartnerAddNewAddress')}
-            style={styles.addAddressBtn}
-          >
+            style={styles.addAddressBtn}>
             <Text style={styles.addAddressText}>ADD ADDRESS</Text>
           </TouchableOpacity>
         )}
 
         <View style={styles.card}>
           <View style={styles.priceDetailsHeader}>
-            <Text style={styles.cardTitle}>Price Details ({totalItems} items)</Text>
+            <Text style={styles.cardTitle}>
+              Price Details ({totalItems} items)
+            </Text>
           </View>
           <View style={styles.priceDetailsContent}>
             <View style={styles.row}>
@@ -310,13 +353,17 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
             {parseFloat(invoiceData.walletMoney) > 0 && (
               <View style={styles.row}>
                 <Text style={styles.orangeText}>Wallet Money</Text>
-                <Text style={styles.orangeText}>-₹{invoiceData.walletMoney}</Text>
+                <Text style={styles.orangeText}>
+                  -₹{invoiceData.walletMoney}
+                </Text>
               </View>
             )}
             {parseFloat(invoiceData.couponDiscount) > 0 && (
               <View style={styles.row}>
                 <Text style={styles.orangeText}>Coupon Discount</Text>
-                <Text style={styles.orangeText}>-₹{invoiceData.couponDiscount}</Text>
+                <Text style={styles.orangeText}>
+                  -₹{invoiceData.couponDiscount}
+                </Text>
               </View>
             )}
             <View style={styles.row}>
@@ -329,7 +376,9 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Shipping Charges</Text>
-              <Text style={styles.orangeText}>{invoiceData.shippingCharges}</Text>
+              <Text style={styles.orangeText}>
+                {invoiceData.shippingCharges}
+              </Text>
             </View>
             <View style={[styles.row, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total Amount</Text>
@@ -354,13 +403,18 @@ const PartnerDeliveryAddressScreen = ({ navigation, route }) => {
       <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
         <Text style={styles.continueText}>CONTINUE TO PAYMENT</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  errorText: { fontSize: 16, color: '#ff0000', textAlign: 'center', marginTop: 20 },
+  container: {flex: 1, backgroundColor: '#fff'},
+  errorText: {
+    fontSize: 16,
+    color: '#ff0000',
+    textAlign: 'center',
+    marginTop: 20,
+  },
   backBtn: {
     backgroundColor: '#f37022',
     paddingVertical: 12,
@@ -369,9 +423,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 20,
   },
-  backBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '600', marginLeft: 10, color: '#333' },
+  backBtnText: {color: '#fff', fontWeight: '600', fontSize: 16},
+  header: {padding: 16, flexDirection: 'row', alignItems: 'center'},
+  headerTitle: {fontSize: 16, fontWeight: '600', marginLeft: 10, color: '#333'},
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -379,7 +433,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 16,
   },
-  stepContainer: { alignItems: 'center', flexDirection: 'row' },
+  stepContainer: {alignItems: 'center', flexDirection: 'row'},
   square: {
     width: 8,
     height: 8,
@@ -388,7 +442,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginRight: 8,
   },
-  activeSquare: { borderColor: '#D6722F', backgroundColor: '#D6722F' },
+  activeSquare: {borderColor: '#D6722F', backgroundColor: '#D6722F'},
   dottedLine: {
     flex: 1,
     height: 1,
@@ -397,26 +451,30 @@ const styles = StyleSheet.create({
     borderColor: '#666',
     marginHorizontal: 4,
   },
-  activeStep: { color: '#D6722F', fontWeight: 'bold', fontSize: 11 },
-  inactiveStep: { color: '#666', fontWeight: 'bold', fontSize: 11 },
-  content: { paddingHorizontal: 16, paddingBottom: 80 },
+  activeStep: {color: '#D6722F', fontWeight: 'bold', fontSize: 11},
+  inactiveStep: {color: '#666', fontWeight: 'bold', fontSize: 11},
+  content: {paddingHorizontal: 16, paddingBottom: 80},
   deliverBox: {
     backgroundColor: '#FDF6F1',
     padding: 15,
     borderRadius: 6,
     marginBottom: 16,
   },
-  stickyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  deliverToLabel: { color: '#000', fontWeight: '600', fontSize: 14 },
-  deliverToName: { fontSize: 14, fontWeight: '600', color: '#000' },
-  deliverToAddress: { fontSize: 12, color: '#666' },
+  stickyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  deliverToLabel: {color: '#000', fontWeight: '600', fontSize: 14},
+  deliverToName: {fontSize: 14, fontWeight: '600', color: '#000'},
+  deliverToAddress: {fontSize: 12, color: '#666'},
   changeButton: {
     backgroundColor: '#f37022',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 4,
   },
-  changeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  changeText: {color: '#fff', fontSize: 12, fontWeight: '600'},
   addAddressBtn: {
     backgroundColor: '#f37022',
     paddingVertical: 12,
@@ -424,7 +482,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 16,
   },
-  addAddressText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  addAddressText: {color: '#fff', fontWeight: '600', fontSize: 14},
   card: {
     marginHorizontal: 12,
     marginBottom: 16,
@@ -432,19 +490,28 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#FDF6F1',
   },
-  priceDetailsHeader: { padding: 16 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#333' },
-  priceDetailsContent: { padding: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  label: { fontSize: 14, color: '#333' },
-  value: { fontSize: 14, color: '#333' },
-  strike: { fontSize: 14, color: '#333', textDecorationLine: 'line-through' },
-  orangeText: { fontSize: 14, color: '#F36F25' },
-  totalRow: { borderTopWidth: 1, borderTopColor: '#E0E0E0', paddingTop: 12, marginTop: 4 },
-  totalLabel: { fontSize: 15, fontWeight: '600', color: '#333' },
-  totalValue: { fontSize: 15, fontWeight: '600', color: '#333' },
-  savingBox: { padding: 12, borderRadius: 4, marginTop: 12 },
-  savingText: { fontSize: 14, color: '#333', textAlign: 'center' },
+  priceDetailsHeader: {padding: 16},
+  cardTitle: {fontSize: 16, fontWeight: '600', color: '#333'},
+  priceDetailsContent: {padding: 16},
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  label: {fontSize: 14, color: '#333'},
+  value: {fontSize: 14, color: '#333'},
+  strike: {fontSize: 14, color: '#333', textDecorationLine: 'line-through'},
+  orangeText: {fontSize: 14, color: '#F36F25'},
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingTop: 12,
+    marginTop: 4,
+  },
+  totalLabel: {fontSize: 15, fontWeight: '600', color: '#333'},
+  totalValue: {fontSize: 15, fontWeight: '600', color: '#333'},
+  savingBox: {padding: 12, borderRadius: 4, marginTop: 12},
+  savingText: {fontSize: 14, color: '#333', textAlign: 'center'},
   paymentMethod: {
     backgroundColor: '#FDF6F1',
     flexDirection: 'row',
@@ -453,8 +520,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 10,
   },
-  paymentText: { fontWeight: '500', fontSize: 14, color: '#333' },
-  paymentMode: { fontSize: 14, fontWeight: '600', color: '#333' },
+  paymentText: {fontWeight: '500', fontSize: 14, color: '#333'},
+  paymentMode: {fontSize: 14, fontWeight: '600', color: '#333'},
   continueBtn: {
     backgroundColor: '#f37022',
     paddingVertical: 14,
@@ -466,7 +533,7 @@ const styles = StyleSheet.create({
     right: 16,
     borderRadius: 8,
   },
-  continueText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  continueText: {color: '#fff', fontSize: 14, fontWeight: 'bold'},
 });
 
 export default PartnerDeliveryAddressScreen;

@@ -19,22 +19,15 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import GenderTabs from '../Component/GenderTabs';
 import SuggestionCard from '../Component/SuggestionCard';
-import { debounce } from 'lodash'; // Import lodash for debouncing
+import { debounce } from 'lodash';
 import { BASE_URL } from '../../config/apiConfig';
-
-// Sample recent searches data
-const recentSearches = [
-  { label: 'Chiffon Saree', image: require('../../assets/Images/Girl1.png') },
-  { label: 'Formal Shirt', image: require('../../assets/Images/Girl2.png') },
-  { label: 'Cargo Pants', image: require('../../assets/Images/Girl3.png') },
-  { label: 'Chiffon Saree', image: require('../../assets/Images/Girl1.png') },
-  { label: 'Formal Shirt', image: require('../../assets/Images/Girl2.png') },
-  { label: 'Cargo Pants', image: require('../../assets/Images/Girl3.png') },
-];
+import girl1Image from '../../assets/Images/Girl1.png';
+import girl2Image from '../../assets/Images/Girl2.png';
+import girl3Image from '../../assets/Images/Girl3.png';
 
 const SearchCategory = () => {
   const navigation = useNavigation();
-  const token = useSelector((state) => state.auth.token);
+  const token = useSelector(state => state.auth.token);
   const dispatch = useDispatch();
   const [wishlistItem, setWishlistItem] = useState(null);
   const [cartItem, setCartItem] = useState(null);
@@ -62,7 +55,6 @@ const SearchCategory = () => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const limit = 5;
 
-  // Sort options
   const sortOptions = [
     { label: 'Latest', value: 'latest' },
     { label: 'Popularity', value: 'popularity' },
@@ -75,11 +67,27 @@ const SearchCategory = () => {
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
+        setWishlistLoading(true);
+        setWishlistError(null);
+
         if (!token) {
-          setWishlistError('Please log in to view wishlist');
-          setWishlistLoading(false);
+          Alert.alert(
+            'Login Required',
+            'Please log in to view your wishlist.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_wishlist',
+                }),
+              },
+            ],
+            { cancelable: false }
+          );
           return;
         }
+
         const response = await fetch(`${BASE_URL}/userwishlist`, {
           method: 'GET',
           headers: {
@@ -87,30 +95,77 @@ const SearchCategory = () => {
             'Content-Type': 'application/json',
           },
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Wishlist server response:', errorText);
+          const errorData = response.headers.get('content-type')?.includes('application/json')
+            ? JSON.parse(errorText)
+            : {};
+          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
         const data = await response.json();
-        if (response.ok && data.success && data.data?.items?.length > 0) {
+        console.log('🌐 Wishlist response:', data);
+
+        if (data.success && data.data?.items?.length > 0) {
           setWishlistItem(data.data.items[0]);
         } else {
           setWishlistError(data.message || 'No wishlist items found');
         }
       } catch (err) {
-        setWishlistError('Failed to fetch wishlist');
+        const errorMessage = err.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Failed to fetch wishlist. Please try again.';
+        setWishlistError(errorMessage);
+        if (err.message.includes('401')) {
+          Alert.alert(
+            'Session Expired',
+            'Your session has expired. Please log in again.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_wishlist',
+                }),
+              },
+            ],
+            { cancelable: false }
+          );
+        }
       } finally {
         setWishlistLoading(false);
       }
     };
     fetchWishlist();
-  }, [token]);
+  }, [token, navigation]);
 
   // Fetch cart data
   useEffect(() => {
     const fetchCart = async () => {
       try {
+        setCartLoading(true);
+        setCartError(null);
+
         if (!token) {
-          setCartError('Please log in to view cart');
-          setCartLoading(false);
+          Alert.alert(
+            'Login Required',
+            'Please log in to view your cart.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_cart',
+                }),
+              },
+            ],
+            { cancelable: false }
+          );
           return;
         }
+
         const response = await fetch(`${BASE_URL}/usercart`, {
           method: 'GET',
           headers: {
@@ -118,42 +173,104 @@ const SearchCategory = () => {
             'Content-Type': 'application/json',
           },
         });
+
+        console.log('🌐 Cart response:', response);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Cart server response:', errorText);
+          const errorData = response.headers.get('content-type')?.includes('application/json')
+            ? JSON.parse(errorText)
+            : {};
+          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
         const data = await response.json();
-        if (response.ok && data.success && data.data?.items?.length > 0) {
+        if (data.success && data.data?.items?.length > 0) {
           setCartItem(data.data.items[0]);
         } else {
           setCartError(data.message || 'No cart items found');
         }
       } catch (err) {
-        setCartError('Failed to fetch cart');
+        const errorMessage = err.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Failed to fetch cart. Please try again.';
+        setCartError(errorMessage);
+        if (err.message.includes('401')) {
+          Alert.alert(
+            'Session Expired',
+            'Your session has expired. Please log in again.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_cart',
+                }),
+              },
+            ],
+            { cancelable: false }
+          );
+        }
       } finally {
         setCartLoading(false);
       }
     };
     fetchCart();
-  }, [token]);
+  }, [token, navigation]);
 
   // Fetch filters
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         setFilterLoading(true);
-        const apiUrl = `${BASE_URL}/filter/`;
+        setFilterError(null);
+
+        if (!token) {
+          Alert.alert(
+            'Login Required',
+            'Please log in to access filters.',
+            [
+              {
+                text: 'OK',
+                onPress: () => navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_filters',
+                }),
+              },
+            ],
+            { cancelable: false }
+          );
+          return;
+        }
+
+        const apiUrl = `${BASE_URL}/filter`;
         const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
+            Authorization: `Bearer ${token}`,
           },
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Filter server response:', errorText);
+          const errorData = response.headers.get('content-type')?.includes('application/json')
+            ? JSON.parse(errorText)
+            : {};
+          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
         const json = await response.json();
-        console.log("json",json)
+        console.log('🌐 Filters response:', json);
+
         if (json?.success && Array.isArray(json.data)) {
           const mappedFilters = {};
-          json.data.forEach((filter) => {
+          json.data.forEach(filter => {
             if (filter.key && Array.isArray(filter.values)) {
               mappedFilters[filter.key] = {};
-              filter.values.forEach((val) => {
-                mappedFilters[filter.key][val] = appliedFilters?.[filter.key]?.[val] || false;
+              filter.values.forEach(val => {
+                mappedFilters[filter.key][val] =
+                  appliedFilters?.[filter.key]?.[val] || false;
               });
             }
           });
@@ -162,19 +279,38 @@ const SearchCategory = () => {
           setFilters(mappedFilters);
           setSelectedCategory(json.data[0]?.key || 'Price range');
         } else {
-          setFilterError(json?.message || 'No filters available');
-          Alert.alert('Error', json?.message || 'No filters available');
+          throw new Error(json?.message || 'No filters available');
         }
       } catch (error) {
-        setFilterError('Error fetching filters');
-        Alert.alert('Error', 'Error fetching filters');
+        const errorMessage = error.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Error fetching filters. Please try again.';
+        setFilterError(errorMessage);
+        Alert.alert(
+          'Error',
+          errorMessage,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (errorMessage.includes('401')) {
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'view_filters',
+                  });
+                }
+              },
+            },
+          ],
+          { cancelable: false }
+        );
       } finally {
         setFilterLoading(false);
       }
     };
 
     fetchFilters();
-  }, [token]);
+  }, [token, navigation, appliedFilters]);
 
   // Fetch search results
   useEffect(() => {
@@ -194,16 +330,22 @@ const SearchCategory = () => {
         `sortBy=${encodeURIComponent(sortBy)}`,
       ];
 
-      Object.keys(appliedFilters).forEach((key) => {
+      Object.keys(appliedFilters).forEach(key => {
         if (key === 'Price range' && priceRange.min && priceRange.max) {
-          queryParams.push(`Price range=${encodeURIComponent(`₹${priceRange.min} - ₹${priceRange.max}`)}`);
+          queryParams.push(
+            `Price range=${encodeURIComponent(
+              `₹${priceRange.min} - ₹${priceRange.max}`,
+            )}`,
+          );
         } else {
           const selectedValues = Object.entries(appliedFilters[key])
             .filter(([_, isSelected]) => isSelected)
             .map(([val]) => val);
           if (selectedValues.length > 0) {
             queryParams.push(
-              `${encodeURIComponent(key)}=${encodeURIComponent(selectedValues.join(','))}`
+              `${encodeURIComponent(key)}=${encodeURIComponent(
+                selectedValues.join(','),
+              )}`,
             );
           }
         }
@@ -219,9 +361,21 @@ const SearchCategory = () => {
             'Content-Type': 'application/json',
           },
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Search server response:', errorText);
+          const errorData = response.headers.get('content-type')?.includes('application/json')
+            ? JSON.parse(errorText)
+            : {};
+          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        }
+
         const json = await response.json();
+        console.log('🌐 Search response:', json);
+
         if (json?.success) {
-          const formattedItems = (json.data?.items || []).map((item) => ({
+          const formattedItems = (json.data?.items || []).map(item => ({
             name: item.name || 'Unnamed Item',
             description: item.description || 'No description available',
             mrp: item.MRP || 0,
@@ -232,19 +386,39 @@ const SearchCategory = () => {
             defaultColor: item.defaultColor || '',
             userAverageRating: item.userAverageRating || 4.5,
           }));
-          setProducts(page === 1 ? formattedItems : [...products, ...formattedItems]);
+          setProducts(
+            page === 1 ? formattedItems : [...products, ...formattedItems],
+          );
           setTotalPages(json.data?.totalPages || 1);
           setListKey(Date.now().toString());
           if (formattedItems.length === 0 && page === 1) {
             Alert.alert('No Results', 'No items found for your search');
           }
         } else {
-          Alert.alert('Error', json?.message || 'Failed to load search results');
-          setProducts([]);
-          setListKey(Date.now().toString());
+          throw new Error(json?.message || 'Failed to load search results');
         }
       } catch (error) {
-        Alert.alert('Error', 'Failed to fetch search results');
+        const errorMessage = error.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Failed to fetch search results. Please try again.';
+        Alert.alert(
+          'Error',
+          errorMessage,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (errorMessage.includes('401')) {
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'search',
+                  });
+                }
+              },
+            },
+          ],
+          { cancelable: false }
+        );
         setProducts([]);
         setListKey(Date.now().toString());
       } finally {
@@ -255,13 +429,13 @@ const SearchCategory = () => {
     const debouncedFetchProducts = debounce(fetchProducts, 500);
     debouncedFetchProducts();
     return () => debouncedFetchProducts.cancel();
-  }, [searchQuery, appliedFilters, sortBy, page, token]);
+  }, [searchQuery, appliedFilters, sortBy, page, token, navigation]);
 
   // Update active filter count
   useEffect(() => {
     let count = Object.values(appliedFilters)
-      .flatMap((obj) => Object.values(obj))
-      .filter((v) => v).length;
+      .flatMap(obj => Object.values(obj))
+      .filter(v => v).length;
     if (priceRange.min && priceRange.max) count += 1;
     setActiveFilterCount(count);
   }, [appliedFilters, priceRange]);
@@ -276,7 +450,7 @@ const SearchCategory = () => {
     setFilterModalVisible(false);
   };
 
-  const handleApplySort = (sortOption) => {
+  const handleApplySort = sortOption => {
     setSortBy(sortOption || 'popularity');
     setCurrentSort(sortOption || 'popularity');
     setPage(1);
@@ -290,12 +464,12 @@ const SearchCategory = () => {
 
   const handleLoadMore = () => {
     if (page < totalPages && !loading) {
-      setPage((prev) => prev + 1);
+      setPage(prev => prev + 1);
     }
   };
 
   const handleFilterChange = (category, option) => {
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
@@ -306,17 +480,21 @@ const SearchCategory = () => {
 
   const clearAllFilters = () => {
     const cleared = {};
-    filtersData.forEach((filter) => {
+    filtersData.forEach(filter => {
       if (filter.key !== 'Price range') {
         cleared[filter.key] = {};
-        filter.values.forEach((val) => {
+        filter.values.forEach(val => {
           cleared[filter.key][val] = false;
         });
       }
     });
     setFilters(cleared);
     setPriceRange({ min: '', max: '' });
-    handleApplyFilters([], cleared, { currentPage: 1, totalPages: 1, totalItems: 0 });
+    handleApplyFilters([], cleared, {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+    });
   };
 
   const applyFilters = async (filterState = filters) => {
@@ -324,9 +502,30 @@ const SearchCategory = () => {
       const min = Number(priceRange.min);
       const max = Number(priceRange.max);
       if (isNaN(min) || isNaN(max) || min > max) {
-        Alert.alert('Error', 'Invalid price range. Ensure Min and Max are numbers and Min is less than Max.');
+        Alert.alert(
+          'Error',
+          'Invalid price range. Ensure Min and Max are numbers and Min is less than Max.',
+        );
         return;
       }
+    }
+
+    if (!token) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to apply filters.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Login', {
+              fromScreen: 'SearchCategory',
+              actionAfterLogin: 'apply_filters',
+            }),
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
     }
 
     const queryParams = [
@@ -336,16 +535,22 @@ const SearchCategory = () => {
       `sortBy=${encodeURIComponent(sortBy)}`,
     ];
 
-    Object.keys(filterState).forEach((key) => {
+    Object.keys(filterState).forEach(key => {
       if (key === 'Price range' && priceRange.min && priceRange.max) {
-        queryParams.push(`Price range=${encodeURIComponent(`₹${priceRange.min} - ₹${priceRange.max}`)}`);
+        queryParams.push(
+          `Price range=${encodeURIComponent(
+            `₹${priceRange.min} - ₹${priceRange.max}`,
+          )}`,
+        );
       } else {
         const selectedValues = Object.entries(filterState[key])
           .filter(([_, isSelected]) => isSelected)
           .map(([val]) => val);
         if (selectedValues.length > 0) {
           queryParams.push(
-            `${encodeURIComponent(key)}=${encodeURIComponent(selectedValues.join(','))}`
+            `${encodeURIComponent(key)}=${encodeURIComponent(
+              selectedValues.join(','),
+            )}`,
           );
         }
       }
@@ -358,13 +563,25 @@ const SearchCategory = () => {
       setFilterLoading(true);
       const response = await fetch(apiUrl, {
         headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Filter apply server response:', errorText);
+        const errorData = response.headers.get('content-type')?.includes('application/json')
+          ? JSON.parse(errorText)
+          : {};
+        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('🌐 Filter apply response:', data);
+
       if (data?.success) {
-        const formattedItems = (data.data?.items || []).map((item) => ({
+        const formattedItems = (data.data?.items || []).map(item => ({
           name: item.name || 'Unnamed Item',
           description: item.description || '',
           mrp: item.MRP || 0,
@@ -384,12 +601,31 @@ const SearchCategory = () => {
           Alert.alert('No Results', 'No items match the selected filters');
         }
       } else {
-        setFilterError(data?.message || 'Failed to apply filters');
-        Alert.alert('Error', data?.message || 'Failed to apply filters');
+        throw new Error(data?.message || 'Failed to apply filters');
       }
     } catch (error) {
-      setFilterError('Error applying filters');
-      Alert.alert('Error', 'Error applying filters');
+      const errorMessage = error.message.includes('401')
+        ? 'Session expired. Please log in again.'
+        : 'Error applying filters. Please try again.';
+      setFilterError(errorMessage);
+      Alert.alert(
+        'Error',
+        errorMessage,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (errorMessage.includes('401')) {
+                navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'apply_filters',
+                });
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     } finally {
       setFilterLoading(false);
     }
@@ -426,15 +662,47 @@ const SearchCategory = () => {
           body: JSON.stringify({ itemId, color }),
         });
 
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('❌ Wishlist create server response:', errorText);
+          const errorData = res.headers.get('content-type')?.includes('application/json')
+            ? JSON.parse(errorText)
+            : {};
+          throw new Error(errorData.message || `HTTP error! Status: ${res.status}`);
+        }
+
         const data = await res.json();
-        if (res.ok && data.success) {
+        console.log('🌐 Wishlist create response:', data);
+
+        if (data.success) {
           Alert.alert('Success', 'Item added to wishlist!');
           navigation.navigate('Wishlist');
         } else {
-          Alert.alert('Error', data.message || 'Failed to add to wishlist');
+          throw new Error(data.message || 'Failed to add to wishlist');
         }
       } catch (error) {
-        Alert.alert('Error', 'Something went wrong while adding to wishlist');
+        const errorMessage = error.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Something went wrong while adding to wishlist';
+        Alert.alert(
+          'Error',
+          errorMessage,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (errorMessage.includes('401')) {
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'like_item',
+                    itemId,
+                  });
+                }
+              },
+            },
+          ],
+          { cancelable: false }
+        );
       }
     };
 
@@ -445,30 +713,38 @@ const SearchCategory = () => {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate('ProductDetail', { itemId: item.itemId })}
-      >
+        onPress={() =>
+          navigation.navigate('ProductDetail', { itemId: item.itemId })
+        }>
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: item.image?.uri || 'https://via.placeholder.com/150' }}
             style={styles.image}
-            onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+            onError={e => console.log('Image load error:', e.nativeEvent.error)}
           />
           <TouchableOpacity style={styles.heartIcon} onPress={handleHeartPress}>
             <View style={styles.heartBackground}>
-              <Image source={require('../../assets/Images/Heart.png')} style={styles.heartImage} />
+              <Image
+                source={require('../../assets/Images/Heart.png')}
+                style={styles.heartImage}
+              />
             </View>
           </TouchableOpacity>
         </View>
 
         <View style={styles.contentContainer}>
-          <Text numberOfLines={2} style={styles.title}>{item.name || 'No Name'}</Text>
+          <Text numberOfLines={2} style={styles.title}>
+            {item.name || 'No Name'}
+          </Text>
           <Text style={styles.subtitle}>Women's Party Wear</Text>
 
           <View style={styles.priceContainer}>
             <Text style={styles.mrpLabel}>MRP</Text>
             <Text style={styles.mrp}>₹{(item.mrp || 0).toFixed(2)}</Text>
             <Text style={styles.price}>₹{(item.price || 0).toFixed(2)}</Text>
-            <Text style={styles.discount}>{Math.round(item.discount) || 0}% Off</Text>
+            <Text style={styles.discount}>
+              {Math.round(item.discount) || 0}% Off
+            </Text>
           </View>
 
           <View style={styles.ratingContainer}>
@@ -479,9 +755,16 @@ const SearchCategory = () => {
               {hasHalfStar && (
                 <Icon name="star-half-empty" size={12} color="#FF9017" />
               )}
-              {[...Array(5 - fullStars - (hasHalfStar ? 1 : 0))].map((_, index) => (
-                <Icon key={index + fullStars + 1} name="star-o" size={12} color="#FF9017" />
-              ))}
+              {[...Array(5 - fullStars - (hasHalfStar ? 1 : 0))].map(
+                (_, index) => (
+                  <Icon
+                    key={index + fullStars + 1}
+                    name="star-o"
+                    size={12}
+                    color="#FF9017"
+                  />
+                ),
+              )}
               <Text style={styles.rating}> {rating.toFixed(1)}</Text>
             </View>
           </View>
@@ -494,8 +777,7 @@ const SearchCategory = () => {
   const CustomCheckbox = ({ value, onValueChange }) => (
     <TouchableOpacity
       onPress={onValueChange}
-      style={[styles.checkboxBase, value && styles.checkboxChecked]}
-    >
+      style={[styles.checkboxBase, value && styles.checkboxChecked]}>
       {value && <Text style={styles.checkmark}>✓</Text>}
     </TouchableOpacity>
   );
@@ -513,7 +795,9 @@ const SearchCategory = () => {
               placeholder="Min"
               keyboardType="numeric"
               value={priceRange.min}
-              onChangeText={(text) => setPriceRange((prev) => ({ ...prev, min: text }))}
+              onChangeText={text =>
+                setPriceRange(prev => ({ ...prev, min: text }))
+              }
             />
             <Text style={styles.priceDash}> - </Text>
             <TextInput
@@ -521,14 +805,16 @@ const SearchCategory = () => {
               placeholder="Max"
               keyboardType="numeric"
               value={priceRange.max}
-              onChangeText={(text) => setPriceRange((prev) => ({ ...prev, max: text }))}
+              onChangeText={text =>
+                setPriceRange(prev => ({ ...prev, max: text }))
+              }
             />
           </View>
         </View>
       );
     }
 
-    return Object.keys(filters[selectedCategory]).map((option) => (
+    return Object.keys(filters[selectedCategory]).map(option => (
       <View key={option} style={styles.optionRow}>
         <CustomCheckbox
           value={filters[selectedCategory][option]}
@@ -538,8 +824,7 @@ const SearchCategory = () => {
           style={[
             styles.optionText,
             filters[selectedCategory][option] && styles.selectedOptionText,
-          ]}
-        >
+          ]}>
           {option}
         </Text>
       </View>
@@ -559,7 +844,9 @@ const SearchCategory = () => {
       return (
         <View style={styles.filterModalContainer}>
           <Text style={styles.errorText}>{filterError}</Text>
-          <TouchableOpacity onPress={closeFilterModal} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={closeFilterModal}
+            style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
@@ -570,7 +857,9 @@ const SearchCategory = () => {
       <View style={styles.filterModalContainer}>
         <View style={styles.filterContent}>
           <View style={styles.filterHeader}>
-            <TouchableOpacity onPress={closeFilterModal} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={closeFilterModal}
+              style={styles.backButton}>
               <Text style={styles.backText}>←</Text>
             </TouchableOpacity>
             <Text style={styles.filterHeaderTitle}>FILTER</Text>
@@ -581,36 +870,38 @@ const SearchCategory = () => {
 
           <View style={styles.filterBody}>
             <ScrollView style={styles.leftColumn}>
-              {filtersData.map((cat) => (
+              {filtersData.map(cat => (
                 <TouchableOpacity
                   key={cat.key}
                   style={[
                     styles.categoryButton,
                     selectedCategory === cat.key && styles.activeCategory,
                   ]}
-                  onPress={() => setSelectedCategory(cat.key)}
-                >
+                  onPress={() => setSelectedCategory(cat.key)}>
                   <Text
                     style={[
                       styles.categoryText,
                       selectedCategory === cat.key && styles.activeCategoryText,
-                    ]}
-                  >
-                    {cat.key} ({cat.key === 'Price range' ? 'Custom' : cat.values.length})
+                    ]}>
+                    {cat.key} (
+                    {cat.key === 'Price range' ? 'Custom' : cat.values.length})
                   </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
 
-            <ScrollView style={styles.rightColumn}>{renderFilterOptions()}</ScrollView>
+            <ScrollView style={styles.rightColumn}>
+              {renderFilterOptions()}
+            </ScrollView>
           </View>
 
           <TouchableOpacity
             style={styles.applyButton}
             onPress={() => applyFilters()}
-            disabled={filterLoading}
-          >
-            <Text style={styles.applyButtonText}>{filterLoading ? 'Applying...' : 'APPLY'}</Text>
+            disabled={filterLoading}>
+            <Text style={styles.applyButtonText}>
+              {filterLoading ? 'Applying...' : 'APPLY'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -623,32 +914,36 @@ const SearchCategory = () => {
       <ScrollView style={styles.sortContent}>
         <Text style={styles.sortTitle}>SORT BY</Text>
 
-        <TouchableOpacity style={styles.sortCloseButton} onPress={closeSortModal}>
+        <TouchableOpacity
+          style={styles.sortCloseButton}
+          onPress={closeSortModal}>
           <Text style={styles.sortCloseText}>×</Text>
         </TouchableOpacity>
 
-        {sortOptions.map((option) => (
+        {sortOptions.map(option => (
           <TouchableOpacity
             key={option.value}
             style={styles.sortOptionRow}
-            onPress={() => setCurrentSort(option.value)}
-          >
+            onPress={() => setCurrentSort(option.value)}>
             <Text
               style={[
                 styles.sortOptionText,
                 currentSort === option.value && styles.sortSelectedOption,
-              ]}
-            >
+              ]}>
               {option.label}
             </Text>
           </TouchableOpacity>
         ))}
 
-        <TouchableOpacity style={styles.sortClearButton} onPress={() => setCurrentSort(null)}>
+        <TouchableOpacity
+          style={styles.sortClearButton}
+          onPress={() => setCurrentSort(null)}>
           <Text style={styles.sortClearButtonText}>CLEAR ALL</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sortApplyButton} onPress={() => handleApplySort(currentSort)}>
+        <TouchableOpacity
+          style={styles.sortApplyButton}
+          onPress={() => handleApplySort(currentSort)}>
           <Text style={styles.sortApplyButtonText}>APPLY</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -666,8 +961,7 @@ const SearchCategory = () => {
                 setSearchQuery('');
                 setPage(1);
                 setProducts([]);
-              }}
-            >
+              }}>
               <Image
                 source={require('../../assets/Images/Back1.png')}
                 style={styles.backIcon}
@@ -684,7 +978,7 @@ const SearchCategory = () => {
                 placeholderTextColor="#999999"
                 style={styles.searchInput}
                 value={searchQuery}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   setSearchQuery(text);
                   setPage(1);
                   setProducts([]);
@@ -696,14 +990,18 @@ const SearchCategory = () => {
 
           <View style={styles.resultsContainer}>
             {loading && page === 1 ? (
-              <ActivityIndicator size="large" color="#9B5AF5" style={{ marginTop: 20 }} />
+              <ActivityIndicator
+                size="large"
+                color="#9B5AF5"
+                style={{ marginTop: 20 }}
+              />
             ) : products.length === 0 ? (
               <Text style={styles.noItemsText}>No items found</Text>
             ) : (
               <FlatList
                 key={listKey}
                 data={products}
-                keyExtractor={(item) => item.itemId}
+                keyExtractor={item => item.itemId}
                 numColumns={2}
                 showsVerticalScrollIndicator={false}
                 renderItem={renderSubCategoryItem}
@@ -712,7 +1010,11 @@ const SearchCategory = () => {
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={() =>
                   loading && page > 1 ? (
-                    <ActivityIndicator size="small" color="#9B5AF5" style={{ marginVertical: 10 }} />
+                    <ActivityIndicator
+                      size="small"
+                      color="#9B5AF5"
+                      style={{ marginVertical: 10 }}
+                    />
                   ) : page === totalPages && products.length > 0 ? (
                     <Text style={styles.noMoreText}>No more items to load</Text>
                   ) : null
@@ -725,9 +1027,13 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.filterBtn}
               onPress={openFilterModal}
-              accessibilityLabel={`Filter products${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
-            >
-              <Image source={require('../../assets/Images/Filter.png')} style={styles.icon} />
+              accessibilityLabel={`Filter products${
+                activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''
+              }`}>
+              <Image
+                source={require('../../assets/Images/Filter.png')}
+                style={styles.icon}
+              />
               <Text style={styles.iconText}>
                 FILTER{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
               </Text>
@@ -735,9 +1041,11 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.sortBtn}
               onPress={openSortModal}
-              accessibilityLabel="Sort products"
-            >
-              <Image source={require('../../assets/Images/Sort.png')} style={styles.icon} />
+              accessibilityLabel="Sort products">
+              <Image
+                source={require('../../assets/Images/Sort.png')}
+                style={styles.icon}
+              />
               <Text style={styles.iconText}>SORT</Text>
             </TouchableOpacity>
           </View>
@@ -750,14 +1058,14 @@ const SearchCategory = () => {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require('../../assets/Images/Back1.png')}
+              source={require('../../assets/icon/BackIcon.png')}
               style={styles.backIcon}
             />
           </TouchableOpacity>
 
           <View style={styles.searchBox}>
             <Image
-              source={require('../../assets/Images/SearchIcon.png')}
+              source={require('../../assets/icon/SearchIcon.png')}
               style={styles.searchIcon}
             />
             <TextInput
@@ -765,7 +1073,7 @@ const SearchCategory = () => {
               placeholderTextColor="#999999"
               style={styles.searchInput}
               value={searchQuery}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setSearchQuery(text);
                 setPage(1);
                 setProducts([]);
@@ -774,80 +1082,107 @@ const SearchCategory = () => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Recent Searches</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.recentSearchesContainer}
-        >
-          {recentSearches.map((item, index) => (
+        <ScrollView contentContainerStyle={styles.mainContentContainer}>
+          <Text style={styles.sectionTitle}>Recent Searches</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recentSearchesContainer}>
             <TouchableOpacity
-              key={index}
               style={styles.recentItem}
               onPress={() => {
-                setSearchQuery(item.label);
+                setSearchQuery('Chiffon Saree');
                 setPage(1);
                 setProducts([]);
-              }}
-            >
-              <Image source={item.image} style={styles.recentImage} />
-              <Text style={styles.recentLabel}>{item.label}</Text>
+              }}>
+              <Image source={girl1Image} style={styles.recentImage} />
+              <Text style={styles.recentLabel}>Chiffon Saree</Text>
             </TouchableOpacity>
-          ))}
+            <TouchableOpacity
+              style={styles.recentItem}
+              onPress={() => {
+                setSearchQuery('Chiffon Saree');
+                setPage(1);
+                setProducts([]);
+              }}>
+              <Image source={girl2Image} style={styles.recentImage} />
+              <Text style={styles.recentLabel}>Formal Shirt</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.recentItem}
+              onPress={() => {
+                setSearchQuery('Chiffon Saree');
+                setPage(1);
+                setProducts([]);
+              }}>
+              <Image source={girl3Image} style={styles.recentImage} />
+              <Text style={styles.recentLabel}>Formal Shirt</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
+            Popular Categories
+          </Text>
+          <GenderTabs />
+
+          <ScrollView contentContainerStyle={styles.suggestionContainer}>
+            {wishlistLoading ? (
+              <Text style={styles.loadingText}>Loading wishlist...</Text>
+            ) : wishlistError || !wishlistItem ? (
+              <Text style={styles.errorText}>
+                {wishlistError || 'No wishlist items available'}
+              </Text>
+            ) : (
+              <SuggestionCard
+                title="Searching from wishlist?"
+                productImage={{ uri: wishlistItem.url }}
+                productName={wishlistItem.itemId.name}
+                productDesc={wishlistItem.itemId.description}
+                price={wishlistItem.itemId.discountedPrice}
+                oldPrice={wishlistItem.itemId.MRP}
+                discount={Math.round(
+                  ((wishlistItem.itemId.MRP - wishlistItem.itemId.discountedPrice) /
+                    wishlistItem.itemId.MRP) *
+                    100,
+                )}
+                rating={4.5}
+                reviews="79 Ratings & 55"
+                sizes={['XS', 'S', 'M', 'L', 'XL']}
+                colors={[wishlistItem.color.toLowerCase()]}
+                buttonLabel="VIEW WISHLIST"
+                onButtonPress={() => navigation.navigate('Wishlist')}
+              />
+            )}
+
+            {cartLoading ? (
+              <Text style={styles.loadingText}>Loading cart...</Text>
+            ) : cartError || !cartItem ? (
+              <Text style={styles.errorText}>
+                {cartError || 'No cart items available'}
+              </Text>
+            ) : (
+              <SuggestionCard
+                title="Missing anything from bag?"
+                productImage={{ uri: cartItem.itemId.image }}
+                productName={cartItem.itemId.name}
+                productDesc={cartItem.itemId.description}
+                price={cartItem.itemId.discountedPrice}
+                oldPrice={cartItem.itemId.MRP}
+                discount={Math.round(
+                  ((cartItem.itemId.MRP - cartItem.itemId.discountedPrice) /
+                    cartItem.itemId.MRP) *
+                    100,
+                )}
+                rating={4.5}
+                reviews="121 Ratings & 59"
+                sizes={[cartItem.size]}
+                colors={[cartItem.color.toLowerCase()]}
+                buttonLabel="VIEW CART"
+                onButtonPress={() => navigation.navigate('Cart')}
+              />
+            )}
+          </ScrollView>
         </ScrollView>
-
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Popular Categories</Text>
-        <GenderTabs />
-
-        {wishlistLoading ? (
-          <Text style={styles.loadingText}>Loading wishlist...</Text>
-        ) : wishlistError || !wishlistItem ? (
-          <Text style={styles.errorText}>{wishlistError || 'No wishlist items available'}</Text>
-        ) : (
-          <SuggestionCard
-            title="Searching from wishlist?"
-            productImage={{ uri: wishlistItem.url }}
-            productName={wishlistItem.itemId.name}
-            productDesc={wishlistItem.itemId.description}
-            price={wishlistItem.itemId.discountedPrice}
-            oldPrice={wishlistItem.itemId.MRP}
-            discount={Math.round(
-              ((wishlistItem.itemId.MRP - wishlistItem.itemId.discountedPrice) /
-                wishlistItem.itemId.MRP) *
-                100
-            )}
-            rating={4.5}
-            reviews="79 Ratings & 55"
-            sizes={['XS', 'S', 'M', 'L', 'XL']}
-            colors={[wishlistItem.color.toLowerCase()]}
-            buttonLabel="VIEW WISHLIST"
-            onButtonPress={() => navigation.navigate('Wishlist')}
-          />
-        )}
-
-        {cartLoading ? (
-          <Text style={styles.loadingText}>Loading cart...</Text>
-        ) : cartError || !cartItem ? (
-          <Text style={styles.errorText}>{cartError || 'No cart items available'}</Text>
-        ) : (
-          <SuggestionCard
-            title="Missing anything from bag?"
-            productImage={{ uri: cartItem.itemId.image }}
-            productName={cartItem.itemId.name}
-            productDesc={cartItem.itemId.description}
-            price={cartItem.itemId.discountedPrice}
-            oldPrice={cartItem.itemId.MRP}
-            discount={Math.round(
-              ((cartItem.itemId.MRP - cartItem.itemId.discountedPrice) / cartItem.itemId.MRP) * 100
-            )}
-            rating={4.5}
-            reviews="121 Ratings & 59"
-            sizes={[cartItem.size]}
-            colors={[cartItem.color.toLowerCase()]}
-            buttonLabel="VIEW CART"
-            onButtonPress={() => navigation.navigate('Cart')}
-          />
-        )}
       </SafeAreaView>
     );
   };
@@ -859,16 +1194,14 @@ const SearchCategory = () => {
         animationType="slide"
         transparent
         visible={isFilterModalVisible}
-        onRequestClose={closeFilterModal}
-      >
+        onRequestClose={closeFilterModal}>
         {renderFilterModal()}
       </Modal>
       <Modal
         animationType="slide"
         transparent
         visible={isSortModalVisible}
-        onRequestClose={closeSortModal}
-      >
+        onRequestClose={closeSortModal}>
         {renderSortModal()}
       </Modal>
     </View>
@@ -879,6 +1212,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  mainContentContainer: {
+    paddingBottom: 20,
+  },
+  suggestionContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   resultsContainer: {
     flex: 1,
@@ -894,7 +1234,7 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     marginTop: 30,
-    width: 24,
+    width: 30,
     height: 24,
     marginRight: 12,
   },
@@ -945,7 +1285,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     marginRight: 10,
-    tintColor: '#999999',
     opacity: 0.6,
   },
   searchInput: {

@@ -5,13 +5,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerSavedAddressScreen = ({ navigation }) => {
   const token = useSelector(state => state.auth.token);
+  const insets = useSafeAreaInsets();
   const [defaultAddress, setDefaultAddress] = useState(null);
   const [otherAddresses, setOtherAddresses] = useState([]);
 
@@ -35,6 +39,8 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
 
           setDefaultAddress(defaultAddr || null);
           setOtherAddresses(otherAddr);
+        } else {
+          console.error('No addresses found or invalid response:', json);
         }
       } catch (error) {
         console.error('Error fetching addresses:', error);
@@ -52,8 +58,8 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
       style={styles.addressBox}
       onPress={() => {
         navigation.navigate('PartnerEdit', {
-          addressId: item._id,   // ✅ This is the correct addressDetail._id
-          address: item
+          addressId: item._id,
+          address: item,
         });
       }}
     >
@@ -65,16 +71,14 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}> PARTNER SAVED ADDRESSES</Text>
+        <Text style={styles.headerTitle}>PARTNER SAVED ADDRESSES</Text>
       </View>
 
-      {/* Address List */}
       <ScrollView contentContainerStyle={styles.content}>
         {defaultAddress && (
           <>
@@ -91,29 +95,48 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      {/* Add New Address */}
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => navigation.navigate('AddNewAddress')}>
+        onPress={() => navigation.navigate('AddNewAddress')}
+      >
         <Text style={styles.addButtonText}>ADD NEW ADDRESS</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 export default PartnerSavedAddressScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
-  content: { padding: 16, paddingBottom: 100 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    color: '#000',
+    textTransform: 'uppercase',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 100,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -126,8 +149,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
   },
-  nameText: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 4 },
-  addressText: { fontSize: 13, color: '#555' },
+  nameText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 4,
+  },
+  addressText: {
+    fontSize: 13,
+    color: '#555',
+  },
   addButton: {
     backgroundColor: '#f37022',
     paddingVertical: 15,
@@ -135,7 +166,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
     bottom: 20,
-    width: '100%',
+    width: Dimensions.get('window').width - 40, // Adjusted to account for margins
+    marginHorizontal: 20,
+    borderRadius: 5, // Added for rounded corners
   },
-  addButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

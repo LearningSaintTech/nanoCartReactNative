@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,19 +11,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
-import { useDispatch, useSelector } from 'react-redux';
-import { setUserDetails } from '../../redux/reducers/authReducer';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import {useDispatch, useSelector} from 'react-redux';
+import {setUserDetails} from '../../redux/reducers/authReducer';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { BASE_URL } from '../../config/apiConfig';
+// import Icon from 'react-native-vector-icons/Ionicons';
 
-const BackIcon = require('../../assets/Images/Backward.png');
 
-const PartnerRegisterScreen = ({ navigation }) => {
+const {width} = Dimensions.get('window');
+const scaleFont = size => (width / 414) * size; // Scale font based on 414px reference (e.g., iPhone 11 Pro)
+const scalePadding = size => (width / 414) * size;
+
+const PartnerRegisterScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token);
-  const user = useSelector((state) => state.auth.user);
+  const token = useSelector(state => state.auth.token);
+  const user = useSelector(state => state.auth.user);
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -35,17 +41,17 @@ const PartnerRegisterScreen = ({ navigation }) => {
   const [shopAddress, setShopAddress] = useState('');
   const [pincode, setPincode] = useState('');
   const [imageShop, setImageShop] = useState(null);
-
-  
-const [pendingModalVisible, setPendingModalVisible] = useState(false);
-const [partnerId, setPartnerId] = useState(null);
-const [pollingInterval, setPollingInterval] = useState(null);
+  const [pendingModalVisible, setPendingModalVisible] = useState(false);
+  const [partnerId, setPartnerId] = useState(null);
+  const [pollingInterval, setPollingInterval] = useState(null);
+  const [subscribe, setSubscribe] = useState(false);
 
   useEffect(() => {
+
+    console.log("this is token",token)
     const fetchUserProfile = async () => {
       try {
         if (!token) return;
-
         const response = await fetch(`${BASE_URL}/auth/profile`, {
           method: 'GET',
           headers: {
@@ -56,8 +62,8 @@ const [pollingInterval, setPollingInterval] = useState(null);
 
         const data = await response.json();
         if (response.ok && data.success) {
-          const { name, email, phoneNumber } = data.data;
-          dispatch(setUserDetails({ name, email, phoneNumber }));
+          const {name, email, phoneNumber} = data.data;
+          dispatch(setUserDetails({name, email, phoneNumber}));
           setName(name);
           setEmail(email);
           setPhoneNumber(phoneNumber);
@@ -71,49 +77,44 @@ const [pollingInterval, setPollingInterval] = useState(null);
   }, [dispatch, token]);
 
   const handleImagePick = () => {
-    Alert.alert(
-      'Upload Shop Image',
-      'Choose an option',
-      [
-        {
-          text: 'Camera',
-          onPress: () => {
-            launchCamera({ mediaType: 'photo' }, (response) => {
-              if (!response.didCancel && response.assets) {
-                setImageShop(response.assets[0]);
-              }
-            });
-          },
+    Alert.alert('Upload Shop Image', 'Choose an option', [
+      {
+        text: 'Camera',
+        onPress: () => {
+          launchCamera({mediaType: 'photo'}, response => {
+            if (!response.didCancel && response.assets) {
+              setImageShop(response.assets[0]);
+            }
+          });
         },
-        {
-          text: 'Gallery',
-          onPress: () => {
-            launchImageLibrary({ mediaType: 'photo' }, (response) => {
-              if (!response.didCancel && response.assets) {
-                setImageShop(response.assets[0]);
-              }
-            });
-          },
+      },
+      {
+        text: 'Gallery',
+        onPress: () => {
+          launchImageLibrary({mediaType: 'photo'}, response => {
+            if (!response.didCancel && response.assets) {
+              setImageShop(response.assets[0]);
+            }
+          });
         },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+      },
+      {text: 'Cancel', style: 'cancel'},
+    ]);
   };
 
-
   const handleRegister = async () => {
-    console.log(' Starting handleRegister');
-  
+    console.log('Starting handleRegister');
+
     // Step 1: Validation
     console.log('Checking required fields...');
     if (!name || !email || !shopName || !shopAddress || !pan || !pincode) {
-      console.warn(' Validation failed');
+      console.warn('Validation failed');
       Alert.alert('Validation Error', 'Please fill all required fields');
       return;
     }
-  
+
     // Step 2: FormData
-    console.log(' Creating FormData...');
+    console.log('Creating FormData...');
     const formData = new FormData();
     formData.append('name', name);
     formData.append('email', email);
@@ -123,7 +124,7 @@ const [pollingInterval, setPollingInterval] = useState(null);
     formData.append('shopAddress', shopAddress);
     formData.append('panNumber', pan);
     formData.append('pincode', pincode);
-  
+
     if (imageShop) {
       formData.append('imageShop', {
         uri: imageShop.uri,
@@ -131,103 +132,196 @@ const [pollingInterval, setPollingInterval] = useState(null);
         name: imageShop.fileName || 'shop-image.jpg',
       });
     }
-  
+
     // Step 3: API Call
     try {
-      console.log(' Sending registration request...');
-      const res = await fetch(`${BASE_URL}/auth/partner/signup`, {
+      console.log('Sending registration request...');
+      const res = await fetch(`${BASE_URL}/auth/partner/signup1`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // headers: {
+        //   'Content-Type': 'multipart/form-data',
+        // },
         body: formData,
       });
-  
+
       const data = await res.json();
-      console.log(' API Response:', data);
-  
+      console.log('API Response:', data);
+
       if (res.ok && data.success) {
-       const isVerified = data?.data?.isVerified;
-       const isActive = data?.data?.isActive;
-       const message = data.message;
+        const isVerified = data?.data?.isVerified;
+        const isActive = data?.data?.isActive;
+        const message = data.message;
 
-if (!isVerified || !isActive) {
-  console.log(' Partner is not verified or not active. Awaiting admin approval.');
-  Alert.alert(
-    'Success',
-    `${message}\n\nPlease wait for admin approval before logging in.`
-  );
-  return; // wait for admin, do NOT navigate
-} else {
-  console.log('✅ Partner is verified and active. Navigating to Home.');
-  Alert.alert('Success', 'Registration complete and approved!');
-  navigation.navigate('PartnerHome');
-}
-
+        if (!isVerified || !isActive) {
+          console.log(
+            'Partner is not verified or not active. Awaiting admin approval.',
+          );
+          Alert.alert(
+            'Success',
+            `${message}\n\nPlease wait for admin approval before logging in.`,
+          );
+          return;
+        } else {
+          console.log('✅ Partner is verified and active. Navigating to Home.');
+          Alert.alert('Success', 'Registration complete and approved!');
+          navigation.navigate('PartnerHome');
+        }
       } else {
-        console.warn(' Registration failed:', data.message);
+        console.warn('Registration failed:', data.message);
         Alert.alert('Error', data.message || 'Something went wrong');
       }
     } catch (err) {
-      console.error(' Network Error:', err);
+      console.error('Network Error:', err);
       Alert.alert('Error', 'Registration failed');
     }
   };
-  
+
+
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Image source={BackIcon} style={styles.backIcon} />
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{flex: 1}}>
+        <View
+          style={[
+            styles.headerContainer,
+            {paddingTop: insets.top + scalePadding(10)},
+          ]}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrowleft" size={scaleFont(24)} color="#000" />
+          </TouchableOpacity>
+        </View>
 
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Register</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Register </Text>
           <Text style={styles.subtitle}>Looks like you are new here!</Text>
 
-          <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
-          <TextInput style={[styles.input, { color: '#aaa' }]} value={`+91 - ${phoneNumber}`} editable={false} />
-          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} />
-          <TextInput style={styles.input} placeholder="Shop Name*" value={shopName} onChangeText={setShopName} />
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor="#777"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={[styles.input, {color: '#aaa'}]}
+            value={`${phoneNumber}`}
+            editable={false}
+            placeholder="Phone Number"
+            placeholderTextColor="#777"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#777"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => setSubscribe(!subscribe)}>
+              {subscribe ? (
+                <Icon name="checksquare" size={scaleFont(18)} color="#D86427" />
+              ) : (
+                <Icon name="checksquareo" size={scaleFont(18)} color="#aaa" />
+              )}
+            </TouchableOpacity>
+            <Text style={styles.checkboxLabel}>
+              Email me for offers and updates.
+            </Text>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Shop Name*"
+            placeholderTextColor="#777"
+            value={shopName}
+            onChangeText={setShopName}
+          />
 
           <View style={styles.rowInputs}>
             <TextInput
-              style={[styles.input, { flex: 1, marginRight: 10 }]}
+              style={[styles.input, {flex: 1, marginRight: scalePadding(10)}]}
               placeholder="GST No."
+              placeholderTextColor="#777"
               value={gst}
               onChangeText={setGst}
             />
             <TextInput
-              style={[styles.input, { flex: 1 }]}
+              style={[styles.input, {flex: 1}]}
               placeholder="PAN No.*"
+              placeholderTextColor="#777"
               value={pan}
               onChangeText={setPan}
             />
           </View>
 
-          <TextInput style={styles.input} placeholder="Shop Address*" value={shopAddress} onChangeText={setShopAddress} />
-          <TextInput style={styles.input} placeholder="Pincode*" value={pincode} onChangeText={setPincode} keyboardType="numeric" />
+          <TextInput
+            style={styles.input}
+            placeholder="Shop Address*"
+            placeholderTextColor="#777"
+            value={shopAddress}
+            onChangeText={setShopAddress}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Pincode*"
+            placeholderTextColor="#777"
+            value={pincode}
+            onChangeText={setPincode}
+            keyboardType="numeric"
+          />
 
-          <View style={[styles.uploadContainer, { marginBottom: 20 }]}>
+          <View
+            style={[styles.uploadContainer, {marginBottom: scalePadding(20)}]}>
             <Text style={styles.uploadLabel}>Shop Image*</Text>
-            <TouchableOpacity onPress={handleImagePick} style={styles.uploadButton}>
+            <TouchableOpacity
+              onPress={handleImagePick}
+              style={styles.uploadButton}>
               <Text style={styles.uploadText}>Upload</Text>
-              <Icon name="upload" size={16} color="#fff" style={{ marginLeft: 5 }} />
+              <Icon
+                name="upload"
+                size={scaleFont(16)}
+                color="#fff"
+                style={{marginLeft: scalePadding(5)}}
+              />
             </TouchableOpacity>
           </View>
 
           {imageShop && (
-            <Image source={{ uri: imageShop.uri }} style={{ width: 100, height: 100, marginTop: 10, alignSelf: 'center' }} />
+            <Image
+              source={{uri: imageShop.uri}}
+              style={{
+                width: scaleFont(100),
+                height: scaleFont(100),
+                marginTop: scalePadding(10),
+                alignSelf: 'center',
+                borderRadius: scalePadding(6),
+              }}
+            />
           )}
 
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={handleRegister}>
             <Text style={styles.registerButtonText}>REGISTER</Text>
-            <Icon name="arrowright" size={18} color="#fff" style={{ marginLeft: 8 }} />
+            <Icon
+              name="arrowright"
+              size={scaleFont(18)}
+              color="#fff"
+              style={{marginLeft: scalePadding(8)}}
+            />
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
-            Having trouble logging in? <Text style={styles.whatsappText}>Whatsapp Us</Text>
+            Having trouble logging in?{' '}
+            <Text style={styles.whatsappText}>Whatsapp Us</Text>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -238,35 +332,127 @@ if (!isVerified || !isActive) {
 export default PartnerRegisterScreen;
 
 const styles = StyleSheet.create({
-  container: { padding: 25, paddingTop: 60 },
-  backButton: { position: 'absolute', top: 20, left: 20, zIndex: 99,marginTop:20 },
-  backIcon: { width: 22, height: 22, resizeMode: 'contain' },
-  title: { fontSize: 26, fontWeight: '600', fontFamily: 'serif', marginBottom: 5 },
-  subtitle: { fontSize: 14, color: '#777', marginBottom: 30 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 999,
+    backgroundColor: '#fff',
+    elevation: 4, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    paddingBottom: scalePadding(10),
+    paddingHorizontal: scalePadding(20),
+  },
+  backButton: {
+    width: scaleFont(30),
+    height: scaleFont(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContainer: {
+    padding: scalePadding(25),
+    paddingTop: scalePadding(80),
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: scaleFont(28),
+    fontWeight: '600',
+    fontFamily: 'QuicheSans-Medium', // Corrected font
+    color: '#000',
+    marginBottom: scalePadding(5),
+    marginTop: 10,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: scalePadding(25),
+  },
+  checkbox: {
+    marginRight: scalePadding(10),
+  },
+  checkboxLabel: {
+    fontSize: scaleFont(14),
+    color: '#555',
+    fontFamily: 'Poppins-Regular',
+  },
+
+  subtitle: {
+    fontSize: scaleFont(14),
+    color: '#777',
+    marginBottom: scalePadding(30),
+    fontFamily: 'Poppins-Regular',
+  },
   input: {
     borderBottomWidth: 1,
     borderBottomColor: '#aaa',
-    fontSize: 16,
-    paddingVertical: 10,
-    marginBottom: 25,
+    fontSize: scaleFont(16),
+    paddingVertical: scalePadding(8),
+    marginBottom: scalePadding(25),
     color: '#000',
+    fontFamily: 'Poppins-Regular',
   },
-  rowInputs: { flexDirection: 'row', marginBottom: 25 },
+  rowInputs: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: scalePadding(25),
+  },
   registerButton: {
     flexDirection: 'row',
     backgroundColor: '#D86427',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: scalePadding(14),
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 4,
-    marginBottom: 15,
+    borderRadius: scalePadding(6),
+    marginBottom: scalePadding(15),
   },
-  registerButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  footerText: { fontSize: 12, color: '#444', textAlign: 'center', marginBottom: 20 },
-  whatsappText: { color: '#D86427', fontWeight: '600' },
-  uploadContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  uploadLabel: { fontSize: 14, color: '#444' },
-  uploadButton: { flexDirection: 'row', backgroundColor: '#F28C38', paddingVertical: 5, paddingHorizontal: 12, borderRadius: 5, alignItems: 'center' },
-  uploadText: { color: '#fff', fontSize: 14 },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: scaleFont(16),
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  footerText: {
+    fontSize: scaleFont(12),
+    color: '#444',
+    textAlign: 'center',
+    marginBottom: scalePadding(30),
+    fontFamily: 'Poppins-Regular',
+  },
+  whatsappText: {
+    color: '#D86427',
+    fontWeight: '500',
+  },
+  uploadContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: scalePadding(15),
+  },
+  uploadLabel: {
+    fontSize: scaleFont(15),
+    color: '#444',
+    fontFamily: 'Poppins-Regular',
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    backgroundColor: '#D86427',
+    paddingVertical: scalePadding(6),
+    paddingHorizontal: scalePadding(14),
+    borderRadius: scalePadding(5),
+    alignItems: 'center',
+  },
+  uploadText: {
+    color: '#fff',
+    fontSize: scaleFont(14),
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
+  },
 });

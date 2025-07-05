@@ -265,7 +265,7 @@ const PaymentScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Delivery')}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>PAYMENT</Text>
@@ -273,7 +273,9 @@ const PaymentScreen = ({ navigation }) => {
 
       <View style={styles.stepIndicator}>
         <Text style={styles.stepActive}>■ CART DETAILS</Text>
+        <Text style={styles.stepActive}>─────</Text>
         <Text style={styles.stepActive}>■ ADDRESS</Text>
+        <Text style={styles.stepActive}>─────</Text>
         <Text style={styles.stepActive}>■ PAYMENT</Text>
       </View>
 
@@ -462,14 +464,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingTop:32
   },
   header: {
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    display:"flex"
   },
   headerTitle: {
-    marginTop: 20,
+   
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
@@ -538,7 +542,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   accordionContent: {
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     marginBottom: 16,
   },
   paymentOption: {
@@ -546,6 +550,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal:10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },

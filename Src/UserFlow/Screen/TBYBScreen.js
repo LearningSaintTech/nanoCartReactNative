@@ -40,7 +40,9 @@ const TBYBScreen = ({ navigation }) => {
     <View style={styles.card}>
       <View style={styles.imageWrapper}>
         <Image source={item.image} style={styles.image} />
-      
+        {/* <TouchableOpacity style={styles.deleteIcon}>
+          <Image source={require('../../assets/Images/delete.png')} style={styles.deleteImg} />
+        </TouchableOpacity> */}
       </View>
       <View style={styles.details}>
         <Text style={styles.name}>{item.name}</Text>

@@ -577,7 +577,7 @@ const PartnerProductDetail = () => {
 
             console.log('Cart Payload:', payload);
             try {
-              const response = await fetch('http://192.168.1.17:4000/api/partner/cart/create', {
+              const response = await fetch(`${BASE_URL}/partner/cart/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,

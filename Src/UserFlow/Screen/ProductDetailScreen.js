@@ -1,3 +1,5 @@
+
+
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Header from '../Component/Header';
 import AccordionItem from '../Component/AccordionItem';
@@ -15,6 +17,7 @@ import {
   TouchableWithoutFeedback,
   TextInput,
   Modal,
+  Alert,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,24 +31,24 @@ const ProductDetailScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const token = useSelector(state => state.auth.token);
-  const { itemId } = route.params;
-  console.log("product details id ", itemId)
+  const { itemId } = route.params || {};
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [product, setProduct] = useState(null);
   const [selectedColorImages, setSelectedColorImages] = useState([]);
   const [sizes, setSizes] = useState([]);
-  const [selectedColor, setSelectedColor] = useState(null); // Track selected color
-  const [selectedSize, setSelectedSize] = useState(null);  // Track selected size
-  const [quantity, setQuantity] = useState(1); // Add quantity state
-  const [ratingsData, setRatingsData] = useState(null); // State for ratings and reviews
-  const [ratingsLoading, setRatingsLoading] = useState(true); // State for ratings loading
-  const [recommendedItems, setRecommendedItems] = useState([]); // New state for recommended items
-  const [recommendedLoading, setRecommendedLoading] = useState(true); // New state for recommended items loading
-  const [isModalVisible, setIsModalVisible] = useState(false); // State for TBYB modal
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [ratingsData, setRatingsData] = useState(null);
+  const [ratingsLoading, setRatingsLoading] = useState(true);
+  const [recommendedItems, setRecommendedItems] = useState([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   // Helper function to convert createdAt to "X weeks ago"
   const timeAgo = (dateString) => {
-    const now = new Date('2025-06-18T14:36:00.000Z'); // 08:06 PM IST on June 18, 2025
+    const now = new Date('2025-07-04T14:01:00.000Z'); // Updated to current date: 02:01 PM IST, July 4, 2025
     const pastDate = new Date(dateString);
     const diffInMs = now - pastDate;
     const diffInSeconds = Math.floor(diffInMs / 1000);
@@ -68,41 +71,105 @@ const ProductDetailScreen = () => {
   };
 
   // Fetch product details
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`);
-        const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          const productData = json.data[0];
-          setProduct(productData);
-          if (productData.imagesByColor?.length > 0) {
-            setSelectedColorImages(productData.imagesByColor[0].images);
-            setSizes(productData.imagesByColor[0].sizes || []);
-            setSelectedColor(productData.imagesByColor[0].color); // Default to first color
-            setSelectedSize(productData.imagesByColor[0].sizes?.[0]?.size || null); // Default to first size
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching product details:', err);
-      } finally {
-        setLoading(false);
+  const fetchProductDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (!itemId) throw new Error('No item ID provided');
+      if (!token) {
+        Alert.alert(
+          'Login Required',
+          'Please log in to view product details.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Login', {
+                fromScreen: 'ProductDetail',
+                itemId,
+              }),
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
       }
-    };
 
+      const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `HTTP error! Status: ${res.status}`);
+      }
+
+      const json = await res.json();
+      console.log('Product details response:', json);
+      if (json.data && json.data.length > 0) {
+        const productData = json.data[0];
+        setProduct(productData);
+        if (productData.imagesByColor?.length > 0) {
+          setSelectedColorImages(productData.imagesByColor[0].images);
+          setSizes(productData.imagesByColor[0].sizes || []);
+          setSelectedColor(productData.imagesByColor[0].color);
+          setSelectedSize(productData.imagesByColor[0].sizes?.[0]?.size || null);
+        }
+      } else {
+        throw new Error('No product data found');
+      }
+    } catch (err) {
+      console.error('Error fetching product details:', err.message);
+      setError(
+        err.message.includes('401')
+          ? 'Session expired. Please log in again.'
+          : 'Failed to load product details. Please try again.',
+      );
+      if (err.message.includes('401')) {
+        Alert.alert(
+          'Session Expired',
+          'Your session has expired. Please log in again.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Login', {
+                fromScreen: 'ProductDetail',
+                itemId,
+              }),
+            },
+          ],
+          { cancelable: false }
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProductDetails();
-  }, [itemId]);
+  }, [itemId, token, navigation]);
 
   // Fetch ratings and reviews
   useEffect(() => {
     const fetchRatingsReviews = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/user/ratingreview/${itemId}`);
+        setRatingsLoading(true);
+        const res = await fetch(`${BASE_URL}/user/ratingreview/${itemId}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         const json = await res.json();
+        console.log('Ratings response:', json);
         if (json.success && json.data) {
           setRatingsData(json.data);
         } else {
-          console.log('Failed to fetch ratings and reviews:', json.message);
           setRatingsData(null);
         }
       } catch (err) {
@@ -114,20 +181,26 @@ const ProductDetailScreen = () => {
     };
 
     fetchRatingsReviews();
-  }, [itemId]);
+  }, [itemId, token]);
 
   // Fetch recommended items
   useEffect(() => {
     const fetchRecommendedItems = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/items`);
+        setRecommendedLoading(true);
+        const res = await fetch(`${BASE_URL}/items`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         const json = await res.json();
+        console.log('Recommended items response:', json);
         if (json.success && json.data && json.data.items) {
-          // Filter out the current item to avoid recommending the same product
           const filteredItems = json.data.items.filter(item => item._id !== itemId);
           setRecommendedItems(filteredItems);
         } else {
-          console.log('Failed to fetch recommended items:', json.message);
           setRecommendedItems([]);
         }
       } catch (err) {
@@ -139,14 +212,34 @@ const ProductDetailScreen = () => {
     };
 
     fetchRecommendedItems();
-  }, [itemId]);
+  }, [itemId, token]);
 
   if (loading) {
-    return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#D2691E" />
+        <Text style={styles.loadingText}>Loading product details...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchProductDetails}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   if (!product) {
-    return <Text style={{ textAlign: 'center', marginTop: 50 }}>No product found</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No product found</Text>
+      </View>
+    );
   }
 
   const { itemId: itemInfo, imagesByColor, sizeChart, deliveryDescription, returnPolicy, About, isSize, howToMeasure } = product;
@@ -155,7 +248,7 @@ const ProductDetailScreen = () => {
     setSelectedColor(colorObj.color);
     setSelectedColorImages(colorObj.images);
     setSizes(colorObj.sizes);
-    setSelectedSize(colorObj.sizes?.[0]?.size || null); // Reset size selection when color changes
+    setSelectedSize(colorObj.sizes?.[0]?.size || null);
   };
 
   const handleSizeSelect = (size) => {
@@ -287,14 +380,14 @@ const ProductDetailScreen = () => {
 
         {/* Product Details */}
         <View style={styles.details}>
-          <Text style={styles.title}>{itemInfo.name}</Text>
-          <Text style={styles.subTitle}>{itemInfo.description}</Text>
+          <Text style={styles.title}>{itemInfo?.name || 'Unknown Product'}</Text>
+          <Text style={styles.subTitle}>{itemInfo?.description || 'No description available'}</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.strikeThrough}>₹{itemInfo.MRP}</Text>
-            <Text style={styles.price}> ₹{itemInfo.discountedPrice}</Text>
-            <Text style={styles.discount}>({Math.round(itemInfo.discountPercentage)}% off)</Text>
+            <Text style={styles.strikeThrough}>₹{itemInfo?.MRP || 'N/A'}</Text>
+            <Text style={styles.price}> ₹{itemInfo?.discountedPrice || 'N/A'}</Text>
+            <Text style={styles.discount}>({Math.round(itemInfo?.discountPercentage || 0)}% off)</Text>
           </View>
-          <Text style={styles.delivery}>{deliveryDescription}</Text>
+          <Text style={styles.delivery}>{deliveryDescription || 'No delivery information available'}</Text>
         </View>
 
         {/* Sizes */}
@@ -305,9 +398,9 @@ const ProductDetailScreen = () => {
               <TouchableOpacity onPress={() => navigation.navigate('SizeChart', {
                 sizeChart,
                 howToMeasure,
-                itemId: product.itemId._id,
-                imagesByColor: product.imagesByColor,
-                selectedColor: selectedColor // Pass the currently selected color
+                itemId: itemInfo?._id,
+                imagesByColor,
+                selectedColor,
               })}>
                 <Text style={styles.sizeChartText}>SIZE CHART</Text>
               </TouchableOpacity>
@@ -319,7 +412,7 @@ const ProductDetailScreen = () => {
                   style={[
                     styles.sizeBox,
                     selectedSize === szObj.size ? styles.selectedSizeBox : {},
-                    szObj.stock === 0 && { opacity: 0.5 } // Optional: visually disable out-of-stock
+                    szObj.stock === 0 && { opacity: 0.5 },
                   ]}
                   onPress={() => szObj.stock > 0 && handleSizeSelect(szObj.size)}
                   disabled={szObj.stock === 0}
@@ -327,7 +420,7 @@ const ProductDetailScreen = () => {
                   <Text style={[
                     styles.sizeBoxText,
                     selectedSize === szObj.size ? styles.selectedSizeBoxText : {},
-                    szObj.stock === 0 && { textDecorationLine: 'line-through', color: '#aaa' }
+                    szObj.stock === 0 && { textDecorationLine: 'line-through', color: '#aaa' },
                   ]}>
                     {szObj.size}
                   </Text>
@@ -337,42 +430,42 @@ const ProductDetailScreen = () => {
             <Text style={styles.deliveryText}>Fastest 2-3 days delivery to 100+ pincodes</Text>
 
             {/* Try Before You Buy Button */}
-           <TouchableOpacity
-  style={styles.tryBeforeButton}
-  onPress={() => {
-    if (!selectedColor || !selectedColorImages || !selectedColorImages[0]?.url) {
-      Alert.alert('Error', 'Please select a color before trying on.');
-      return;
-    }
-    navigation.navigate('UploadTBYB', {
-      garmentImage: selectedColorImages[0].url, // Pass the primary image for the selected color
-      itemId: product.itemId._id,
-      category: product.itemId.category || 'tops', // Use product category or default to 'tops'
-      selectedColor: selectedColor,
-    });
-  }}
->
-  <Image
-    source={require('../../assets/Images/Tshirt.png')}
-    style={styles.tbybIcon}
-  />
-  <Text style={styles.tryBeforeText}>TRY BEFORE YOU BUY</Text>
-</TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tryBeforeButton}
+              onPress={() => {
+                if (!selectedColor || !selectedColorImages || !selectedColorImages[0]?.url) {
+                  Alert.alert('Error', 'Please select a color before trying on.');
+                  return;
+                }
+                navigation.navigate('UploadTBYB', {
+                  garmentImage: selectedColorImages[0].url,
+                  itemId: itemInfo?._id,
+                  category: itemInfo?.category || 'tops',
+                  selectedColor,
+                });
+              }}
+            >
+              <Image
+                source={require('../../assets/Images/Tshirt.png')}
+                style={styles.tbybIcon}
+              />
+              <Text style={styles.tryBeforeText}>TRY BEFORE YOU BUY</Text>
+            </TouchableOpacity>
           </View>
         )}
 
         {/* Accordion Sections */}
         <View style={styles.accordionContainer}>
           <AccordionItem title="About the Product">
-            <Text>{About}</Text>
+            <Text>{About || 'No product information available'}</Text>
           </AccordionItem>
 
           <AccordionItem title="Check Delivery at Your Pincode">
-            <PincodeChecker deliveryPincode={product.deliveryPincode} />
+            <PincodeChecker deliveryPincode={product?.deliveryPincode || []} />
           </AccordionItem>
 
           <AccordionItem title="Return Policies">
-            <Text>{returnPolicy}</Text>
+            <Text>{returnPolicy || 'No return policy available'}</Text>
           </AccordionItem>
         </View>
 
@@ -420,7 +513,7 @@ const ProductDetailScreen = () => {
             ratingsData.data.slice(0, 1).map((review, idx) => (
               <View key={idx} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
-                  <Text style={styles.reviewerName}>{review.userId.name}</Text>
+                  <Text style={styles.reviewerName}>{review.userId?.name || 'Anonymous'}</Text>
                   <View style={styles.ratingBadge}>
                     <Text style={styles.ratingText}>{review.rating} ★</Text>
                   </View>
@@ -476,59 +569,52 @@ const ProductDetailScreen = () => {
 
       {/* Modal for TBYB Terms & Conditions */}
       <Modal
-  animationType="fade"
-  transparent={true}
-  visible={isModalVisible}
-  onRequestClose={() => setIsModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>TBYB Terms & Conditions</Text>
-      <Text style={styles.modalSubtitle}>8/10 Free Trials Left</Text>
-      <View style={styles.modalList}>
-        <Text style={styles.modalBullet}>• Upload a clear full-body image to try outfits.</Text>
-        <Text style={styles.modalBullet}>• Each virtual try-on session deducts one credit from your monthly limit.</Text>
-        <Text style={styles.modalBullet}>• Users receive 10 free trials every month for virtual try-ons.</Text>
-        <Text style={styles.modalBullet}>• Purchasing an item resets your credits, allowing more try-ons.</Text>
-        <Text style={styles.modalBullet}>• The generated previews depend on image quality, lighting, and body posture.</Text>
-        <Text style={styles.modalBullet}>• Unused credits do not carry over to the next month.</Text>
-      </View>
-      <TouchableOpacity 
-        style={styles.modalCloseButton} 
-        onPress={() => setIsModalVisible(false)}
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
       >
-        <Text style={styles.modalCloseText}>CLOSE</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>TBYB Terms & Conditions</Text>
+            <Text style={styles.modalSubtitle}>8/10 Free Trials Left</Text>
+            <View style={styles.modalList}>
+              <Text style={styles.modalBullet}>• Upload a clear full-body image to try outfits.</Text>
+              <Text style={styles.modalBullet}>• Each virtual try-on session deducts one credit from your monthly limit.</Text>
+              <Text style={styles.modalBullet}>• Users receive 10 free trials every month for virtual try-ons.</Text>
+              <Text style={styles.modalBullet}>• Purchasing an item resets your credits, allowing more try-ons.</Text>
+              <Text style={styles.modalBullet}>• The generated previews depend on image quality, lighting, and body posture.</Text>
+              <Text style={styles.modalBullet}>• Unused credits do not carry over to the next month.</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>CLOSE</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.bottomButtons}>
         <TouchableOpacity
           style={styles.wishlistButton}
           onPress={async () => {
-            console.log('Wishlist button pressed');
-
             if (!token) {
-              console.log('No token found. Redirecting to login screen...');
               navigation.navigate('Login', {
                 fromScreen: 'ProductDetail',
-                itemId: product.itemId._id,
+                itemId: itemInfo?._id,
               });
               return;
             }
 
-            console.log('Token found:', token);
-
             const payload = {
-              itemId: product.itemId._id,
+              itemId: itemInfo?._id,
               color: selectedColor || 'Black',
             };
 
-            console.log('Request Payload:', payload);
-
             try {
-              const response = await fetch('http://192.168.1.17:4000/api/userwishlist/create', {
+              const response = await fetch(`${BASE_URL}/userwishlist/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -537,23 +623,16 @@ const ProductDetailScreen = () => {
                 body: JSON.stringify(payload),
               });
 
-              console.log('Wishlist API Response Status:', response.status);
-
               const data = await response.json();
-              console.log('Wishlist API Response Data:', data);
-
               if (response.ok) {
-                console.log('Item added to wishlist successfully.');
                 dispatch(addToWishlist(data));
-                console.log('Wishlist item dispatched to Redux:', data);
                 alert('Added to wishlist');
                 navigation.navigate('Wishlist');
               } else {
-                console.warn('Wishlist API error:', data.message);
                 alert(data.message || 'Failed to add to wishlist');
               }
             } catch (err) {
-              console.error('Network/API Error while adding to wishlist:', err);
+              console.error('Error adding to wishlist:', err);
               alert('Something went wrong while adding to wishlist');
             }
           }}
@@ -565,13 +644,10 @@ const ProductDetailScreen = () => {
         <TouchableOpacity
           style={styles.cartButton}
           onPress={async () => {
-            console.log('🛒 Add to cart button pressed');
-
             if (!token) {
-              console.warn('No token found. Redirecting to login.');
               navigation.navigate('Login', {
                 fromScreen: 'ProductDetail',
-                itemId: product.itemId._id,
+                itemId: itemInfo?._id,
               });
               return;
             }
@@ -590,17 +666,15 @@ const ProductDetailScreen = () => {
             }
 
             const payload = {
-              itemId: product.itemId._id,
-              quantity: quantity, // Use dynamic quantity
+              itemId: itemInfo?._id,
+              quantity,
               size: selectedSize,
               color: selectedColor || 'Black',
               skuId: selectedSizeObj.skuId,
             };
 
-            console.log('Cart Payload:', payload);
-
             try {
-              const response = await fetch('http://192.168.1.17:4000/api/usercart/create', {
+              const response = await fetch(`${BASE_URL}/usercart/create`, {
                 method: 'POST',
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -610,17 +684,14 @@ const ProductDetailScreen = () => {
               });
 
               const data = await response.json();
-
-              console.log('Cart API Response:', data);
-
               if (response.ok) {
                 alert('Added to cart successfully.');
                 navigation.navigate('Cart');
               } else {
                 alert(data.message || 'Failed to add to cart.');
               }
-            } catch (error) {
-              console.error('Cart API Error:', error);
+            } catch (err) {
+              console.error('Cart API Error:', err);
               alert('Something went wrong while adding to cart.');
             }
           }}
@@ -993,47 +1064,81 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     textAlign: 'center',
   },
-modalOverlay: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-},
-modalContent: {
-  width: '80%',
-  backgroundColor: '#fff',
-  borderRadius: 10,
-  padding: 20,
-},
-modalTitle: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  textAlign: 'center',
-  marginBottom: 10,
-},
-modalSubtitle: {
-  fontSize: 16,
-  color: '#FF6B00',
-  textAlign: 'center',
-  marginBottom: 15,
-},
-modalList: {
-  marginBottom: 20,
-},
-modalBullet: {
-  fontSize: 14,
-  marginVertical: 5,
-  lineHeight: 20,
-},
-modalCloseButton: {
-  backgroundColor: '#FF6B00',
-  paddingVertical: 12,
-  borderRadius: 5,
-  alignItems: 'center',
-},
-modalCloseText: {
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: 16,
-},
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#FF6B00',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  modalList: {
+    marginBottom: 20,
+  },
+  modalBullet: {
+    fontSize: 14,
+    marginVertical: 5,
+    lineHeight: 20,
+  },
+  modalCloseButton: {
+    backgroundColor: '#FF6B00',
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#E74C3C',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#D2691E',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 4,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

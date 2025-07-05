@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  View, Text, TextInput, Image, TouchableOpacity, ScrollView, StyleSheet,
+  View,
+  Text,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
 } from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
-import { useSelector, useDispatch } from 'react-redux';
-import { setCartItems } from '../../redux/reducers/cartSlice';
-import { BASE_URL } from '../../config/apiConfig';
+import {useSelector, useDispatch} from 'react-redux';
+import {setCartItems} from '../../redux/reducers/cartSlice';
+import {BASE_URL} from '../../config/apiConfig';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-const CartScreen = ({ navigation }) => {
+const CartScreen = ({navigation}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const authToken = useSelector(state => state.auth.token);
   const cartItems = useSelector(state => state.cart.items);
@@ -28,7 +35,7 @@ const CartScreen = ({ navigation }) => {
     try {
       const response = await fetch(`${BASE_URL}/usercart`, {
         method: 'GET',
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: {Authorization: `Bearer ${authToken}`},
       });
       const data = await response.json();
       if (response.ok) {
@@ -41,7 +48,7 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  const handleRemoveItem = async (cartItem) => {
+  const handleRemoveItem = async cartItem => {
     try {
       const payload = {
         itemId: cartItem.itemId._id,
@@ -105,7 +112,7 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
-  const handleMoveToWishlist = async (cartItem) => {
+  const handleMoveToWishlist = async cartItem => {
     try {
       const payload = {
         itemId: cartItem.itemId._id,
@@ -132,8 +139,14 @@ const CartScreen = ({ navigation }) => {
   };
 
   // Calculate totals based on cart data
-  const cartTotalMRP = cartItems.reduce((total, item) => total + (item.itemId.MRP * item.quantity), 0);
-  const discountedTotal = cartItems.reduce((total, item) => total + (item.itemId.discountedPrice * item.quantity), 0);
+  const cartTotalMRP = cartItems.reduce(
+    (total, item) => total + item.itemId.MRP * item.quantity,
+    0,
+  );
+  const discountedTotal = cartItems.reduce(
+    (total, item) => total + item.itemId.discountedPrice * item.quantity,
+    0,
+  );
 
   const [invoiceData, setInvoiceData] = useState({
     gst: 0,
@@ -154,7 +167,7 @@ const CartScreen = ({ navigation }) => {
       if (res.ok && json.success) {
         const invoice = json.data[0].invoice;
         // Pick the latest value for each key
-        const getLatestValue = (key) => {
+        const getLatestValue = key => {
           const items = invoice.filter(item => item.key === key);
           return items.length > 0 ? items[items.length - 1].value : 0;
         };
@@ -162,7 +175,9 @@ const CartScreen = ({ navigation }) => {
         setInvoiceData({
           gst: getLatestValue('gst'),
           coupon_discount: getLatestValue('coupon discount'),
-          shipping_charge: getLatestValue('shipping charges') || getLatestValue('shipping charge'),
+          shipping_charge:
+            getLatestValue('shipping charges') ||
+            getLatestValue('shipping charge'),
           cod_charges: getLatestValue('cod charges'),
         });
       } else {
@@ -179,17 +194,26 @@ const CartScreen = ({ navigation }) => {
     invoiceData.coupon_discount +
     invoiceData.shipping_charge +
     invoiceData.cod_charges +
-    (discountedTotal * (invoiceData.gst / 100))
+    discountedTotal * (invoiceData.gst / 100)
   ).toFixed(2);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+    <View style={{flex: 1, backgroundColor: '#fff'}}>
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{paddingBottom: 100}}
+        showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => navigation.navigate('UserHome')}>
-              <Image source={require('../../assets/Images/Back.png')} style={styles.backIcon} />
+            {/* <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image
+                source={require('../../assets/icon/BackIcon.png')}
+                style={styles.backIcon}
+              />
+            </TouchableOpacity> */}
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Icon name="arrow-back" size={22} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Cart</Text>
           </View>
@@ -203,9 +227,11 @@ const CartScreen = ({ navigation }) => {
                 } else {
                   setIsModalVisible(true);
                 }
-              }}
-            >
-              <Image source={require('../../assets/Images/Cart.png')} style={styles.icon} />
+              }}>
+              <Image
+                source={require('../../assets/icon/CartIcon.png')}
+                style={styles.icon}
+              />
               {cartCount > 0 && (
                 <View style={styles.cartBadge}>
                   <Text style={styles.cartBadgeText}>{cartCount}</Text>
@@ -215,158 +241,203 @@ const CartScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Progress bar */}
-        <View style={styles.progress}>
-          <Text style={styles.activeStep}>● CART DETAILS</Text>
-          <Text style={styles.progressLine}>─────</Text>
-          <Text style={styles.inactiveStep}>● ADDRESS</Text>
-          <Text style={styles.progressLine}>─────</Text>
-          <Text style={styles.inactiveStep}>● PAYMENT</Text>
-        </View>
-
-        {/* Cart Items or Empty Cart Message */}
-        {cartItems.length === 0 ? (
-          <View style={styles.emptyCartContainer}>
-            <Image
-              source={require('../../assets/Images/Cart.png')}
-              style={styles.emptyCartImage}
-            />
-            <Text style={styles.emptyCartTitle}>Your Cart is Empty</Text>
-            <Text style={styles.emptyCartSubtitle}>Add items to start shopping</Text>
-            <TouchableOpacity
-              style={styles.continueShoppingBtn}
-              onPress={() => navigation.navigate('UserHome')}
-            >
-              <Text style={styles.continueShoppingText}>Continue Shopping</Text>
-            </TouchableOpacity>
+        <View style={styles.heroSection}>
+          {/* Progress bar */}
+          <View style={styles.progress}>
+            <Text style={styles.activeStep}>● CART DETAILS </Text>
+            <Text style={styles.progressLine}>─────</Text>
+            <Text style={styles.inactiveStep}>● ADDRESS</Text>
+            <Text style={styles.progressLine}>─────</Text>
+            <Text style={styles.inactiveStep}>● PAYMENT</Text>
           </View>
-        ) : (
-          cartItems.map((cartItem, index) => (
-            <View key={index} style={styles.card}>
-              <View style={{ flexDirection: 'row' }}>
-                <Image
-                  source={{ uri: cartItem.itemId?.image }}
-                  style={styles.productImage}
-                />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productTitle}>{cartItem.itemId?.name}</Text>
-                  <Text style={styles.productDesc}>Unisex Collections</Text>
-                  <View style={styles.sizeText}>
-                    <Text style={styles.sizeLabel}>Size: </Text>
-                    <Text style={styles.sizeValue}>{cartItem.size}</Text>
-                  </View>
 
-                  <View style={styles.qtyRow}>
-                    <Text style={styles.qtyLabel}>Qty: </Text>
-                    <View style={styles.qtyControls}>
-                      <TouchableOpacity style={styles.qtyBtn} onPress={() => handleUpdateQuantity(cartItem, 'decrease')}>
-                        <Entypo name="chevron-down" size={14} color="#fff" />
-                      </TouchableOpacity>
-                      <Text style={styles.qtyNumber}>{cartItem.quantity}</Text>
-                      <TouchableOpacity style={styles.qtyBtn} onPress={() => handleUpdateQuantity(cartItem, 'increase')}>
-                        <Entypo name="chevron-up" size={14} color="#fff" />
-                      </TouchableOpacity>
+          {/* Cart Items or Empty Cart Message */}
+          {cartItems.length === 0 ? (
+            <View style={styles.emptyCartContainer}>
+              <Image
+                source={require('../../assets/Images/Cart.png')}
+                style={styles.emptyCartImage}
+              />
+              <Text style={styles.emptyCartTitle}>Your Cart is Empty</Text>
+              <Text style={styles.emptyCartSubtitle}>
+                Add items to start shopping
+              </Text>
+              <TouchableOpacity
+                style={styles.continueShoppingBtn}
+                onPress={() => navigation.navigate('UserHome')}>
+                <Text style={styles.continueShoppingText}>
+                  Continue Shopping
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            cartItems.map((cartItem, index) => (
+              <View key={index} style={styles.card}>
+                <View style={{flexDirection: 'row'}}>
+                  <Image
+                    source={{uri: cartItem.itemId?.image}}
+                    style={styles.productImage}
+                  />
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productTitle}>
+                      {cartItem.itemId?.name}
+                    </Text>
+                    <Text style={styles.productDesc}>Unisex Collections</Text>
+                    <View style={styles.sizeText}>
+                      <Text style={styles.sizeLabel}>Size: </Text>
+                      <Text style={styles.sizeValue}>{cartItem.size}</Text>
+                    </View>
+
+                    <View style={styles.qtyRow}>
+                      <Text style={styles.qtyLabel}>Qty: </Text>
+                      <View style={styles.qtyControls}>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={() =>
+                            handleUpdateQuantity(cartItem, 'decrease')
+                          }>
+                          <Entypo name="chevron-down" size={14} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyNumber}>
+                          {cartItem.quantity}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={() =>
+                            handleUpdateQuantity(cartItem, 'increase')
+                          }>
+                          <Entypo name="chevron-up" size={14} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.mrpLabel}>MRP </Text>
+                      <Text style={styles.strikePrice}>
+                        ₹{cartItem.itemId.MRP.toFixed(2)}
+                      </Text>
+                      <Text style={styles.actualPrice}>
+                        ₹{cartItem.itemId.discountedPrice.toFixed(2)}
+                      </Text>
                     </View>
                   </View>
-
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.mrpLabel}>MRP </Text>
-                    <Text style={styles.strikePrice}>₹{cartItem.itemId.MRP.toFixed(2)}</Text>
-                    <Text style={styles.actualPrice}>₹{cartItem.itemId.discountedPrice.toFixed(2)}</Text>
-                  </View>
                 </View>
-              </View>
 
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleMoveToWishlist(cartItem)}>
-                  <Text style={styles.actionText}>MOVE TO WISHLIST</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleRemoveItem(cartItem)}>
-                  <Text style={styles.actionText}>REMOVE</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
-        )}
-
-        {/* Apply Coupon */}
-        {cartItems.length > 0 && (
-          <>
-            <TouchableOpacity
-              style={styles.couponBar}
-              onPress={() => setShowCoupon(prev => !prev)}
-            >
-              <Text style={{ fontWeight: 'bold' }}>Apply Coupon</Text>
-              <Entypo name={showCoupon ? 'chevron-up' : 'chevron-down'} size={20} color="#000" />
-            </TouchableOpacity>
-
-            {showCoupon && (
-              <View style={styles.couponAccordion}>
-                <View style={styles.couponInputRow}>
-                  <TextInput
-                    placeholder="Enter your Coupon code"
-                    style={styles.couponInput}
-                    value={couponCode}
-                    onChangeText={setCouponCode}
-                  />
-                  <TouchableOpacity style={styles.couponApplyBtn}>
-                    <Text style={styles.couponApplyText}>APPLY</Text>
+                <View style={styles.actionRow}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleMoveToWishlist(cartItem)}>
+                    <Text style={styles.actionText}>MOVE TO WISHLIST</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleRemoveItem(cartItem)}>
+                    <Text style={styles.actionText}>REMOVE</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-            )}
-          </>
-        )}
+            ))
+          )}
 
-        {/* Price Details */}
-        {cartItems.length > 0 && (
-          <View style={styles.priceCard}>
-            <Text style={styles.priceTitle}>Price Details ({cartItems.length} items)</Text>
-            <View style={styles.priceRow}>
-              <Text>Cart Total</Text>
-              <Text>₹{cartTotalMRP.toFixed(2)}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text>Discounted Price</Text>
-              <Text>₹{discountedTotal.toFixed(2)}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.orange}>Coupon Discount</Text>
-              <Text style={styles.orange}>- ₹{invoiceData.coupon_discount.toFixed(2)}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text>GST ({invoiceData.gst}%)</Text>
-              <Text>₹{(discountedTotal * (invoiceData.gst / 100)).toFixed(2)}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text>Shipping Charges</Text>
-              <Text>₹{invoiceData.shipping_charge.toFixed(2)}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text>COD Charges</Text>
-              <Text>₹{invoiceData.cod_charges.toFixed(2)}</Text>
-            </View>
-            <View style={[styles.priceRow, { borderTopWidth: 1, paddingTop: 8, marginTop: 6, borderColor: '#ddd' }]}>
-              <Text style={{ fontWeight: 'bold' }}>Total Payable</Text>
-              <Text style={{ fontWeight: 'bold' }}>₹{totalPayable}</Text>
-            </View>
-          </View>
-        )}
+          {/* Apply Coupon */}
+          {cartItems.length > 0 && (
+            <>
+              <TouchableOpacity
+                style={styles.couponBar}
+                onPress={() => setShowCoupon(prev => !prev)}>
+                <Text style={{fontWeight: 'bold'}}>Apply Coupon</Text>
+                <Entypo
+                  name={showCoupon ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color="#000"
+                />
+              </TouchableOpacity>
 
-        {/* Continue Button */}
-        {cartItems.length > 0 && (
-          <TouchableOpacity style={styles.continueBtn} onPress={handleContinuePress}>
-            <Text style={styles.continueText}>CONTINUE</Text>
-          </TouchableOpacity>
-        )}
+              {showCoupon && (
+                <View style={styles.couponAccordion}>
+                  <View style={styles.couponInputRow}>
+                    <TextInput
+                      placeholder="Enter your Coupon code"
+                      style={styles.couponInput}
+                      value={couponCode}
+                      onChangeText={setCouponCode}
+                    />
+                    <TouchableOpacity style={styles.couponApplyBtn}>
+                      <Text style={styles.couponApplyText}>APPLY</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
 
-        {/* Payment Method */}
-        {cartItems.length > 0 && (
-          <View style={styles.paymentRow}>
-            <Text>Payment Method</Text>
-            <Text style={{ fontWeight: 'bold' }}>UPI</Text>
-          </View>
-        )}
+          {/* Price Details */}
+          {cartItems.length > 0 && (
+            <View style={styles.priceCard}>
+              <Text style={styles.priceTitle}>
+                Price Details ({cartItems.length} items)
+              </Text>
+              <View style={styles.priceRow}>
+                <Text>Cart Total</Text>
+                <Text>₹{cartTotalMRP.toFixed(2)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text>Discounted Price</Text>
+                <Text>₹{discountedTotal.toFixed(2)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text style={styles.orange}>Coupon Discount</Text>
+                <Text style={styles.orange}>
+                  - ₹{invoiceData.coupon_discount.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text>GST ({invoiceData.gst}%)</Text>
+                <Text>
+                  ₹{(discountedTotal * (invoiceData.gst / 100)).toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text>Shipping Charges</Text>
+                <Text>₹{invoiceData.shipping_charge.toFixed(2)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text>COD Charges</Text>
+                <Text>₹{invoiceData.cod_charges.toFixed(2)}</Text>
+              </View>
+              <View
+                style={[
+                  styles.priceRow,
+                  {
+                    borderTopWidth: 1,
+                    paddingTop: 8,
+                    marginTop: 6,
+                    borderColor: '#ddd',
+                  },
+                ]}>
+                <Text style={{fontWeight: 'bold'}}>Total Payable</Text>
+                <Text style={{fontWeight: 'bold'}}>₹{totalPayable}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Continue Button */}
+          {cartItems.length > 0 && (
+            <TouchableOpacity
+              style={styles.continueBtn}
+              onPress={handleContinuePress}>
+              <Text style={styles.continueText}>CONTINUE</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Payment Method */}
+          {cartItems.length > 0 && (
+            <View style={styles.paymentRow}>
+              <Text>Payment Method</Text>
+              <Text style={{fontWeight: 'bold'}}>UPI</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -376,7 +447,7 @@ export default CartScreen;
 
 // Styles remain unchanged
 const styles = StyleSheet.create({
-  icon: { width: 20, height: 20, resizeMode: 'contain' },
+  icon: {width: 20, height: 20, resizeMode: 'contain'},
   header: {
     marginTop: 20,
     flexDirection: 'row',
@@ -387,11 +458,17 @@ const styles = StyleSheet.create({
     elevation: 2,
     justifyContent: 'space-between',
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  backIcon: { width: 24, height: 24, resizeMode: 'contain', marginRight: 8 },
-  headerTitle: {   marginLeft:20, fontSize: 16, fontWeight: 'bold', color: '#000', textTransform: 'uppercase' },
-  rightIcons: { flexDirection: 'row', alignItems: 'center',marginRight:10 },
-  cartIconWrapper: { position: 'relative' },
+  headerLeft: {flexDirection: 'row', alignItems: 'center'},
+  backIcon: {width: 24, height: 24, resizeMode: 'contain', marginRight: 8},
+  headerTitle: {
+    marginLeft: 20,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textTransform: 'uppercase',
+  },
+  rightIcons: {flexDirection: 'row', alignItems: 'center', marginRight: 10},
+  cartIconWrapper: {position: 'relative'},
   cartBadge: {
     position: 'absolute',
     top: -6,
@@ -403,16 +480,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  cartBadgeText: {color: '#fff', fontSize: 10, fontWeight: 'bold'},
+  heroSection: {
+    padding: 10,
+  },
   progress: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 10,
     alignItems: 'center',
+    display: 'flex',
   },
-  activeStep: { fontWeight: 'bold', color: '#F36F25' },
-  inactiveStep: { color: '#ccc' },
-  progressLine: { color: '#ccc', marginHorizontal: 4 },
+  activeStep: {fontWeight: 'bold', color: '#F36F25'},
+  inactiveStep: {color: '#ccc'},
+  progressLine: {color: '#ccc', marginHorizontal: 4},
   card: {
     backgroundColor: '#FFF8F5',
     padding: 12,
@@ -537,7 +618,7 @@ const styles = StyleSheet.create({
   },
   priceCard: {
     backgroundColor: '#fff',
-    padding: 16,
+
     marginTop: 1,
   },
   priceTitle: {
@@ -561,7 +642,7 @@ const styles = StyleSheet.create({
   continueBtn: {
     backgroundColor: '#FF6B00',
     padding: 16,
-    margin: 16,
+    // margin: 16,
   },
   continueText: {
     color: '#fff',
@@ -575,7 +656,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#F5F5F5',
-    marginTop: 1,
+    marginTop: 10,
   },
   emptyCartContainer: {
     flex: 1,
@@ -613,7 +694,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   couponAccordion: {
-    marginHorizontal: 15,
+    // marginHorizontal: 15,
     backgroundColor: '#fdf0e7',
     paddingVertical: 12,
     paddingHorizontal: 10,

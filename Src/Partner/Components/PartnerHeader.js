@@ -72,7 +72,7 @@ const PartnerHeader = () => {
           {/* Logo */}
           <View style={{ flex: 1, maxWidth: scale(150) }}>
             <Image
-              source={require('../../assets/Images/Headerlogo.png')}
+              source={require('../../assets/icon/logo.png')}
               style={{
                 width: scale(130),
                 height: scale(40),
@@ -98,12 +98,12 @@ const PartnerHeader = () => {
                 letterSpacing: scale(0.3),
               }}
             >
-              ₹ Patner
+              $ 0.0
             </Text>
 
             <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
               <Image
-                source={require('../../assets/Images/SearchIcon.png')}
+                source={require('../../assets/icon/SearchIcon.png')}
                 style={{
                   width: scale(24),
                   height: scale(24),
@@ -117,7 +117,7 @@ const PartnerHeader = () => {
               style={{ position: 'relative' }}
             >
               <Image
-                source={require('../../assets/Images/Cart.png')}
+                source={require('../../assets/icon/CartIcon.png')}
                 style={{
                   width: scale(26),
                   height: scale(26),

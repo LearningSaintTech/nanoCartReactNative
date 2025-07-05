@@ -24,7 +24,8 @@ const HomeScreen = () => {
   return (
     <ScrollView 
       style={[styles.container, { paddingTop: insets.top }]} 
-      contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + hp('4%') }]} >
+      contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + hp('4%') }]}
+    >
       <Header />
       <CarouselSlider />
       <PromoBanner />
