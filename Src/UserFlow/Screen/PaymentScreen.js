@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
 
-const PaymentScreen = ({ navigation }) => {
+const PaymentScreen = ({ navigation, route }) => { // Add route to props
   const token = useSelector((state) => state.auth.token);
   const cartItems = useSelector((state) => state.cart.items);
   const [address, setAddress] = useState(null);
@@ -29,22 +29,29 @@ const PaymentScreen = ({ navigation }) => {
   const [razorpayModalVisible, setRazorpayModalVisible] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
 
+  // Get coupon_discount from route params
+  const couponDiscount = Number(route.params?.coupon_discount) || 0;
+
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotalMRP = cartItems.reduce((total, item) => total + (item.itemId.MRP * item.quantity), 0);
   const discountedTotal = cartItems.reduce((total, item) => total + (item.itemId.discountedPrice * item.quantity), 0);
 
   const totalAmount = React.useMemo(() => {
     const gstPercentage = parseFloat(invoiceData.gst.replace('%', '')) || 0;
-    const couponDiscount = parseFloat(invoiceData.coupon_discount.replace('₹', '')) || 0;
     const shippingCharge = parseFloat(invoiceData.shipping_charge.replace('₹', '')) || 0;
     const codCharge = isCODSelected
       ? parseFloat(invoice.find((item) => item.key === 'cod charges')?.value || '0')
       : 0;
     const gstAmount = discountedTotal * (gstPercentage / 100);
     return (discountedTotal + gstAmount + shippingCharge + codCharge - couponDiscount).toFixed(2);
-  }, [discountedTotal, invoiceData, invoice, isCODSelected]);
+  }, [discountedTotal, invoiceData, invoice, isCODSelected, couponDiscount]);
 
-  const savings = cartTotalMRP - discountedTotal - parseFloat(invoiceData.coupon_discount.replace('₹', ''));
+  const savings = cartTotalMRP - discountedTotal - couponDiscount;
+
+  useEffect(() => {
+    console.log('PaymentScreen route params:', route.params);
+    console.log('Coupon discount received:', couponDiscount);
+  }, [route.params]);
 
   useEffect(() => {
     const fetchAddress = async () => {
@@ -68,45 +75,54 @@ const PaymentScreen = ({ navigation }) => {
     if (token) fetchAddress();
   }, [token]);
 
-  useEffect(() => {
-    const fetchInvoiceData = async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/invoice`, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+ useEffect(() => {
+  const fetchInvoiceData = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/invoice`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      console.log('Raw Invoice Response:', JSON.stringify(json, null, 2));
+      if (res.ok && json.success) {
+        const invoice = json.data[0].invoice;
+        setInvoice(invoice);
+        const getLatestValue = (key) => {
+          const items = invoice.filter((item) => item.key === key);
+          return items.length > 0 ? items[items.length - 1].value : 0;
+        };
+
+        const gstValue = getLatestValue('gst');
+        const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge');
+
+        setInvoiceData({
+          gst: `${gstValue}%`,
+          coupon_discount: `₹${couponDiscount.toFixed(2)}`,
+          shipping_charge: shippingCharge === 0 ? '₹0' : `₹${shippingCharge.toFixed(2)}`, // Fixed typo: Chaucge -> Charge
+          total_amount: `₹${totalAmount}`,
         });
-        const json = await res.json();
-        console.log('Raw Invoice Response:', JSON.stringify(json, null, 2));
-        if (res.ok && json.success) {
-          const invoice = json.data[0].invoice;
-          setInvoice(invoice);
-          // Pick the latest value for each key
-          const getLatestValue = (key) => {
-            const items = invoice.filter((item) => item.key === key);
-            return items.length > 0 ? items[items.length - 1].value : 0;
-          };
-
-          const gstValue = getLatestValue('gst'); // e.g., 4 (%)
-          const couponDiscount = getLatestValue('coupon discount'); // e.g., 5 (₹)
-          const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge'); // e.g., 3 (₹)
-
-          setInvoiceData({
-            gst: `${gstValue}%`,
-            coupon_discount: `₹${couponDiscount.toFixed(2)}`,
-            shipping_charge: shippingCharge === 0 ? '₹0' : `₹${shippingCharge.toFixed(2)}`,
-            total_amount: `₹${totalAmount}`,
-          });
-        } else {
-          console.warn('Failed to fetch invoice:', json.message);
-        }
-      } catch (err) {
-        console.error('Error fetching invoice:', err.message);
+      } else {
+        console.warn('Failed to fetch invoice:', json.message);
+        setInvoiceData({
+          gst: '0%',
+          coupon_discount: `₹${couponDiscount.toFixed(2)}`,
+          shipping_charge: '₹0',
+          total_amount: `₹${totalAmount}`,
+        });
       }
-    };
+    } catch (err) {
+      console.error('Error fetching invoice:', err.message);
+      setInvoiceData({
+        gst: '0%',
+        coupon_discount: `₹${couponDiscount.toFixed(2)}`,
+        shipping_charge: '₹0',
+        total_amount: `₹${totalAmount}`,
+      });
+    }
+  };
 
-    if (token) fetchInvoiceData();
-  }, [token, totalAmount]);
-
+  if (token) fetchInvoiceData();
+}, [token, totalAmount, couponDiscount]);
   const createOrder = async () => {
     try {
       const orderDetails = cartItems.map((item) => ({
@@ -117,11 +133,14 @@ const PaymentScreen = ({ navigation }) => {
         skuId: item.skuId,
       }));
 
-      const transformedInvoice = invoice.map((item) => ({
-        key: item.key,
-        value:(item.value), // Changed from item.values to item.value
-        _id: item._id,
-      }));
+      const transformedInvoice = [
+        ...invoice.map((item) => ({
+          key: item.key,
+          value: item.value,
+          _id: item._id,
+        })),
+        ...(couponDiscount > 0 ? [{ key: 'coupon discount', value: couponDiscount, _id: 'generated-coupon-id' }] : []),
+      ];
 
       const shippingAddressId = address?._id;
       const paymentMethod = isCODSelected ? 'COD' : selectedPaymentMethod;
@@ -210,10 +229,9 @@ const PaymentScreen = ({ navigation }) => {
   const handleRazorpayPayment = async () => {
     setPaymentStatus('processing');
 
-    // Mock Razorpay payment (since actual module is commented out)
     const options = {
-      key: 'rzp_test_1DP5mmOlF5G5ag', // Razorpay test key
-      amount: parseFloat(totalAmount) * 100, // Convert to paise
+      key: 'rzp_test_1DP5mmOlF5G5ag',
+      amount: parseFloat(totalAmount) * 100,
       currency: 'INR',
       name: 'Demo App',
       description: 'Order Payment',
@@ -227,7 +245,6 @@ const PaymentScreen = ({ navigation }) => {
 
     console.log('Razorpay Options:', options);
 
-    // Simulate payment (replace with actual RazorpayCheckout.open when integrated)
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const paymentSuccess = Math.random() > 0.5;
@@ -363,10 +380,12 @@ const PaymentScreen = ({ navigation }) => {
               <Text style={styles.label}>Discounted Price</Text>
               <Text style={styles.value}>₹{discountedTotal.toFixed(2)}</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.discount}>Coupon Discount</Text>
-              <Text style={styles.discount}>- {invoiceData.coupon_discount}</Text>
-            </View>
+            {couponDiscount > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.discount}>Coupon Discount</Text>
+                <Text style={styles.discount}>- ₹{couponDiscount.toFixed(2)}</Text>
+              </View>
+            )}
             <View style={styles.row}>
               <Text style={styles.label}>GST ({invoiceData.gst})</Text>
               <Text style={styles.value}>₹{(discountedTotal * (parseFloat(invoiceData.gst.replace('%', '')) / 100)).toFixed(2)}</Text>
@@ -460,20 +479,20 @@ const PaymentScreen = ({ navigation }) => {
 
 export default PaymentScreen;
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop:32
+    paddingTop: 32,
   },
   header: {
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    display:"flex"
+    display: "flex",
   },
   headerTitle: {
-   
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
@@ -542,7 +561,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   accordionContent: {
-    // paddingHorizontal: 16,
     marginBottom: 16,
   },
   paymentOption: {
@@ -550,7 +568,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },

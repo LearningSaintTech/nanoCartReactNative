@@ -28,19 +28,22 @@ const PartnerCategoryGrid = ({ data, onItemPress }) => {
             <TouchableOpacity
               key={item._id}
               style={styles.item}
-              onPress={() => onItemPress(item)}
+              onPress={() => {
+                console.log('Item pressed:', JSON.stringify(item, null, 2));
+                onItemPress(item);
+              }}
             >
               <Image
                 source={{ uri: item.image }}
                 style={styles.image}
-                // defaultSource={require('../../assets/Images/placeholder.png')}
               />
               <Text style={styles.name}>{item.name}</Text>
             </TouchableOpacity>
           ))}
-          {row.length < 3 && [...Array(3 - row.length)].map((_, i) => (
-            <View key={`empty-${i}`} style={styles.item} />
-          ))}
+          {row.length < 3 &&
+            [...Array(3 - row.length)].map((_, i) => (
+              <View key={`empty-${i}`} style={styles.item} />
+            ))}
         </View>
       ))}
     </View>

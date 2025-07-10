@@ -97,7 +97,7 @@ const PartnerSubCategoryItem = ({ item, navigation }) => {
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
-          console.log('Navigating to ProductDetail:', { itemId: item.itemId }); // Log navigation to product detail
+          console.log('Navigating to ProductDetail:', { itemId: item.itemId }); 
           navigation.navigate('PartnerProductDetail', { itemId: item.itemId });
         }}
       >

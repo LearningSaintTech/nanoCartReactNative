@@ -1,6 +1,4 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -11,9 +9,11 @@ import {
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { BASE_URL } from '../../config/apiConfig';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {BASE_URL} from '../../config/apiConfig';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const OrderHistoryScreen = () => {
   const navigation = useNavigation();
@@ -22,7 +22,7 @@ const OrderHistoryScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = useSelector(state => state.auth.token);
-  const { itemId } = route.params || {};
+  const {itemId} = route.params || {};
 
   // Function to fetch orders from the backend
   const fetchOrders = async () => {
@@ -44,6 +44,8 @@ const OrderHistoryScreen = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        console.log('This is api response ', responseData);
         throw new Error(
           errorData.message || `HTTP error! Status: ${response.status}`,
         );
@@ -52,7 +54,7 @@ const OrderHistoryScreen = () => {
       const responseData = await response.json();
       if (!responseData.success) {
         throw new Error(responseData.message || 'Failed to fetch orders');
-      }
+      }       
 
       const fetchedOrders = responseData.data;
 
@@ -71,7 +73,9 @@ const OrderHistoryScreen = () => {
           hour12: true,
         }),
         status: order.orderStatus || 'Unknown',
-        image: order.orderDetails[0]?.itemId?.image || 'https://via.placeholder.com/70',
+        image:
+          order.orderDetails[0]?.itemId?.image ||
+          'https://via.placeholder.com/70',
         itemId: order.orderDetails[0]?.itemId?._id || '',
         size: order.orderDetails[0]?.size || 'N/A',
         color: order.orderDetails[0]?.color || 'N/A',
@@ -156,10 +160,17 @@ const OrderHistoryScreen = () => {
 
   // Handle button press
   const handleButtonPress = (button, orderId, item) => {
-    console.log('handleButtonPress - Button:', button, 'OrderId:', orderId, 'Item:', item); // Debug log
+    console.log(
+      'handleButtonPress - Button:',
+      button,
+      'OrderId:',
+      orderId,
+      'Item:',
+      item,
+    ); // Debug log
     switch (button) {
       case 'Track Order':
-        navigation.navigate('TrackOrder', { orderId });
+        navigation.navigate('TrackOrder', {orderId});
         break;
       case 'Rate & Review':
         navigation.navigate('RateProduct', {
@@ -176,7 +187,7 @@ const OrderHistoryScreen = () => {
         });
         break;
       case 'View Details':
-        navigation.navigate('TrackOrder', { orderId });
+        navigation.navigate('TrackOrder', {orderId});
         break;
       default:
         break;
@@ -188,17 +199,17 @@ const OrderHistoryScreen = () => {
     fetchOrders();
   }, [token]);
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('TrackOrder', { orderId: item.orderId })}
+      onPress={() => navigation.navigate('TrackOrder', {orderId: item.orderId})}
       accessibilityLabel={`View tracking details for order ${item.orderId}`}
       activeOpacity={0.8}>
       <Text style={styles.orderId}>Order ID: {item.orderId}</Text>
       <View style={styles.row}>
         <Image
           source={
-            typeof item.image === 'string' ? { uri: item.image } : item.image
+            typeof item.image === 'string' ? {uri: item.image} : item.image
           }
           style={styles.image}
         />
@@ -209,7 +220,7 @@ const OrderHistoryScreen = () => {
           <Text
             style={[
               styles.status,
-              item.status === 'Cancelled' && { color: '#E86363' },
+              item.status === 'Cancelled' && {color: '#E86363'},
             ]}>
             ● {item.status}
           </Text>
@@ -229,7 +240,7 @@ const OrderHistoryScreen = () => {
             handleButtonPress(item.button, item.orderId, item);
           }}
           accessibilityLabel={item.button}>
-          <Text style={[styles.buttonText, { color: item.textColor }]}>
+          <Text style={[styles.buttonText, {color: item.textColor}]}>
             {item.button}
           </Text>
         </TouchableOpacity>
@@ -240,9 +251,14 @@ const OrderHistoryScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      <View style={styles.header}>
-        <Text style={styles.headerText}>ORDER</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>ORDERS</Text>
+        </View>
+      </SafeAreaView>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D6722F" />
@@ -265,7 +281,7 @@ const OrderHistoryScreen = () => {
           keyExtractor={item => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{paddingBottom: 20}}
         />
       )}
     </View>
@@ -279,16 +295,19 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   header: {
-    paddingVertical: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 10,
+    borderBottomColor: '#E0E0E0',
   },
-  headerText: {
-    marginTop: 20,
-    fontSize: 16,
+  headerTitle: {
     fontWeight: 'bold',
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
   },
   card: {
     backgroundColor: '#fff',

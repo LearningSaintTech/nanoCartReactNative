@@ -100,6 +100,7 @@ const PartnerMyAccountScreen = () => {
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>MY ACCOUNT</Text>
+        
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
             <Image

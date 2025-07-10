@@ -10,16 +10,24 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
 
-const DeliveryAddressScreen = ({ navigation }) => {
+const DeliveryAddressScreen = ({ navigation, route }) => {
   const token = useSelector(state => state.auth.token);
   const cartItems = useSelector(state => state.cart.items);
   const [address, setAddress] = useState(null);
   const [invoiceData, setInvoiceData] = useState({
     gst: '0%',
-    coupon_discount: '₹0',
     shipping_charge: '₹0',
-    total_amount: '₹0',
+    cod_charges: '₹0',
   });
+
+  // Get coupon_discount from route params with type safety
+  const couponDiscount = Number(route.params?.coupon_discount) || 0;
+
+  // Debug log for route params
+  useEffect(() => {
+    console.log('DeliveryAddressScreen route params:', route.params);
+    console.log('Coupon discount received:', couponDiscount);
+  }, [route.params]);
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotalMRP = cartItems.reduce((total, item) => total + (item.itemId.MRP * item.quantity), 0);
@@ -58,49 +66,76 @@ const DeliveryAddressScreen = ({ navigation }) => {
 
         if (res.ok && json.success) {
           const invoice = json.data[0].invoice;
-          // Pick the latest value for each key
           const getLatestValue = (key) => {
             const items = invoice.filter(item => item.key === key);
             return items.length > 0 ? items[items.length - 1].value : 0;
           };
 
-          const gstValue = getLatestValue('gst'); // e.g., 4 (%)
-          const couponDiscount = getLatestValue('coupon discount'); // e.g., 5 (₹)
-          const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge'); // e.g., 3 (₹)
-          const codCharges = getLatestValue('cod charges'); // e.g., 7 (₹)
-
-          // Calculate total amount
-          const gstAmount = (discountedTotal * (gstValue / 100)).toFixed(2);
-          const totalAmount = (
-            discountedTotal -
-            couponDiscount +
-            shippingCharge +
-            codCharges +
-            parseFloat(gstAmount)
-          ).toFixed(2);
+          const gstValue = getLatestValue('gst');
+          const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge');
+          const codCharges = getLatestValue('cod charges');
 
           setInvoiceData({
             gst: `${gstValue}%`,
-            coupon_discount: `₹${couponDiscount.toFixed(2)}`,
             shipping_charge: shippingCharge === 0 ? '₹0' : `₹${shippingCharge.toFixed(2)}`,
-            total_amount: `₹${totalAmount}`,
+            cod_charges: codCharges === 0 ? '₹0' : `₹${codCharges.toFixed(2)}`,
           });
         } else {
           console.warn('Failed to fetch invoice:', json.message);
+          setInvoiceData({
+            gst: '0%',
+            shipping_charge: '₹0',
+            cod_charges: '₹0',
+          });
         }
       } catch (err) {
         console.error('Error fetching invoice:', err.message);
+        setInvoiceData({
+          gst: '0%',
+          shipping_charge: '₹0',
+          cod_charges: '₹0',
+        });
       }
     };
 
     if (token) fetchInvoiceData();
-  }, [token, cartItems, discountedTotal]);
+  }, [token, cartItems]);
 
   const handleContinue = () => {
-    navigation.navigate('Payment');
+    // Calculate total amount to pass to Payment screen
+    const gstValue = parseFloat(invoiceData.gst.replace('%', '')) || 0;
+    const shippingCharge = parseFloat(invoiceData.shipping_charge.replace('₹', '')) || 0;
+    const codCharges = parseFloat(invoiceData.cod_charges.replace('₹', '')) || 0;
+    const gstAmount = (discountedTotal * (gstValue / 100)).toFixed(2);
+    const totalAmount = (
+      discountedTotal +
+      parseFloat(gstAmount) +
+      shippingCharge +
+      codCharges -
+      couponDiscount
+    ).toFixed(2);
+
+    navigation.navigate('Payment', {
+      coupon_discount: couponDiscount,
+      total_amount: totalAmount,
+    });
   };
 
-  const savings = cartTotalMRP - discountedTotal - parseFloat(invoiceData.coupon_discount.replace('₹', ''));
+  // Calculate total amount for display
+  const gstValue = parseFloat(invoiceData.gst.replace('%', '')) || 0;
+  const shippingCharge = parseFloat(invoiceData.shipping_charge.replace('₹', '')) || 0;
+  const codCharges = parseFloat(invoiceData.cod_charges.replace('₹', '')) || 0;
+  const gstAmount = (discountedTotal * (gstValue / 100)).toFixed(2);
+  const totalAmount = (
+    discountedTotal +
+    parseFloat(gstAmount) +
+    shippingCharge +
+    codCharges -
+    couponDiscount
+  ).toFixed(2);
+
+  // Calculate savings
+  const savings = cartTotalMRP - discountedTotal - couponDiscount;
 
   return (
     <View style={styles.container}>
@@ -108,10 +143,9 @@ const DeliveryAddressScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>DELIVERY ADDRESS </Text>
+        <Text style={styles.headerTitle}>DELIVERY ADDRESS</Text>
       </View>
 
-      {/* Steps */}
       <View style={styles.stepIndicator}>
         <Text style={styles.stepActive}>■ CART DETAILS</Text>
         <Text style={styles.stepActive}>─────</Text>
@@ -120,10 +154,7 @@ const DeliveryAddressScreen = ({ navigation }) => {
         <Text style={styles.stepInactive}>■ PAYMENT</Text>
       </View>
 
-     
-
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Address Logic */}
         {address ? (
           <View style={styles.deliverBox}>
             <View style={styles.deliverRow}>
@@ -155,7 +186,6 @@ const DeliveryAddressScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-        {/* Price Details */}
         {cartItems.length > 0 ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Price Details ({totalCartCount} items)</Text>
@@ -167,10 +197,12 @@ const DeliveryAddressScreen = ({ navigation }) => {
               <Text style={styles.label}>Discounted Price</Text>
               <Text style={styles.value}>₹{discountedTotal.toFixed(2)}</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.discount}>Coupon Discount</Text>
-              <Text style={styles.discount}>- {invoiceData.coupon_discount}</Text>
-            </View>
+            {couponDiscount > 0 && (
+              <View style={styles.row}>
+                <Text style={styles.discount}>Coupon Discount</Text>
+                <Text style={styles.discount}>- ₹{couponDiscount.toFixed(2)}</Text>
+              </View>
+            )}
             <View style={styles.row}>
               <Text style={styles.label}>GST</Text>
               <Text style={styles.value}>{invoiceData.gst}</Text>
@@ -182,8 +214,12 @@ const DeliveryAddressScreen = ({ navigation }) => {
               </Text>
             </View>
             <View style={styles.row}>
+              <Text style={styles.label}>COD Charges</Text>
+              <Text style={styles.value}>{invoiceData.cod_charges}</Text>
+            </View>
+            <View style={styles.row}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>{invoiceData.total_amount}</Text>
+              <Text style={styles.totalValue}>₹{totalAmount}</Text>
             </View>
             <View style={styles.savingBox}>
               <Text style={styles.savingText}>
@@ -217,9 +253,9 @@ const DeliveryAddressScreen = ({ navigation }) => {
 export default DeliveryAddressScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' ,paddingTop:32},
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center',display:"flex",  elevation: 2,},
-  headerTitle: {  fontSize: 16, fontWeight: '600', marginLeft: 10 },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 32 },
+  header: { padding: 16, flexDirection: 'row', alignItems: 'center', display: 'flex', elevation: 2 },
+  headerTitle: { fontSize: 16, fontWeight: '600', marginLeft: 10 },
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   stepActive: { color: '#f37022', fontWeight: 'bold', fontSize: 12 },
   stepInactive: { color: '#ccc', fontSize: 12 },
@@ -295,5 +331,4 @@ const styles = StyleSheet.create({
   continueText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   emptyCartMessage: { padding: 16, alignItems: 'center' },
   emptyCartText: { fontSize: 16, color: '#666' },
-  
 });

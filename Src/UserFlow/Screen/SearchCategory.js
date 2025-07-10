@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Modal,
   SafeAreaView,
 } from 'react-native';
@@ -54,7 +53,6 @@ const SearchCategory = () => {
   const [currentSort, setCurrentSort] = useState(sortBy);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const limit = 5;
-
   const sortOptions = [
     { label: 'Latest', value: 'latest' },
     { label: 'Popularity', value: 'popularity' },
@@ -66,27 +64,15 @@ const SearchCategory = () => {
   // Fetch wishlist data
   useEffect(() => {
     const fetchWishlist = async () => {
+      if (!token) {
+        setWishlistError('Login required to see details');
+        setWishlistLoading(false);
+        return;
+      }
+
       try {
         setWishlistLoading(true);
         setWishlistError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to view your wishlist.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_wishlist',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const response = await fetch(`${BASE_URL}/userwishlist`, {
           method: 'GET',
@@ -115,56 +101,28 @@ const SearchCategory = () => {
         }
       } catch (err) {
         const errorMessage = err.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch wishlist. Please try again.';
         setWishlistError(errorMessage);
-        if (err.message.includes('401')) {
-          Alert.alert(
-            'Session Expired',
-            'Your session has expired. Please log in again.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_wishlist',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-        }
       } finally {
         setWishlistLoading(false);
       }
     };
     fetchWishlist();
-  }, [token, navigation]);
+  }, [token]);
 
   // Fetch cart data
   useEffect(() => {
     const fetchCart = async () => {
+      if (!token) {
+        setCartError('Login required to see details');
+        setCartLoading(false);
+        return;
+      }
+
       try {
         setCartLoading(true);
         setCartError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to view your cart.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_cart',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const response = await fetch(`${BASE_URL}/usercart`, {
           method: 'GET',
@@ -192,56 +150,28 @@ const SearchCategory = () => {
         }
       } catch (err) {
         const errorMessage = err.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch cart. Please try again.';
         setCartError(errorMessage);
-        if (err.message.includes('401')) {
-          Alert.alert(
-            'Session Expired',
-            'Your session has expired. Please log in again.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_cart',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-        }
       } finally {
         setCartLoading(false);
       }
     };
     fetchCart();
-  }, [token, navigation]);
+  }, [token]);
 
   // Fetch filters
   useEffect(() => {
     const fetchFilters = async () => {
+      if (!token) {
+        setFilterError('Login required to see details');
+        setFilterLoading(false);
+        return;
+      }
+
       try {
         setFilterLoading(true);
         setFilterError(null);
-
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to access filters.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'view_filters',
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
 
         const apiUrl = `${BASE_URL}/filter`;
         const response = await fetch(apiUrl, {
@@ -283,34 +213,16 @@ const SearchCategory = () => {
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Error fetching filters. Please try again.';
         setFilterError(errorMessage);
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'view_filters',
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
       } finally {
         setFilterLoading(false);
       }
     };
 
     fetchFilters();
-  }, [token, navigation, appliedFilters]);
+  }, [token, appliedFilters]);
 
   // Fetch search results
   useEffect(() => {
@@ -392,33 +304,16 @@ const SearchCategory = () => {
           setTotalPages(json.data?.totalPages || 1);
           setListKey(Date.now().toString());
           if (formattedItems.length === 0 && page === 1) {
-            Alert.alert('No Results', 'No items found for your search');
+            setProducts([]);
           }
         } else {
           throw new Error(json?.message || 'Failed to load search results');
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Failed to fetch search results. Please try again.';
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'search',
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
+        console.error(errorMessage);
         setProducts([]);
         setListKey(Date.now().toString());
       } finally {
@@ -429,7 +324,7 @@ const SearchCategory = () => {
     const debouncedFetchProducts = debounce(fetchProducts, 500);
     debouncedFetchProducts();
     return () => debouncedFetchProducts.cancel();
-  }, [searchQuery, appliedFilters, sortBy, page, token, navigation]);
+  }, [searchQuery, appliedFilters, sortBy, page, token]);
 
   // Update active filter count
   useEffect(() => {
@@ -457,7 +352,15 @@ const SearchCategory = () => {
     setSortModalVisible(false);
   };
 
-  const openFilterModal = () => setFilterModalVisible(true);
+  const openFilterModal = () => {
+    if (!token) {
+      setFilterError('Login required to see details');
+      setFilterModalVisible(true);
+      return;
+    }
+    setFilterModalVisible(true);
+  };
+
   const closeFilterModal = () => setFilterModalVisible(false);
   const openSortModal = () => setSortModalVisible(true);
   const closeSortModal = () => setSortModalVisible(false);
@@ -498,6 +401,11 @@ const SearchCategory = () => {
   };
 
   const applyFilters = async (filterState = filters) => {
+    if (!token) {
+      setFilterError('Login required to see details');
+      return;
+    }
+
     if (priceRange.min && priceRange.max) {
       const min = Number(priceRange.min);
       const max = Number(priceRange.max);
@@ -508,24 +416,6 @@ const SearchCategory = () => {
         );
         return;
       }
-    }
-
-    if (!token) {
-      Alert.alert(
-        'Login Required',
-        'Please log in to apply filters.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login', {
-              fromScreen: 'SearchCategory',
-              actionAfterLogin: 'apply_filters',
-            }),
-          },
-        ],
-        { cancelable: false }
-      );
-      return;
     }
 
     const queryParams = [
@@ -555,10 +445,8 @@ const SearchCategory = () => {
         }
       }
     });
-
     const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const apiUrl = `${BASE_URL}/items/search${queryString}`;
-
     try {
       setFilterLoading(true);
       const response = await fetch(apiUrl, {
@@ -598,34 +486,16 @@ const SearchCategory = () => {
           totalItems: data.data?.totalItems || 0,
         });
         if (formattedItems.length === 0) {
-          Alert.alert('No Results', 'No items match the selected filters');
+          setProducts([]);
         }
       } else {
         throw new Error(data?.message || 'Failed to apply filters');
       }
     } catch (error) {
       const errorMessage = error.message.includes('401')
-        ? 'Session expired. Please log in again.'
+        ? 'Login required to see details'
         : 'Error applying filters. Please try again.';
       setFilterError(errorMessage);
-      Alert.alert(
-        'Error',
-        errorMessage,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (errorMessage.includes('401')) {
-                navigation.navigate('Login', {
-                  fromScreen: 'SearchCategory',
-                  actionAfterLogin: 'apply_filters',
-                });
-              }
-            },
-          },
-        ],
-        { cancelable: false }
-      );
     } finally {
       setFilterLoading(false);
     }
@@ -675,34 +545,15 @@ const SearchCategory = () => {
         console.log('🌐 Wishlist create response:', data);
 
         if (data.success) {
-          Alert.alert('Success', 'Item added to wishlist!');
           navigation.navigate('Wishlist');
         } else {
           throw new Error(data.message || 'Failed to add to wishlist');
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
-          ? 'Session expired. Please log in again.'
+          ? 'Login required to see details'
           : 'Something went wrong while adding to wishlist';
-        Alert.alert(
-          'Error',
-          errorMessage,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (errorMessage.includes('401')) {
-                  navigation.navigate('Login', {
-                    fromScreen: 'SearchCategory',
-                    actionAfterLogin: 'like_item',
-                    itemId,
-                  });
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
+        console.error(errorMessage);
       }
     };
 
@@ -845,9 +696,20 @@ const SearchCategory = () => {
         <View style={styles.filterModalContainer}>
           <Text style={styles.errorText}>{filterError}</Text>
           <TouchableOpacity
-            onPress={closeFilterModal}
+            onPress={() => {
+              if (filterError.includes('Login required')) {
+                navigation.navigate('Login', {
+                  fromScreen: 'SearchCategory',
+                  actionAfterLogin: 'view_filters',
+                });
+              } else {
+                closeFilterModal();
+              }
+            }}
             style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
+            <Text style={styles.closeButtonText}>
+              {filterError.includes('Login required') ? 'Login' : 'Close'}
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -1025,16 +887,17 @@ const SearchCategory = () => {
 
           <View style={styles.footerButtons}>
             <TouchableOpacity
-              style={styles.filterBtn}
+              style={[styles.filterBtn, !token && styles.disabledBtn]}
               onPress={openFilterModal}
+              disabled={!token}
               accessibilityLabel={`Filter products${
                 activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''
               }`}>
               <Image
                 source={require('../../assets/Images/Filter.png')}
-                style={styles.icon}
+                style={[styles.icon, !token && styles.disabledIcon]}
               />
-              <Text style={styles.iconText}>
+              <Text style={[styles.iconText, !token && styles.disabledText]}>
                 FILTER{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
               </Text>
             </TouchableOpacity>
@@ -1101,7 +964,7 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.recentItem}
               onPress={() => {
-                setSearchQuery('Chiffon Saree');
+                setSearchQuery('Formal Shirt');
                 setPage(1);
                 setProducts([]);
               }}>
@@ -1111,7 +974,7 @@ const SearchCategory = () => {
             <TouchableOpacity
               style={styles.recentItem}
               onPress={() => {
-                setSearchQuery('Chiffon Saree');
+                setSearchQuery('Formal Shirt');
                 setPage(1);
                 setProducts([]);
               }}>
@@ -1129,9 +992,18 @@ const SearchCategory = () => {
             {wishlistLoading ? (
               <Text style={styles.loadingText}>Loading wishlist...</Text>
             ) : wishlistError || !wishlistItem ? (
-              <Text style={styles.errorText}>
-                {wishlistError || 'No wishlist items available'}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  wishlistError.includes('Login required') &&
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'view_wishlist',
+                  })
+                }>
+                <Text style={styles.errorText}>
+                  {wishlistError || 'No wishlist items available'}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <SuggestionCard
                 title="Searching from wishlist?"
@@ -1147,6 +1019,7 @@ const SearchCategory = () => {
                 )}
                 rating={4.5}
                 reviews="79 Ratings & 55"
+                //  hard coded here in api it is not given it
                 sizes={['XS', 'S', 'M', 'L', 'XL']}
                 colors={[wishlistItem.color.toLowerCase()]}
                 buttonLabel="VIEW WISHLIST"
@@ -1157,9 +1030,18 @@ const SearchCategory = () => {
             {cartLoading ? (
               <Text style={styles.loadingText}>Loading cart...</Text>
             ) : cartError || !cartItem ? (
-              <Text style={styles.errorText}>
-                {cartError || 'No cart items available'}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  cartError.includes('Login required') &&
+                  navigation.navigate('Login', {
+                    fromScreen: 'SearchCategory',
+                    actionAfterLogin: 'view_cart',
+                  })
+                }>
+                <Text style={styles.errorText}>
+                  {cartError || 'No cart items available'}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <SuggestionCard
                 title="Missing anything from bag?"
@@ -1303,9 +1185,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: 'red',
+    color: '#666666',
     textAlign: 'center',
     marginVertical: 20,
+    textDecorationLine: 'underline',
   },
   grid: {
     padding: 10,
@@ -1353,15 +1236,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
+  disabledBtn: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#e0e0e0',
+  },
   icon: {
     width: 18,
     height: 18,
     marginRight: 6,
     resizeMode: 'contain',
   },
+  disabledIcon: {
+    opacity: 0.5,
+  },
   iconText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  disabledText: {
+    color: '#999',
   },
   noMoreText: {
     textAlign: 'center',

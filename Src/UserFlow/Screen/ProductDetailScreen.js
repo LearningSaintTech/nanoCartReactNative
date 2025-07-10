@@ -1,5 +1,4 @@
 
-
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Header from '../Component/Header';
 import AccordionItem from '../Component/AccordionItem';
@@ -667,11 +666,12 @@ const ProductDetailScreen = () => {
 
             const payload = {
               itemId: itemInfo?._id,
-              quantity,
+              // quantity,
               size: selectedSize,
               color: selectedColor || 'Black',
               skuId: selectedSizeObj.skuId,
             };
+            console.log("payload->",payload)
 
             try {
               const response = await fetch(`${BASE_URL}/usercart/create`, {

@@ -11,9 +11,13 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import {BASE_URL} from '../../config/apiConfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const PartnerDeliveryAddressScreen = ({navigation, route}) => {
+import { useRoute } from '@react-navigation/native';
+const PartnerDeliveryAddressScreen = ({navigation}) => {
   const token = useSelector(state => state.auth.token);
+   const route = useRoute();
+  const navigationData = route.params;
+
+  console.log("This is navigation data ",navigationData.invoiceData)
   const [address, setAddress] = useState(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
   const [invoiceData, setInvoiceData] = useState({
@@ -77,9 +81,8 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
           method: 'GET',
           headers: {Authorization: `Bearer ${token}`},
         });
-
         const json = await response.json();
-        console.log('Address API response:', JSON.stringify(json, null, 2));
+        // console.log('Address API response:', JSON.stringify(json, null, 2));
         if (response.ok && json.addresses?.addressDetail?.length > 0) {
           const defaultAddress =
             json.addresses.addressDetail.find(a => a.isDefault) ||
@@ -109,7 +112,7 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
           headers: {Authorization: `Bearer ${token}`},
         });
         const json = await res.json();
-        console.log('Invoice API response:', JSON.stringify(json, null, 2));
+        // console.log('Invoice API response:', JSON.stringify(json, null, 2));
 
         if (
           res.ok &&
@@ -387,7 +390,7 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
             <View style={styles.savingBox}>
               <Text style={styles.savingText}>
                 {parseFloat(invoiceData.savings) > 0
-                  ? `Hooray! You are saving ₹${invoiceData.savings}/- with this order!`
+                  ? `Hooray! You are saving ₹${invoiceData.savings}/-with this order!`
                   : 'No additional savings applied.'}
               </Text>
             </View>
@@ -484,7 +487,7 @@ const styles = StyleSheet.create({
   },
   addAddressText: {color: '#fff', fontWeight: '600', fontSize: 14},
   card: {
-    marginHorizontal: 12,
+    
     marginBottom: 16,
     borderRadius: 8,
     overflow: 'hidden',

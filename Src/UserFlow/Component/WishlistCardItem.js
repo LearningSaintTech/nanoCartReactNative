@@ -77,8 +77,7 @@ const WishlistCardItem = ({ item, navigation, onRemove }) => {
   
   return (
     <TouchableOpacity style={styles.card}>
-      {/* <Image source={{ uri: product?.image }} style={styles.image} /> */}
-
+    
 
       <Image source={{ uri: item?.url }} style={styles.image} />
 

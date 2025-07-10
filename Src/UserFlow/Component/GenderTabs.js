@@ -27,7 +27,6 @@ const GenderTabs = () => {
       .then(json => {
         if (json.success && Array.isArray(json.data)) {
           setCategories(json.data);
-
           // Set the first category ("For Her") as the default active tab
           const firstCategoryId = json.data[0]?._id;
           if (firstCategoryId) {
@@ -45,7 +44,6 @@ const GenderTabs = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch subcategories when activeTab changes
   useEffect(() => {
     if (!activeTab) return;
     console.log('categories', activeTab);
@@ -104,7 +102,6 @@ const GenderTabs = () => {
           )}
         />
       </View>
-
       {/* Subcategory Grid */}
       {loading ? (
         <ActivityIndicator size="large" color="#8B4513" style={styles.loader} />

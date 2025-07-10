@@ -11,6 +11,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { BASE_URL } from '../../config/apiConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useWindowDimensions } from 'react-native';
+
 
 const OrderConfirmationScreen = ({ route, navigation }) => {
   // Extract order data from navigation params
@@ -21,7 +25,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   const [orderId, setOrderId] = useState('');
   const [orderStatus, setOrderStatus] = useState('');
   const [createdAt, setCreatedAt] = useState('');
-
+ const { width } = useWindowDimensions();
   // State to hold recommendations data from API
   const [recommendations, setRecommendations] = useState([]);
 
@@ -94,18 +98,23 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
       setCreatedAt(formatDate(orderData.data.createdAt));
     }
   }, [orderData]);
+  const scale = (size) => (width / 375) * size;
 
   return (
     <ScrollView style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>{'←'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>ORDER CONFIRMATION</Text>
-      </View>
+      
+
+
+      <SafeAreaView style={{ backgroundColor: '#fff', flex: 0 }}>
+              <View style={[styles.header, {  paddingHorizontal: scale(16), paddingVertical: scale(12) }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <Icon name="arrow-back" size={scale(22)} color="#333" />
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { marginLeft: scale(8) }]}>Order Confirmation</Text>
+              </View>
+            </SafeAreaView>
 
       {/* Confirmation message */}
       <View style={styles.messageBox}>
@@ -135,7 +144,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
 
       {/* View Orders */}
       <TouchableOpacity onPress={() => navigation.navigate('OrderHistory')} style={styles.viewOrderBtn}>
-        <Text style={styles.viewOrderText}>VIEW ORDERS</Text>
+        <Text style={styles.viewOrderText}>VIEW ORDERS </Text>
       </TouchableOpacity>
 
       {/* Recommendations */}
@@ -157,14 +166,26 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff', flex: 1, padding: 12 },
-  header: {
+  container: { backgroundColor: '#fff', flex: 1, },
+   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    textTransform: 'uppercase',
   },
   back: { fontSize: 20, marginRight: 10, marginTop: 30 },
-  headerTitle: { fontWeight: 'bold', fontSize: 16, marginTop: 40 },
   messageBox: {
     backgroundColor: '#FAF2EE',
     padding: 14,

@@ -21,7 +21,6 @@ const TrackOrderScreen = ({ route, navigation }) => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   // Fetch order details
   const fetchOrderDetails = async () => {
     try {
@@ -41,14 +40,11 @@ const TrackOrderScreen = ({ route, navigation }) => {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
       }
-
       const responseData = await response.json();
       console.log('order track', responseData);
-
       if (!responseData.success) {
         throw new Error(responseData.message || 'Failed to fetch order details');
       }
-
       setOrder(responseData.data);
     } catch (err) {
       console.error('Error fetching order details:', err.message);
@@ -346,7 +342,7 @@ const TrackOrderScreen = ({ route, navigation }) => {
 
         {/* Action Buttons */}
         {order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned' && (
-          <TouchableOpacity  onPress={()=>navigation.navigate('Cart')}   style={styles.orderAgain}>
+          <TouchableOpacity style={styles.orderAgain}>
             <Text style={styles.orderAgainText}>ORDER AGAIN</Text>
           </TouchableOpacity>
         )}
@@ -420,7 +416,7 @@ const TrackOrderScreen = ({ route, navigation }) => {
         {/* Payment */}
         <View style={styles.section}>
           <Text style={styles.payment}>
-            Payment Method: <Text style={styles.bold}>{order.paymentMethod}  </Text>
+            Payment Method: <Text style={styles.bold}>{order.paymentMethod}</Text>
           </Text>
         </View>
       </ScrollView>

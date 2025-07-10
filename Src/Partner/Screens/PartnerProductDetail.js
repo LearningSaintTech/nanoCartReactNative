@@ -555,7 +555,6 @@ const PartnerProductDetail = () => {
               0
             );
             console.log('Total Quantity:', totalQuantity);
-
             let pricePerPcs;
             if (totalQuantity === 1) {
               pricePerPcs = itemInfo.discountedPrice;
@@ -594,16 +593,16 @@ const PartnerProductDetail = () => {
                 console.log('Item added to cart successfully');
                 dispatch(setCartItems(data.data.items || []));
                 console.log('Dispatched setCartItems with items:', data.data.items);
-                alert('Added to cart successfully.');
+                Alert.alert('Added to cart successfully.');
                 navigation.navigate('PartnerCart');
                 console.log('Navigated to PartnerCart');
               } else {
                 console.warn('Cart API error:', data.message);
-                alert(data.message || 'Failed to add to cart.');
+                Alert.alert(data.message || 'Failed to add to cart.');
               }
             } catch (error) {
               console.error('Cart API Error:', error);
-              alert('Something went wrong while adding to cart.');
+              Alert.alert('Something went wrong while adding to cart.');
             }
           }}
         >

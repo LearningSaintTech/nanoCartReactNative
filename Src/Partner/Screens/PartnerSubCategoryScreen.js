@@ -9,17 +9,17 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from 'react-native';
 import PartnerHeader from '../Components/PartnerHeader';
 import FilterComponent from '../../UserFlow/Component/FilterComponent';
 import SortComponent from '../../UserFlow/Component/SortComponent';
 import PartnerSubCategoryItem from '../Components/PartnerSubCategoryItem';
 import { BASE_URL } from '../../config/apiConfig';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const PartnerSubCategoryScreen = ({ navigation, route }) => {
   const { subCategory, subCategoryId } = route.params;
   const subcategoryId = subCategory?._id || subCategoryId;
-
   const [products, setProducts] = useState([]);
   const [isFilterModalVisible, setFilterModalVisible] = useState(false);
   const [isSortModalVisible, setSortModalVisible] = useState(false);
@@ -30,7 +30,6 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const limit = 5;
-
   useEffect(() => {
     if (route?.params?.likedItemId) {
       console.log('✅ Like this item after login:', route.params.likedItemId);
@@ -44,8 +43,8 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
   useEffect(() => {
     // Calculate active filter count for UI feedback
     const count = Object.values(appliedFilters)
-      .flatMap((obj) => Object.values(obj))
-      .filter((v) => v).length;
+      .flatMap(obj => Object.values(obj))
+      .filter(v => v).length;
     setActiveFilterCount(count);
   }, [appliedFilters]);
 
@@ -58,49 +57,53 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
       }
 
       setLoading(true);
-      const queryParams = [
-        `subCategoryId=${encodeURIComponent(subcategoryId)}`,
-        `page=${pageNum}`,
-        `limit=${limit}`,
-        `sortBy=${encodeURIComponent(sortOption)}`,
-      ];
 
-      // Add filter parameters if any
-      Object.keys(filters).forEach((key) => {
-        const selectedValues = Object.entries(filters[key])
-          .filter(([_, isSelected]) => isSelected)
-          .map(([val]) => val);
-        if (selectedValues.length > 0) {
-          queryParams.push(
-            `${encodeURIComponent(key)}=${encodeURIComponent(selectedValues.join(','))}`
-          );
-        }
-      });
+      const formattedFilters = Object.entries(filters).flatMap(
+        ([key, values]) =>
+          Object.entries(values)
+            .filter(([_, isSelected]) => isSelected)
+            .map(([val]) => ({ key, value: val })),
+      );
 
-      const queryString = queryParams.length ? `?${queryParams.join('&')}` : '';
-      const apiUrl = `${BASE_URL}/items/filter${queryString}`;
+      const requestBody = {
+        subCategoryId: subcategoryId,
+        sortBy: sortOption,
+        page: pageNum,
+        limit: limit,
+      };
 
-      console.log('🌐 Fetching Products with sortBy:', sortOption, 'URL:', apiUrl);
+      if (formattedFilters.length > 0) {
+        requestBody.filters = formattedFilters;
+      }
 
       try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${BASE_URL}/items/filtering`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
         const json = await response.json();
+        console.log('✅ Parsed JSON Response:', json);
+
         if (json?.success) {
-          const formattedItems = (json.data?.items || []).map((item) => ({
+          const formattedItems = (json.data || []).map((item) => ({
+            itemId: item._id,
             name: item.name || 'Unnamed Item',
             description: item.description || 'No description available',
             mrp: item.MRP || 0,
             price: item.discountedPrice || 0,
             discount: item.discountPercentage || 0,
-            image: { uri: item.image || '' },
-            itemId: item._id || '',
+            image: { uri: item.image || (item.itemImageId ? `https://yoraaecommerce.s3.ap-south-1.amazonaws.com/Nanocart/categories/${item.categoryId._id}/subCategories/${item.subCategoryId._id}/item/${item._id}/${item.itemImageId}.jpg` : '') },
             defaultColor: item.defaultColor || '',
             filters: item.filters || [],
           }));
           setProducts(pageNum === 1 ? formattedItems : [...products, ...formattedItems]);
-          setTotalPages(json.data?.totalPages || 1);
+          setTotalPages(Math.ceil(json.count / limit) || 1);
           if (formattedItems.length === 0 && pageNum === 1) {
-            Alert.alert('No Results', 'No items found for the selected filters');
+            Alert.alert('No Results', 'No data found');
           }
         } else {
           console.error('Failed to load items:', json?.message);
@@ -113,7 +116,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
         setLoading(false);
       }
     },
-    [subcategoryId, products]
+    [subcategoryId, products],
   );
 
   const handleApplyFilters = (filteredItems, filters, pagination) => {
@@ -123,7 +126,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
     setTotalPages(pagination?.totalPages || 1);
   };
 
-  const handleApplySort = (sortOption) => {
+  const handleApplySort = sortOption => {
     setSortBy(sortOption);
     setPage(1); // Reset to first page when sort changes
     setSortModalVisible(false); // Close modal after applying sort
@@ -136,13 +139,19 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
 
   const handleLoadMore = () => {
     if (page < totalPages && !loading) {
-      setPage((prev) => prev + 1);
+      setPage(prev => prev + 1);
     }
   };
 
   const renderFooter = () => {
     if (loading && page > 1) {
-      return <ActivityIndicator size="small" color="#9B5AF5" style={{ marginVertical: 10 }} />;
+      return (
+        <ActivityIndicator
+          size="small"
+          color="#9B5AF5"
+          style={{ marginVertical: 10 }}
+        />
+      );
     }
     if (page === totalPages && products.length > 0) {
       return <Text style={styles.noMoreText}>No more items to load</Text>;
@@ -150,20 +159,31 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
     return null;
   };
 
+  const renderItem = ({ item }) => (
+    <PartnerSubCategoryItem item={item} navigation={navigation} />
+  );
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <PartnerHeader />
       {loading && page === 1 ? (
-        <ActivityIndicator size="large" color="#9B5AF5" style={{ marginTop: 20 }} />
+        <ActivityIndicator
+          size="large"
+          color="#9B5AF5"
+          style={{ marginTop: 20 }}
+        />
+      ) : products.length === 0 ? (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data found</Text>
+        </View>
       ) : (
         <FlatList
           data={products}
-          keyExtractor={(item) => item.itemId}
+          keyExtractor={item => item.itemId}
           numColumns={2}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <PartnerSubCategoryItem item={item} navigation={navigation} />
-          )}
+          renderItem={renderItem}
           contentContainerStyle={styles.grid}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
@@ -174,8 +194,9 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.filterBtn}
           onPress={openFilterModal}
-          accessibilityLabel={`Filter products${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}
-        >
+          accessibilityLabel={`Filter products${
+            activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''
+          }`}>
           <Image
             source={require('../../assets/Images/Filter.png')}
             style={styles.icon}
@@ -187,8 +208,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.sortBtn}
           onPress={openSortModal}
-          accessibilityLabel="Sort products"
-        >
+          accessibilityLabel="Sort products">
           <Image
             source={require('../../assets/Images/Sort.png')}
             style={styles.icon}
@@ -201,8 +221,7 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
         animationType="slide"
         transparent
         visible={isFilterModalVisible}
-        onRequestClose={closeFilterModal}
-      >
+        onRequestClose={closeFilterModal}>
         <FilterComponent
           onClose={closeFilterModal}
           onApplyFilters={handleApplyFilters}
@@ -216,15 +235,14 @@ const PartnerSubCategoryScreen = ({ navigation, route }) => {
         animationType="slide"
         transparent
         visible={isSortModalVisible}
-        onRequestClose={closeSortModal}
-      >
+        onRequestClose={closeSortModal}>
         <SortComponent
           onClose={closeSortModal}
           onApplySort={handleApplySort}
-          selectedSort={sortBy} // Pass current sortBy to SortComponent
+          selectedSort={sortBy}
         />
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -241,6 +259,17 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     paddingLeft: 30,
     gap: 15,
+  },
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   filterBtn: {
     backgroundColor: '#fff',
@@ -276,6 +305,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 10,
     fontSize: 14,
+    color: '#666',
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
     color: '#666',
   },
 });
