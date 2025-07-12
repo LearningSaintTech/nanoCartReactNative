@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import PartnerHeader from '../Components/PartnerHeader';
 import {useSelector, useDispatch} from 'react-redux';
-import {setCartItems, clearCart} from './../../redux/reducers/cartSlice'; // Adjust path as needed
+import {setCartItems, clearCart} from './../../redux/reducers/cartSlice';
 import {BASE_URL} from '../../config/apiConfig';
 import {useRoute} from '@react-navigation/native';
 
@@ -48,6 +48,9 @@ const PartnerCartScreen = ({navigation}) => {
     savings: '0.00',
   });
   const [stockData, setStockData] = useState({});
+
+
+console.log("this is invoice data",invoiceData)
 
   const dispatch = useDispatch();
   const token = useSelector(state => state.auth.token);
@@ -193,10 +196,8 @@ const PartnerCartScreen = ({navigation}) => {
           setWalletBalance(data.data.totalBalance || 0);
           console.log('Wallet balance set:', data.data.totalBalance || 0);
         } else {
-          // console.error('Failed to fetch wallet balance:', data.message);
           setWalletBalance(0);
           console.log('Wallet balance set to 0 due to API error');
-         
         }
       } catch (error) {
         console.error('Error fetching wallet balance:', error.message);
@@ -218,12 +219,18 @@ const PartnerCartScreen = ({navigation}) => {
         console.log('Fetching invoice data with token:', token);
         const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
-          headers: {Authorization: `Bearer ${token}`},
+          headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json();
         console.log('Invoice API response:', JSON.stringify(json, null, 2));
 
-        const calculatedCartTotal = cartTotal;
+        // Calculate cartTotal using MRP * totalQuantity
+        const calculatedCartTotal = cartItems.reduce(
+          (sum, item) => sum + item.itemId.MRP * item.totalQuantity,
+          0,
+        );
+
+        // Use totalPrice from cart items as discountedPrice
         const discountedPrice = cartItems.reduce(
           (sum, item) => sum + item.totalPrice,
           0,
@@ -245,8 +252,7 @@ const PartnerCartScreen = ({navigation}) => {
               : 0;
           };
 
-          const walletMoney =
-            getLatestValue('wallet money') || appliedWalletAmount;
+          const walletMoney = getLatestValue('wallet money') || appliedWalletAmount;
           const couponDiscountValue = getLatestValue('coupon discount') || 0;
           const codCharges = getLatestValue('cod charges') || 0;
           const gstValue = getLatestValue('gst') || 0;
@@ -254,12 +260,16 @@ const PartnerCartScreen = ({navigation}) => {
             getLatestValue('shipping charges') ||
             getLatestValue('shipping charge') ||
             0;
+
+          // Calculate totalAmount including shippingCharges and gstValue
           const totalAmount =
             discountedPrice -
             walletMoney -
             couponDiscountValue +
             codCharges +
-            gstValue;
+            gstValue +
+            shippingCharges;
+
           const savings =
             calculatedCartTotal -
             discountedPrice +
@@ -287,12 +297,16 @@ const PartnerCartScreen = ({navigation}) => {
           const codCharges = 0;
           const gstValue = 0;
           const shippingCharges = 0;
+
+          // Calculate totalAmount including shippingCharges and gstValue
           const totalAmount =
             discountedPrice -
             walletMoney -
             couponDiscountValue +
             codCharges +
-            gstValue;
+            gstValue +
+            shippingCharges;
+
           const savings =
             calculatedCartTotal -
             discountedPrice +
@@ -316,49 +330,39 @@ const PartnerCartScreen = ({navigation}) => {
         }
       } catch (err) {
         console.error('Error fetching invoice:', err.message);
-        // const calculatedCartTotal = cartTotal;
 
+        // Calculate cartTotal using MRP * totalQuantity
         const calculatedCartTotal = cartItems.reduce(
           (sum, item) => sum + item.itemId.MRP * item.totalQuantity,
           0,
         );
 
+        // Use totalPrice from cart items as discountedPrice
         const discountedPrice = cartItems.reduce(
           (sum, item) => sum + item.totalPrice,
           0,
         );
+
         const walletMoney = appliedWalletAmount;
         const couponDiscountValue = 0;
         const codCharges = 0;
         const gstValue = 0;
         const shippingCharges = 0;
-        // const totalAmount =discountedPrice - walletMoney -couponDiscountValue + codCharges + gstValue;
+
+        // Calculate totalAmount including shippingCharges and gstValue
         const totalAmount =
           discountedPrice -
           walletMoney -
-          couponDiscountValue +invoiceData.shippingCharges+
-          codCharges + 
-          gstValue;
+          couponDiscountValue +
+          codCharges +
+          gstValue +
+          shippingCharges;
 
-        // const savings =calculatedCartTotal - discountedPrice + couponDiscountValue + walletMoney;
         const savings =
           calculatedCartTotal -
           discountedPrice +
           couponDiscountValue +
           walletMoney;
-
-        // const newInvoiceData = {
-        //   cartTotal: calculatedCartTotal.toFixed(2),
-        //   discountedPrice: discountedPrice.toFixed(2),
-        //   walletMoney: walletMoney.toFixed(2),
-        //   couponDiscount: couponDiscountValue.toFixed(2),
-        //   codCharges: codCharges.toFixed(2),
-        //   gst: gstValue.toFixed(1),
-        //   shippingCharges:
-        //     shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
-        //   totalAmount: totalAmount.toFixed(1),
-        //   savings: savings.toFixed(2),
-        // };
 
         const newInvoiceData = {
           cartTotal: calculatedCartTotal.toFixed(2),
@@ -380,7 +384,7 @@ const PartnerCartScreen = ({navigation}) => {
     fetchCartDetails();
     fetchWalletBalance();
     fetchInvoiceData();
-  }, [token, cartItems.length, appliedWalletAmount]);
+  }, [token, cartItems?.length, appliedWalletAmount]);
 
   const toggleExpand = index => {
     console.log(
@@ -405,118 +409,220 @@ const PartnerCartScreen = ({navigation}) => {
     }
   };
 
-  const handleQuantityChange = async (
+  // const handleQuantityChange = async (
+  //   itemId,
+  //   color,
+  //   size,
+  //   newQuantity,
+  //   itemIndex,
+  // ) => {
+  //   console.log('handleQuantityChange called:', {
+  //     itemId,
+  //     color,
+  //     size,
+  //     newQuantity,
+  //     itemIndex,
+  //   });
+  //   const itemStockData = stockData[itemId];
+  //   if (itemStockData) {
+  //     const colorData = itemStockData.find(c => c.color === color);
+  //     if (colorData) {
+  //       const sizeData = colorData.sizes.find(s => s.size === size);
+  //       if (sizeData && newQuantity > sizeData.stock) {
+  //         console.log(
+  //           `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
+  //         );
+  //         Alert.alert(
+  //           'Error',
+  //           `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
+  //         );
+  //         return;
+  //       }
+  //     }
+  //   }
+
+  //   try {
+  //     const updatedCartItems = [...cartItems];
+  //     const item = updatedCartItems[itemIndex];
+  //     const updatedOrderDetails = item.orderDetails.map(colorObj => {
+  //       if (colorObj.color === color) {
+  //         return {
+  //           ...colorObj,
+  //           sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => {
+  //             if (sizeObj.size === size) {
+  //               return {...sizeObj, quantity: newQuantity};
+  //             }
+  //             return sizeObj;
+  //           }),
+  //         };
+  //       }
+  //       return colorObj;
+  //     });
+
+  //     const payload = {
+  //       itemId,
+  //       orderDetails: updatedOrderDetails.map(colorObj => ({
+  //         color: colorObj.color,
+  //         sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => ({
+  //           size: sizeObj.size,
+  //           quantity:
+  //             sizeObj.size === size && colorObj.color === color
+  //               ? newQuantity
+  //               : sizeObj.quantity,
+  //           skuId: sizeObj.skuId,
+  //         })),
+  //       })),
+  //     };
+  //     console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
+  //     const response = await fetch(`${BASE_URL}/partner/cart/update`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     const data = await response.json();
+  //     console.log('Cart update API response:', JSON.stringify(data, null, 2));
+  //     if (!response.ok) {
+  //       console.error('Failed to update cart:', data.message);
+  //       Alert.alert('Error', 'Failed to update the quantity.');
+  //     } else {
+  //       const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
+  //         method: 'GET',
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       const cartData = await cartResponse.json();
+  //       console.log(
+  //         'Updated cart API response:',
+  //         JSON.stringify(cartData, null, 2),
+  //       );
+  //       if (
+  //         cartResponse.ok &&
+  //         cartData.success &&
+  //         Array.isArray(cartData.data.items)
+  //       ) {
+  //         dispatch(setCartItems(cartData.data.items));
+  //         console.log(
+  //           'Dispatched setCartItems with updated cart:',
+  //           cartData.data.items,
+  //         );
+  //       } else {
+  //         console.error('Failed to fetch updated cart:', cartData.message);
+  //         Alert.alert('Error', 'Failed to refresh cart after quantity update.');
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating quantity:', error.message);
+  //     Alert.alert('Error', 'An error occurred while updating the quantity.');
+  //   }
+  // };
+
+
+
+const handleQuantityChange = async (itemId, color, size, newQuantity, itemIndex) => {
+  console.log('handleQuantityChange called:', {
     itemId,
     color,
     size,
     newQuantity,
     itemIndex,
-  ) => {
-    console.log('handleQuantityChange called:', {
-      itemId,
-      color,
-      size,
-      newQuantity,
-      itemIndex,
-    });
-    const itemStockData = stockData[itemId];
-    if (itemStockData) {
-      const colorData = itemStockData.find(c => c.color === color);
-      if (colorData) {
-        const sizeData = colorData.sizes.find(s => s.size === size);
-        if (sizeData && newQuantity > sizeData.stock) {
-          console.log(
-            `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
-          );
-          Alert.alert(
-            'Error',
-            `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
-          );
-          return;
-        }
-      }
-    }
+  });
 
-    try {
-      const updatedCartItems = [...cartItems];
-      const item = updatedCartItems[itemIndex];
-      const updatedOrderDetails = item.orderDetails.map(colorObj => {
-        if (colorObj.color === color) {
-          return {
-            ...colorObj,
-            sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => {
-              if (sizeObj.size === size) {
-                return {...sizeObj, quantity: newQuantity};
-              }
-              return sizeObj;
-            }),
-          };
-        }
-        return colorObj;
-      });
+  const item = cartItems[itemIndex];
+  const currentColorObj = item.orderDetails.find(obj => obj.color === color);
+  const currentSizeObj = currentColorObj.sizeAndQuantity.find(obj => obj.size === size);
+  const currentQuantity = currentSizeObj.quantity;
+  const action = newQuantity > currentQuantity ? 'increase' : 'decrease';
 
-      const payload = {
-        itemId,
-        orderDetails: updatedOrderDetails.map(colorObj => ({
-          color: colorObj.color,
-          sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => ({
-            size: sizeObj.size,
-            quantity:
-              sizeObj.size === size && colorObj.color === color
-                ? newQuantity
-                : sizeObj.quantity,
-            skuId: sizeObj.skuId,
-          })),
-        })),
-      };
-      console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
-      const response = await fetch(`${BASE_URL}/partner/cart/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+  if (newQuantity < 0) {
+    console.log('Cannot decrease quantity below 0');
+    Alert.alert('Error', 'Quantity cannot be less than 0.');
+    return;
+  }
 
-      const data = await response.json();
-      console.log('Cart update API response:', JSON.stringify(data, null, 2));
-      if (!response.ok) {
-        console.error('Failed to update cart:', data.message);
-        Alert.alert('Error', 'Failed to update the quantity.');
-      } else {
-        const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        const cartData = await cartResponse.json();
+  const itemStockData = stockData[itemId];
+  if (itemStockData) {
+    const colorData = itemStockData.find(c => c.color === color);
+    if (colorData) {
+      const sizeData = colorData.sizes.find(s => s.size === size);
+      if (sizeData && newQuantity > sizeData.stock) {
         console.log(
-          'Updated cart API response:',
-          JSON.stringify(cartData, null, 2),
+          `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
         );
-        if (
-          cartResponse.ok &&
-          cartData.success &&
-          Array.isArray(cartData.data.items)
-        ) {
-          dispatch(setCartItems(cartData.data.items));
-          console.log(
-            'Dispatched setCartItems with updated cart:',
-            cartData.data.items,
-          );
-        } else {
-          console.error('Failed to fetch updated cart:', cartData.message);
-          Alert.alert('Error', 'Failed to refresh cart after quantity update.');
-        }
+        Alert.alert(
+          'Error',
+          `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
+        );
+        return;
       }
-    } catch (error) {
-      console.error('Error updating quantity:', error.message);
-      Alert.alert('Error', 'An error occurred while updating the quantity.');
     }
-  };
+  }
+
+  try {
+    const payload = { itemId, color, size, action };
+    console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch(`${BASE_URL}/partner/cart/update-quantity`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // Log the raw response
+    const responseText = await response.text();
+    console.log('Raw API response:', responseText);
+    console.log('Response status:', response.status);
+
+    // Attempt to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.error('JSON parse error:', jsonError.message);
+      console.error('Response was:', responseText);
+      Alert.alert('Error', 'Invalid response from server. Please try again later.');
+      return;
+    }
+
+    console.log('Parsed API response:', JSON.stringify(data, null, 2));
+
+    if (!response.ok) {
+      console.error('Failed to update cart:', data.message);
+      Alert.alert('Error', data.message || 'Failed to update the quantity.');
+      return;
+    }
+
+    const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const cartData = await cartResponse.json();
+    console.log('Updated cart API response:', JSON.stringify(cartData, null, 2));
+
+    if (cartResponse.ok && cartData.success && Array.isArray(cartData.data.items)) {
+      dispatch(setCartItems(cartData.data.items));
+      console.log('Dispatched setCartItems with updated cart:', cartData.data.items);
+    } else {
+      console.error('Failed to fetch updated cart:', cartData.message);
+      Alert.alert('Error', 'Failed to refresh cart after quantity update.');
+    }
+  } catch (error) {
+    console.error('Error updating quantity:', error.message);
+    Alert.alert('Error', 'An error occurred while updating the quantity.');
+  }
+};
+
 
   const handleRemoveItem = async (item, itemIndex) => {
     console.log(
@@ -647,6 +753,18 @@ const PartnerCartScreen = ({navigation}) => {
       return;
     }
 
+    const currentTotalAmount = parseFloat(invoiceData.totalAmount);
+    if (enteredAmount > currentTotalAmount) {
+      console.log(
+        `Entered wallet amount ${enteredAmount} exceeds total amount ${currentTotalAmount}`,
+      );
+      Alert.alert(
+        'Error',
+        `Wallet amount (₹${enteredAmount}) cannot exceed total amount (₹${currentTotalAmount}).`,
+      );
+      return;
+    }
+
     setAppliedWalletAmount(enteredAmount);
     setIsWalletApplied(true);
     console.log(
@@ -685,7 +803,7 @@ const PartnerCartScreen = ({navigation}) => {
     try {
       const payload = {couponCode};
       console.log('Coupon apply payload:', JSON.stringify(payload, null, 2));
-      const response = await fetch(`${BASE_URL}/coupon/apply`, {
+      const response = await fetch(`${BASE_URL}/coupon/apply-partner`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -698,6 +816,18 @@ const PartnerCartScreen = ({navigation}) => {
 
       if (response.ok && data.success) {
         const discountAmount = parseFloat(data?.data?.discountValue) || 0;
+        const currentTotalAmount = parseFloat(invoiceData.totalAmount);
+
+        if (discountAmount > currentTotalAmount) {
+          console.log(
+            `Coupon discount ${discountAmount} exceeds total amount ${currentTotalAmount}`,
+          );
+          Alert.alert(
+            'Error',
+            `Coupon discount (₹${discountAmount}) cannot exceed total amount (₹${currentTotalAmount}).`,
+          );
+          return;
+        }
 
         setInvoiceData(prev => {
           const newInvoiceData = {
@@ -708,7 +838,8 @@ const PartnerCartScreen = ({navigation}) => {
               parseFloat(prev.walletMoney) -
               discountAmount +
               parseFloat(prev.codCharges) +
-              parseFloat(prev.gst)
+              parseFloat(prev.gst) +
+              (prev.shippingCharges === 'FREE' ? 0 : parseFloat(prev.shippingCharges.replace('₹', '')))
             ).toFixed(1),
             savings: (
               parseFloat(prev.cartTotal) -
@@ -746,7 +877,7 @@ const PartnerCartScreen = ({navigation}) => {
       totalItems,
       cartTotal,
       appliedWalletAmount,
-      couponDiscount: parseFloat(invoiceData.couponDiscount),
+      couponDiscount: parseFloat(invoiceData?.couponDiscount),
       cartItems,
       invoiceData,
     };
@@ -1079,8 +1210,7 @@ const PartnerCartScreen = ({navigation}) => {
           </Text>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Cart Total</Text>
-
-            <Text style={styles.priceValue}>₹{invoiceData.cartTotal}</Text>
+            <Text style={styles.priceValue}>₹{invoiceData?.cartTotal}</Text>
           </View>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Discounted Price</Text>
@@ -1088,19 +1218,22 @@ const PartnerCartScreen = ({navigation}) => {
               ₹{invoiceData.discountedPrice}
             </Text>
           </View>
-          <View style={styles.priceDetailRow}>
-            <Text style={styles.priceLabel}>Wallet Money</Text>
-            <Text style={[styles.priceValue, styles.discountText]}>
-              - ₹{invoiceData.walletMoney}
-            </Text>
-          </View>
-          <View style={styles.priceDetailRow}>
-            <Text style={styles.priceLabel}>Coupon Discount</Text>
-            <Text style={[styles.priceValue, styles.discountText]}>
-              - ₹{invoiceData.couponDiscount}
-            </Text>
-          </View>
-
+          {parseFloat(invoiceData.walletMoney) > 0 && (
+            <View style={styles.priceDetailRow}>
+              <Text style={styles.priceLabel}>Wallet Money</Text>
+              <Text style={[styles.priceValue, styles.discountText]}>
+                - ₹{invoiceData.walletMoney}
+              </Text>
+            </View>
+          )}
+          {parseFloat(invoiceData.couponDiscount) > 0 && (
+            <View style={styles.priceDetailRow}>
+              <Text style={styles.priceLabel}>Coupon Discount</Text>
+              <Text style={[styles.priceValue, styles.discountText]}>
+                - ₹{invoiceData.couponDiscount}
+              </Text>
+            </View>
+          )}
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>GST</Text>
             <Text style={styles.priceValue}>₹{invoiceData.gst}</Text>
@@ -1137,7 +1270,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   emptyCartText: {
     fontSize: 18,
     color: '#666',
@@ -1389,6 +1521,3 @@ const styles = StyleSheet.create({
 });
 
 export default PartnerCartScreen;
-
-
-

@@ -93,12 +93,12 @@ const AddNewAddressScreen = () => {
     console.log(isEdit ? ' Editing Address:' : '➕ Creating Address:', payload);
 
     const url = isEdit
-      ? `${BASE_URL}/user/address/${addressId}` 
+      ? `${BASE_URL}/user/address/${addressId}` //  use addressId
       : `${BASE_URL}/user/address/create`;
 
     try {
       const response = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST', 
+        method: isEdit ? 'PUT' : 'POST', //  PUT for edit, POST for create
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,

@@ -7,7 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  TextInput,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +21,7 @@ const CustomCheckbox = ({ value, onValueChange }) => (
   </TouchableOpacity>
 );
 
-const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilters, sortBy, initialPriceRange }) => {
+const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilters, sortBy }) => {
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.token);
   const [filtersData, setFiltersData] = useState([]);
@@ -30,9 +29,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [priceRange, setPriceRange] = useState(initialPriceRange || { min: '', max: '' });
 
-  // Utility function to get timestamp for logs
   const getTimestamp = () => new Date().toISOString();
 
   useEffect(() => {
@@ -69,27 +66,15 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
         setLoading(true);
         setError(null);
 
-        const apiUrl = `${BASE_URL}/items/filtering`;
-        const requestBody = {
-          subCategoryId,
-          filters: [],
-          name: '',
-          keyword: '',
-          sortBy: '',
-          page: 1,
-          limit: 1,
-        };
-
+        const apiUrl = 'http://10.203.52.142:4000/api/filter';
         console.log(`[${getTimestamp()}] 🌐 [FilterComponent] Fetching filters from: ${apiUrl}`);
-        console.log(`[${getTimestamp()}] 📤 [FilterComponent] Request body: ${JSON.stringify(requestBody, null, 2)}`);
 
         const response = await fetch(apiUrl, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(requestBody),
         });
 
         console.log(`[${getTimestamp()}] 📥 [FilterComponent] Response status: ${response.status}`);
@@ -103,9 +88,9 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
         const json = await response.json();
         console.log(`[${getTimestamp()}] 📊 [FilterComponent] Response data: ${JSON.stringify(json, null, 2)}`);
 
-        if (json?.success && Array.isArray(json.data?.filters)) {
+        if (json?.success && Array.isArray(json.data)) {
           const mappedFilters = {};
-          json.data.filters.forEach(filter => {
+          json.data.forEach(filter => {
             if (filter.key && Array.isArray(filter.values)) {
               mappedFilters[filter.key] = {};
               filter.values.forEach(val => {
@@ -113,12 +98,11 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
               });
             }
           });
-          mappedFilters['Price range'] = { enabled: false };
-          setFiltersData([...json.data.filters, { key: 'Price range', values: [] }]);
+          setFiltersData(json.data);
           setFilters(prev => ({ ...mappedFilters, ...prev }));
-          setSelectedCategory(json.data.filters[0]?.key || 'Price range');
+          setSelectedCategory(json.data[0]?.key || null);
           console.log(`[${getTimestamp()}] ✅ [FilterComponent] Filters set: ${JSON.stringify(mappedFilters, null, 2)}`);
-          console.log(`[${getTimestamp()}] 🗂️ [FilterComponent] Selected category: ${json.data.filters[0]?.key || 'Price range'}`);
+          console.log(`[${getTimestamp()}] 🗂️ [FilterComponent] Selected category: ${json.data[0]?.key || null}`);
         } else {
           throw new Error(json?.message || 'No filters available');
         }
@@ -172,18 +156,14 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   const clearAll = () => {
     const cleared = {};
     filtersData.forEach(filter => {
-      if (filter.key !== 'Price range') {
-        cleared[filter.key] = {};
-        filter.values.forEach(val => {
-          cleared[filter.key][val] = false;
-        });
-      }
+      cleared[filter.key] = {};
+      filter.values.forEach(val => {
+        cleared[filter.key][val] = false;
+      });
     });
     setFilters(cleared);
-    setPriceRange({ min: '', max: '' });
     console.log(`[${getTimestamp()}] 🗑️ [FilterComponent] Cleared all filters: ${JSON.stringify(cleared, null, 2)}`);
-    console.log(`[${getTimestamp()}] 💸 [FilterComponent] Cleared price range: ${JSON.stringify({ min: '', max: '' }, null, 2)}`);
-    onApplyFilters([], cleared, { currentPage: 1, totalPages: 1, totalItems: 0 }, { min: '', max: '' });
+    onApplyFilters([], cleared, { currentPage: 1, totalPages: 1, totalItems: 0 });
     onClose();
   };
 
@@ -212,33 +192,25 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
       return;
     }
 
-    if (priceRange.min && priceRange.max) {
-      const min = Number(priceRange.min);
-      const max = Number(priceRange.max);
-      if (isNaN(min) || isNaN(max) || min > max) {
-        Alert.alert(
-          'Error',
-          'Invalid price range. Ensure Min and Max are numbers and Min is less than Max.',
-        );
-        console.warn(`[${getTimestamp()}] ⚠️ [FilterComponent] Invalid price range: ${JSON.stringify(priceRange, null, 2)}`);
-        return;
-      }
-    }
-
     const filterArray = [];
+    let priceRange = { min: '', max: '' }; // Default empty priceRange
     Object.keys(filterState).forEach(key => {
-      if (key === 'Price range' && priceRange.min && priceRange.max) {
-        filterArray.push({
-          key: 'Price range',
-          value: `₹${priceRange.min} - ₹${priceRange.max}`,
+      Object.entries(filterState[key])
+        .filter(([_, isSelected]) => isSelected)
+        .forEach(([val]) => {
+          filterArray.push({ key, value: val });
+          // Parse price range if selected
+          if (key === 'Price range') {
+            if (val.includes('Under')) {
+              priceRange = { min: 0, max: 500 };
+            } else if (val.includes('Over')) {
+              priceRange = { min: 25000, max: '' };
+            } else {
+              const [min, max] = val.replace('₹', '').split(' - ').map(v => v.replace(',', '').trim());
+              priceRange = { min: parseInt(min) || '', max: parseInt(max) || '' };
+            }
+          }
         });
-      } else {
-        Object.entries(filterState[key])
-          .filter(([_, isSelected]) => isSelected)
-          .forEach(([val]) => {
-            filterArray.push({ key, value: val });
-          });
-      }
     });
 
     const requestBody = {
@@ -295,7 +267,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
           currentPage: data.data?.currentPage || 1,
           totalPages: data.data?.totalPages || 1,
           totalItems: data.data?.totalItems || 0,
-        }, priceRange);
+        }, priceRange); // Include priceRange for compatibility
         if (formattedItems.length === 0) {
           console.warn(`[${getTimestamp()}] ⚠️ [FilterComponent] No items match the selected filters`);
           Alert.alert('No Results', 'No items match the selected filters');
@@ -343,37 +315,6 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
     }
 
     console.log(`[${getTimestamp()}] 🖼️ [FilterComponent] Rendering options for category: ${selectedCategory}`);
-
-    if (selectedCategory === 'Price range') {
-      return (
-        <View style={styles.priceRangeContainer}>
-          <Text style={styles.optionText}>Price Range (₹)</Text>
-          <View style={styles.priceInputRow}>
-            <TextInput
-              style={styles.priceInput}
-              placeholder="Min"
-              keyboardType="numeric"
-              value={priceRange.min}
-              onChangeText={text => {
-                setPriceRange(prev => ({ ...prev, min: text }));
-                console.log(`[${getTimestamp()}] 💸 [FilterComponent] Price range min updated: ${text}`);
-              }}
-            />
-            <Text style={styles.priceDash}> - </Text>
-            <TextInput
-              style={styles.priceInput}
-              placeholder="Max"
-              keyboardType="numeric"
-              value={priceRange.max}
-              onChangeText={text => {
-                setPriceRange(prev => ({ ...prev, max: text }));
-                console.log(`[${getTimestamp()}] 💸 [FilterComponent] Price range max updated: ${text}`);
-              }}
-            />
-          </View>
-        </View>
-      );
-    }
 
     return Object.keys(filters[selectedCategory]).map(option => (
       <View key={option} style={styles.optionRow}>
@@ -453,7 +394,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
                     selectedCategory === cat.key && styles.activeCategoryText,
                   ]}
                 >
-                  {cat.key} ({cat.key === 'Price range' ? 'Custom' : cat.values.length})
+                  {cat.key} ({cat.values.length})
                 </Text>
               </TouchableOpacity>
             ))}
@@ -610,30 +551,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
-  },
-  priceRangeContainer: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  priceInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  priceInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 4,
-    padding: 8,
-    width: 80,
-    textAlign: 'center',
-  },
-  priceDash: {
-    marginHorizontal: 10,
-    fontSize: 16,
-    color: '#333',
   },
 });
 

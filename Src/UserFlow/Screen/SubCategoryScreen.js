@@ -21,6 +21,7 @@ const SubCategoryScreen = ({ navigation, route }) => {
   const { subCategory, subCategoryId } = route.params;
   const subcategoryId = subCategory?._id || subCategoryId;
   const token = useSelector(state => state.auth.token);
+
   const [products, setProducts] = useState([]);
   const [isFilterModalVisible, setFilterModalVisible] = useState(false);
   const [isSortModalVisible, setSortModalVisible] = useState(false);
@@ -34,6 +35,7 @@ const SubCategoryScreen = ({ navigation, route }) => {
   const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const limit = 5;
+
   // Update active filter count
   useEffect(() => {
     let count = Object.values(appliedFilters)

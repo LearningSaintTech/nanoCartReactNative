@@ -39,7 +39,7 @@ const PartnerSubCategoryItem = ({ item, navigation }) => {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/userwishlist/create`, {
+      const res = await fetch(`${BASE_URL}/partner/wishlist/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -18,6 +18,7 @@ import auth from "@react-native-firebase/auth";
 import { BASE_URL } from "../../config/apiConfig";
 
 const screenWidth = Dimensions.get("window").width;
+
 const RegisterVerificationScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
   const { name, email, phone, confirmation } = route.params;

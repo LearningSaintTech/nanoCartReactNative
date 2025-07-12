@@ -629,7 +629,7 @@ const PartnerSearchCategoryScreen = () => {
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
-          navigation.navigate('ProductDetail', { itemId: item.itemId });
+          navigation.navigate('PartnerProductDetail', { itemId: item.itemId });
           console.log('ℹ️ Navigating to ProductDetail:', item.itemId);
         }}>
         <View style={styles.imageContainer}>
@@ -1092,7 +1092,7 @@ const PartnerSearchCategoryScreen = () => {
                 rating={4.5}
                 reviews="79 Ratings & 55"
                 sizes={['XS', 'S', 'M', 'L', 'XL']}
-                colors={[wishlistItem.color.toLowerCase()]}
+                colors={[wishlistItem.color]}
                 buttonLabel="VIEW WISHLIST"
                 onButtonPress={() => {
                   navigation.navigate('Wishlist');
@@ -1132,7 +1132,7 @@ const PartnerSearchCategoryScreen = () => {
                 rating={4.5}
                 reviews="121 Ratings & 59"
                 sizes={[cartItem.size]}
-                colors={[cartItem.color.toLowerCase()]}
+                colors={[cartItem.color]}
                 buttonLabel="VIEW CART"
                 onButtonPress={() => {
                   navigation.navigate('Cart');

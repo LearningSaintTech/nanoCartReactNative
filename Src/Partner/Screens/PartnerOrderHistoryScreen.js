@@ -7,12 +7,12 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, {useState, useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
-import { BASE_URL } from '../../config/apiConfig';
+import {useSelector} from 'react-redux';
+import {BASE_URL} from '../../config/apiConfig';
 
 const PartnerOrderHistoryScreen = () => {
   const navigation = useNavigation();
@@ -20,7 +20,7 @@ const PartnerOrderHistoryScreen = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const token = useSelector((state) => state.auth.token);
+  const token = useSelector(state => state.auth.token);
 
   const fetchOrders = async () => {
     try {
@@ -42,24 +42,30 @@ const PartnerOrderHistoryScreen = () => {
       if (!response.ok) {
         const errorData = await response.text();
         console.error('Non-OK response:', response.status, errorData);
-        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! Status: ${response.status}`,
+        );
       }
 
       const data = await response.json();
       if (data.success) {
-        const transformedOrders = data.data.orderSummaries.map((summary) => ({
+        const transformedOrders = data.data.orderSummaries.map(summary => ({
           id: summary.orderId,
-          date: new Date(summary.orderDate).toLocaleString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          }).replace(/,/, ''),
+          date: new Date(summary.orderDate)
+            .toLocaleString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })
+            .replace(/,/, ''),
           itemCount: summary.numberOfItems,
           items: summary.itemNames.join(', '),
-          status: data.data.orders.find((o) => o.orderId === summary.orderId)?.orderStatus || 'Unknown',
+          status:
+            data.data.orders.find(o => o.orderId === summary.orderId)
+              ?.orderStatus || 'Unknown',
         }));
 
         setOrders(transformedOrders);
@@ -99,13 +105,13 @@ const PartnerOrderHistoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, {paddingTop: insets.top + 10}]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>ORDER HISTORY</Text>
+        <Text style={styles.headerTitle}>ORDER HISTORY </Text>
       </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView contentContainerStyle={{paddingBottom: 20}}>
         {orders.length === 0 ? (
           <View style={styles.centered}>
             <Text style={styles.noOrdersText}>No orders found</Text>
@@ -133,13 +139,15 @@ const PartnerOrderHistoryScreen = () => {
                           ? '#000000'
                           : '#FFFFFF',
                     },
-                  ]}
-                >
+                  ]}>
                   {order.status.toUpperCase()}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('PartnerTrackOrderScreen', { orderId: order.id })}
-                >
+                  onPress={() =>
+                    navigation.navigate('PartnerTrackOrderScreen', {
+                      orderId: order.id,
+                    })
+                  }>
                   <Icon name="chevron-forward-outline" size={24} color="#000" />
                 </TouchableOpacity>
               </View>
@@ -153,7 +161,9 @@ const PartnerOrderHistoryScreen = () => {
                   <Text style={styles.label}>{order.date}</Text>
                 </View>
                 <View style={styles.separator} />
-                <Text style={styles.itemCountText}>{order.itemCount} ITEMS</Text>
+                <Text style={styles.itemCountText}>
+                  {order.itemCount} ITEMS
+                </Text>
                 <Text style={styles.itemsText}>{order.items}</Text>
               </View>
             </View>
@@ -181,7 +191,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },

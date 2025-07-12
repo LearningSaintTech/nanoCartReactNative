@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Image,
@@ -9,20 +9,16 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector,shallowEqual } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
-
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSelector, shallowEqual } from 'react-redux';
+import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerHeader = () => {
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const navigation = useNavigation();
-  // const cartItems = useSelector((state) => state.cart.items);
   const cartItems = useSelector((state) => state.cart.items, shallowEqual);
-  
-
   const token = useSelector((state) => state.auth.token);
+  const [totalBalance, setTotalBalance] = useState(0); // State for totalBalance
 
   // Calculate scaling factor based on a reference width (e.g., 375 for iPhone SE)
   const scale = (size) => (width / 375) * size;
@@ -37,9 +33,37 @@ const PartnerHeader = () => {
     return sum + count;
   }, 0);
 
-  // Log for debugging
-  console.log('PartnerHeader - Cart Items:', cartItems);
-  console.log('PartnerHeader - Total Cart Count:', totalCartCount);
+  // Fetch wallet data when component gains focus
+  useFocusEffect(
+    useCallback(() => {
+      const fetchWalletData = async () => {
+        if (!token) {
+          console.log('No token found, skipping wallet fetch');
+          return;
+        }
+        try {
+          const response = await fetch(`${BASE_URL}/wallet`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`, // Include token in headers
+              'Content-Type': 'application/json',
+            },
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            setTotalBalance(data.data.totalBalance); // Update state with totalBalance
+          } else {
+            console.error('Failed to fetch wallet data:', data.message || 'Unknown error');
+          }
+        } catch (error) {
+          console.error('Error fetching wallet data:', error.message);
+        }
+      };
+
+      fetchWalletData();
+      console.log('PartnerHeader focused. Cart Items:', cartItems);
+    }, [token, cartItems])
+  );
 
   const handleCartPress = () => {
     if (token) {
@@ -48,14 +72,6 @@ const PartnerHeader = () => {
       navigation.navigate('Login', { fromScreen: 'PartnerHeader' });
     }
   };
-
-useFocusEffect(
-  useCallback(() => {
-    // Log or trigger side-effect when screen gains focus
-    console.log('PartnerHeader focused. Cart Items:', cartItems);
-  }, [cartItems])
-);
-
 
   return (
     <>
@@ -77,7 +93,6 @@ useFocusEffect(
             borderBottomWidth: 1,
             borderBottomColor: '#EEEEEE',
             minHeight: scale(60),
-            // Additional padding for Android to avoid status bar overlap
             ...Platform.select({
               android: { paddingTop: StatusBar.currentHeight || scale(10) },
             }),
@@ -112,7 +127,7 @@ useFocusEffect(
                 letterSpacing: scale(0.3),
               }}
             >
-              INR 0.0
+              INR {totalBalance.toFixed(2)} {/* Display totalBalance */}
             </Text>
 
             <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
