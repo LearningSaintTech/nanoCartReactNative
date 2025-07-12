@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../../config/apiConfig';
 
@@ -23,7 +23,6 @@ const CustomCheckbox = ({ value, onValueChange }) => (
 
 const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilters, sortBy }) => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
   const token = useSelector(state => state.auth.token);
   const [filtersData, setFiltersData] = useState([]);
   const [filters, setFilters] = useState(initialFilters || {});
@@ -31,74 +30,89 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const getTimestamp = () => new Date().toISOString();
+
   useEffect(() => {
     const fetchFilters = async () => {
+      console.log(`[${getTimestamp()}] 📥 [FilterComponent] Starting fetchFilters for subCategoryId: ${subCategoryId}`);
+      console.log(`[${getTimestamp()}] 🔑 [FilterComponent] Token: ${token ? 'Present' : 'Missing'}`);
+
+      if (!token) {
+        const errorMsg = 'Login required to see details';
+        setError(errorMsg);
+        setLoading(false);
+        console.error(`[${getTimestamp()}] ❌ [FilterComponent] No token, prompting login`);
+        Alert.alert(
+          'Login Required',
+          'Please log in to access filters.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                console.log(`[${getTimestamp()}] ➡️ [FilterComponent] Navigating to Login from FilterComponent`);
+                navigation.navigate('Login', {
+                  fromScreen: 'FilterComponent',
+                  subCategoryId,
+                });
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        if (!token) {
-          Alert.alert(
-            'Login Required',
-            'Please log in to access filters.',
-            [
-              {
-                text: 'OK',
-                onPress: () => navigation.navigate('Login', {
-                  fromScreen: 'FilterComponent',
-                  subCategoryId,
-                }),
-              },
-            ],
-            { cancelable: false }
-          );
-          return;
-        }
+        const apiUrl = 'http://192.168.1.89:4000/api/filter';
+        console.log(`[${getTimestamp()}] 🌐 [FilterComponent] Fetching filters from: ${apiUrl}`);
 
-        const res = await fetch(`${BASE_URL}/filter`, {
+        const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error('❌ Server response:', errorText);
-          throw new Error(`HTTP error! Status: ${res.status}`);
+        console.log(`[${getTimestamp()}] 📥 [FilterComponent] Response status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[${getTimestamp()}] ❌ [FilterComponent] Server error: ${errorText}`);
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const errorText = await res.text();
-          console.error('❌ Non-JSON response:', errorText);
-          throw new Error('Server returned non-JSON response');
-        }
+        const json = await response.json();
+        console.log(`[${getTimestamp()}] 📊 [FilterComponent] Response data: ${JSON.stringify(json, null, 2)}`);
 
-        const json = await res.json();
-        console.log('🌐 Filters response:', json);
-
-        if (json?.success) {
+        if (json?.success && Array.isArray(json.data)) {
           const mappedFilters = {};
-          json.data.forEach((filter) => {
-            mappedFilters[filter.key] = {};
-            filter.values.forEach((val) => {
-              mappedFilters[filter.key][val] = initialFilters?.[filter.key]?.[val] || false;
-            });
+          json.data.forEach(filter => {
+            if (filter.key && Array.isArray(filter.values)) {
+              mappedFilters[filter.key] = {};
+              filter.values.forEach(val => {
+                mappedFilters[filter.key][val] = initialFilters?.[filter.key]?.[val] || false;
+              });
+            }
           });
           setFiltersData(json.data);
-          setFilters((prev) => ({ ...mappedFilters, ...prev }));
-          setSelectedCategory(json.data[0]?.key);
+          setFilters(prev => ({ ...mappedFilters, ...prev }));
+          setSelectedCategory(json.data[0]?.key || null);
+          console.log(`[${getTimestamp()}] ✅ [FilterComponent] Filters set: ${JSON.stringify(mappedFilters, null, 2)}`);
+          console.log(`[${getTimestamp()}] 🗂️ [FilterComponent] Selected category: ${json.data[0]?.key || null}`);
         } else {
-          throw new Error(json?.message || 'Failed to load filters');
+          throw new Error(json?.message || 'No filters available');
         }
       } catch (error) {
         const errorMessage = error.message.includes('401')
           ? 'Session expired. Please log in again.'
-          : error.message || 'Error fetching filters';
+          : 'Error fetching filters. Please try again.';
         setError(errorMessage);
-        console.error('❌ Error fetching filters:', error);
+        console.error(`[${getTimestamp()}] ❌ [FilterComponent] Fetch error: ${errorMessage}`);
+        console.error(`[${getTimestamp()}] 📜 [FilterComponent] Error stack: ${error.stack}`);
         Alert.alert(
           'Error',
           errorMessage,
@@ -107,6 +121,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
               text: 'OK',
               onPress: () => {
                 if (errorMessage.includes('401')) {
+                  console.log(`[${getTimestamp()}] ➡️ [FilterComponent] Navigating to Login due to 401 error`);
                   navigation.navigate('Login', {
                     fromScreen: 'FilterComponent',
                     subCategoryId,
@@ -119,59 +134,57 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
         );
       } finally {
         setLoading(false);
+        console.log(`[${getTimestamp()}] 🏁 [FilterComponent] Fetch filters completed, loading: ${false}`);
       }
     };
 
-    if (Object.keys(filters).length === 0 || !initialFilters) {
-      fetchFilters();
-    } else {
-      setLoading(false);
-      setFiltersData(Object.keys(initialFilters).map((key) => ({
-        key,
-        values: Object.keys(initialFilters[key]),
-      })));
-      setSelectedCategory(Object.keys(initialFilters)[0] || null);
-    }
-  }, [initialFilters, token, navigation, subCategoryId]);
+    console.log(`[${getTimestamp()}] 🚀 [FilterComponent] useEffect triggered for fetching filters`);
+    fetchFilters();
+  }, [token, navigation, subCategoryId, initialFilters]);
 
   const handleFilterChange = (category, option) => {
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
         [option]: !prev[category][option],
       },
     }));
+    console.log(`[${getTimestamp()}] 🔍 [FilterComponent] Filter changed - Category: ${category}, Option: ${option}, New state: ${!filters[category]?.[option]}`);
   };
 
   const clearAll = () => {
     const cleared = {};
-    filtersData.forEach((filter) => {
+    filtersData.forEach(filter => {
       cleared[filter.key] = {};
-      filter.values.forEach((val) => {
+      filter.values.forEach(val => {
         cleared[filter.key][val] = false;
       });
     });
-    if (onApplyFilters && typeof onApplyFilters === 'function') {
-      onApplyFilters([], cleared, { currentPage: 1, totalPages: 1, totalItems: 0 });
-    } else {
-      console.warn('FilterComponent: onApplyFilters is not a function, skipping apply');
-    }
+    setFilters(cleared);
+    console.log(`[${getTimestamp()}] 🗑️ [FilterComponent] Cleared all filters: ${JSON.stringify(cleared, null, 2)}`);
+    onApplyFilters([], cleared, { currentPage: 1, totalPages: 1, totalItems: 0 });
     onClose();
   };
 
   const applyFilters = async (filterState = filters) => {
+    console.log(`[${getTimestamp()}] 🚀 [FilterComponent] Starting applyFilters`);
+
     if (!token) {
+      console.error(`[${getTimestamp()}] ❌ [FilterComponent] No token, prompting login`);
       Alert.alert(
         'Login Required',
         'Please log in to apply filters.',
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Login', {
-              fromScreen: 'FilterComponent',
-              subCategoryId,
-            }),
+            onPress: () => {
+              console.log(`[${getTimestamp()}] ➡️ [FilterComponent] Navigating to Login from applyFilters`);
+              navigation.navigate('Login', {
+                fromScreen: 'FilterComponent',
+                subCategoryId,
+              });
+            },
           },
         ],
         { cancelable: false }
@@ -179,56 +192,66 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
       return;
     }
 
-    const queryParams = [
-      `subCategoryId=${encodeURIComponent(subCategoryId)}`,
-      'page=1',
-      'limit=5',
-      `sortBy=${encodeURIComponent(sortBy || '')}`,
-    ];
-
-    Object.keys(filterState).forEach((key) => {
-      const selectedValues = Object.entries(filterState[key])
+    const filterArray = [];
+    let priceRange = { min: '', max: '' }; // Default empty priceRange
+    Object.keys(filterState).forEach(key => {
+      Object.entries(filterState[key])
         .filter(([_, isSelected]) => isSelected)
-        .map(([val]) => val);
-
-      if (selectedValues.length > 0) {
-        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(selectedValues.join(','))}`);
-      }
+        .forEach(([val]) => {
+          filterArray.push({ key, value: val });
+          // Parse price range if selected
+          if (key === 'Price range') {
+            if (val.includes('Under')) {
+              priceRange = { min: 0, max: 500 };
+            } else if (val.includes('Over')) {
+              priceRange = { min: 25000, max: '' };
+            } else {
+              const [min, max] = val.replace('₹', '').split(' - ').map(v => v.replace(',', '').trim());
+              priceRange = { min: parseInt(min) || '', max: parseInt(max) || '' };
+            }
+          }
+        });
     });
 
-    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-    const apiUrl = `${BASE_URL}/items/filter${queryString}`;
+    const requestBody = {
+      subCategoryId,
+      filters: filterArray,
+      name: '',
+      keyword: '',
+      sortBy,
+      page: 1,
+      limit: 5,
+    };
 
-    console.log('🌐 Fetching filtered items from:', apiUrl);
+    const apiUrl = `${BASE_URL}/items/filtering`;
 
     try {
       setLoading(true);
+      console.log(`[${getTimestamp()}] 🌐 [FilterComponent] Applying filters to: ${apiUrl}`);
+      console.log(`[${getTimestamp()}] 📤 [FilterComponent] Request body: ${JSON.stringify(requestBody, null, 2)}`);
+
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(requestBody),
       });
+
+      console.log(`[${getTimestamp()}] 📥 [FilterComponent] Apply filters response status: ${response.status}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Server response:', errorText);
+        console.error(`[${getTimestamp()}] ❌ [FilterComponent] Apply filters server error: ${errorText}`);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const errorText = await response.text();
-        console.error('❌ Non-JSON response:', errorText);
-        throw new Error('Server returned non-JSON response');
-      }
-
       const data = await response.json();
-      console.log('🌐 Filtered items response:', data);
+      console.log(`[${getTimestamp()}] 📊 [FilterComponent] Apply filters response: ${JSON.stringify(data, null, 2)}`);
 
       if (data?.success) {
-        const formattedItems = (data.data?.items || []).map((item) => ({
+        const formattedItems = (data.data?.items || []).map(item => ({
           name: item.name || 'Unnamed Item',
           description: item.description || '',
           mrp: item.MRP || 0,
@@ -237,19 +260,16 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
           image: { uri: item.image || '' },
           itemId: item._id || '',
           defaultColor: item.defaultColor || '',
-          filters: item.filters || [],
-          userAverageRating: item.userAverageRating || 0,
+          userAverageRating: item.userAverageRating || 4.5,
         }));
-        if (onApplyFilters && typeof onApplyFilters === 'function') {
-          onApplyFilters(formattedItems, filterState, {
-            currentPage: data.data?.currentPage || 1,
-            totalPages: data.data?.totalPages || 1,
-            totalItems: data.data?.totalItems || 0,
-          });
-        } else {
-          console.warn('FilterComponent: onApplyFilters is not a function, skipping apply');
-        }
+        console.log(`[${getTimestamp()}] ✅ [FilterComponent] Formatted items: ${formattedItems.length} items`);
+        onApplyFilters(formattedItems, filterState, {
+          currentPage: data.data?.currentPage || 1,
+          totalPages: data.data?.totalPages || 1,
+          totalItems: data.data?.totalItems || 0,
+        }, priceRange); // Include priceRange for compatibility
         if (formattedItems.length === 0) {
+          console.warn(`[${getTimestamp()}] ⚠️ [FilterComponent] No items match the selected filters`);
           Alert.alert('No Results', 'No items match the selected filters');
         }
         onClose();
@@ -259,9 +279,10 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
     } catch (error) {
       const errorMessage = error.message.includes('401')
         ? 'Session expired. Please log in again.'
-        : error.message || 'Error applying filters';
+        : 'Error applying filters. Please try again.';
       setError(errorMessage);
-      console.error('❌ Error applying filters:', error);
+      console.error(`[${getTimestamp()}] ❌ [FilterComponent] Apply filters error: ${errorMessage}`);
+      console.error(`[${getTimestamp()}] 📜 [FilterComponent] Error stack: ${error.stack}`);
       Alert.alert(
         'Error',
         errorMessage,
@@ -270,6 +291,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
             text: 'OK',
             onPress: () => {
               if (errorMessage.includes('401')) {
+                console.log(`[${getTimestamp()}] ➡️ [FilterComponent] Navigating to Login due to 401 error in applyFilters`);
                 navigation.navigate('Login', {
                   fromScreen: 'FilterComponent',
                   subCategoryId,
@@ -282,12 +304,19 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
       );
     } finally {
       setLoading(false);
+      console.log(`[${getTimestamp()}] 🏁 [FilterComponent] Apply filters completed, loading: ${false}`);
     }
   };
 
   const renderOptions = () => {
-    if (!selectedCategory || !filters[selectedCategory]) return null;
-    return Object.keys(filters[selectedCategory]).map((option) => (
+    if (!selectedCategory || !filters[selectedCategory]) {
+      console.log(`[${getTimestamp()}] ℹ️ [FilterComponent] No selected category or filters for ${selectedCategory}`);
+      return null;
+    }
+
+    console.log(`[${getTimestamp()}] 🖼️ [FilterComponent] Rendering options for category: ${selectedCategory}`);
+
+    return Object.keys(filters[selectedCategory]).map(option => (
       <View key={option} style={styles.optionRow}>
         <CustomCheckbox
           value={filters[selectedCategory][option]}
@@ -306,6 +335,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   };
 
   if (loading) {
+    console.log(`[${getTimestamp()}] ⏳ [FilterComponent] Rendering loading state`);
     return (
       <View style={styles.modalContainer}>
         <ActivityIndicator size="large" color="#F36F25" />
@@ -314,21 +344,28 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
   }
 
   if (error) {
+    console.log(`[${getTimestamp()}] ❌ [FilterComponent] Rendering error state: ${error}`);
     return (
       <View style={styles.modalContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Text style={styles.closeButtonText}>Close</Text>
+          <Text style={styles.closeButtonText}>
+            {error.includes('Login required') || error.includes('Session expired') ? 'Login' : 'Close'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  console.log(`[${getTimestamp()}] 🖼️ [FilterComponent] Rendering filter modal with ${filtersData.length} categories`);
   return (
     <View style={styles.modalContainer}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            console.log(`[${getTimestamp()}] 🔙 [FilterComponent] Back button pressed`);
+            onClose();
+          }} style={styles.backButton}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>FILTER</Text>
@@ -339,14 +376,17 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
 
         <View style={styles.body}>
           <ScrollView style={styles.leftColumn}>
-            {filtersData.map((cat) => (
+            {filtersData.map(cat => (
               <TouchableOpacity
                 key={cat.key}
                 style={[
                   styles.categoryButton,
                   selectedCategory === cat.key && styles.activeCategory,
                 ]}
-                onPress={() => setSelectedCategory(cat.key)}
+                onPress={() => {
+                  setSelectedCategory(cat.key);
+                  console.log(`[${getTimestamp()}] 🗂️ [FilterComponent] Selected category: ${cat.key}`);
+                }}
               >
                 <Text
                   style={[
@@ -363,7 +403,11 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
           <ScrollView style={styles.rightColumn}>{renderOptions()}</ScrollView>
         </View>
 
-        <TouchableOpacity style={styles.applyButton} onPress={() => applyFilters()} disabled={loading}>
+        <TouchableOpacity
+          style={styles.applyButton}
+          onPress={() => applyFilters()}
+          disabled={loading}
+        >
           <Text style={styles.applyButtonText}>{loading ? 'Applying...' : 'APPLY'}</Text>
         </TouchableOpacity>
       </View>

@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import { BASE_URL } from '../../config/apiConfig';
 
-const PaymentScreen = ({ navigation, route }) => { // Add route to props
+const PaymentScreen = ({ navigation, route }) => {
   const token = useSelector((state) => state.auth.token);
   const cartItems = useSelector((state) => state.cart.items);
   const [address, setAddress] = useState(null);
@@ -60,7 +60,18 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         });
-        const json = await response.json();
+        const responseText = await response.text();
+        console.log('Address Response Status:', response.status);
+        console.log('Address Response Text:', responseText);
+
+        let json;
+        try {
+          json = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.error('JSON Parse Error (Address):', jsonError.message);
+          throw new Error(`Failed to parse address response: ${responseText.substring(0, 100)}...`);
+        }
+
         if (response.ok && json.addresses?.addressDetail?.length > 0) {
           const defaultAddress = json.addresses.addressDetail.find((a) => a.isDefault) || json.addresses.addressDetail[0];
           setAddress(defaultAddress);
@@ -68,41 +79,60 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
           console.warn('No addresses found:', json);
         }
       } catch (err) {
-        console.error('Error fetching address:', err);
+        console.error('Error fetching address:', err.message);
       }
     };
 
     if (token) fetchAddress();
   }, [token]);
 
- useEffect(() => {
-  const fetchInvoiceData = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/invoice`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      console.log('Raw Invoice Response:', JSON.stringify(json, null, 2));
-      if (res.ok && json.success) {
-        const invoice = json.data[0].invoice;
-        setInvoice(invoice);
-        const getLatestValue = (key) => {
-          const items = invoice.filter((item) => item.key === key);
-          return items.length > 0 ? items[items.length - 1].value : 0;
-        };
-
-        const gstValue = getLatestValue('gst');
-        const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge');
-
-        setInvoiceData({
-          gst: `${gstValue}%`,
-          coupon_discount: `₹${couponDiscount.toFixed(2)}`,
-          shipping_charge: shippingCharge === 0 ? '₹0' : `₹${shippingCharge.toFixed(2)}`, // Fixed typo: Chaucge -> Charge
-          total_amount: `₹${totalAmount}`,
+  useEffect(() => {
+    const fetchInvoiceData = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/invoice`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
         });
-      } else {
-        console.warn('Failed to fetch invoice:', json.message);
+        const responseText = await res.text();
+        console.log('Invoice Response Status:', res.status);
+        console.log('Invoice Response Text:', responseText);
+
+        let json;
+        try {
+          json = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.error('JSON Parse Error (Invoice):', jsonError.message);
+          throw new Error(`Failed to parse invoice response: ${responseText.substring(0, 100)}...`);
+        }
+
+        if (res.ok && json.success) {
+          const invoice = json.data[0].invoice;
+          setInvoice(invoice);
+          const getLatestValue = (key) => {
+            const items = invoice.filter((item) => item.key === key);
+            return items.length > 0 ? items[items.length - 1].value : 0;
+          };
+
+          const gstValue = getLatestValue('gst');
+          const shippingCharge = getLatestValue('shipping charges') || getLatestValue('shipping charge');
+
+          setInvoiceData({
+            gst: `${gstValue}%`,
+            coupon_discount: `₹${couponDiscount.toFixed(2)}`,
+            shipping_charge: shippingCharge === 0 ? '₹0' : `₹${shippingCharge.toFixed(2)}`,
+            total_amount: `₹${totalAmount}`,
+          });
+        } else {
+          console.warn('Failed to fetch invoice:', json.message);
+          setInvoiceData({
+            gst: '0%',
+            coupon_discount: `₹${couponDiscount.toFixed(2)}`,
+            shipping_charge: '₹0',
+            total_amount: `₹${totalAmount}`,
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching invoice:', err.message);
         setInvoiceData({
           gst: '0%',
           coupon_discount: `₹${couponDiscount.toFixed(2)}`,
@@ -110,19 +140,11 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
           total_amount: `₹${totalAmount}`,
         });
       }
-    } catch (err) {
-      console.error('Error fetching invoice:', err.message);
-      setInvoiceData({
-        gst: '0%',
-        coupon_discount: `₹${couponDiscount.toFixed(2)}`,
-        shipping_charge: '₹0',
-        total_amount: `₹${totalAmount}`,
-      });
-    }
-  };
+    };
 
-  if (token) fetchInvoiceData();
-}, [token, totalAmount, couponDiscount]);
+    if (token) fetchInvoiceData();
+  }, [token, totalAmount, couponDiscount]);
+
   const createOrder = async () => {
     try {
       const orderDetails = cartItems.map((item) => ({
@@ -139,7 +161,7 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
           value: item.value,
           _id: item._id,
         })),
-        ...(couponDiscount > 0 ? [{ key: 'coupon discount', value: couponDiscount, _id: 'generated-coupon-id' }] : []),
+        ...(couponDiscount > 0 ? [{ key: 'coupon discount', value: couponDiscount }] : []),
       ];
 
       const shippingAddressId = address?._id;
@@ -151,7 +173,7 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
       console.log('shippingAddressId:', shippingAddressId);
       console.log('paymentMethod:', paymentMethod);
       console.log('totalAmount:', totalAmount);
-      console.log('token:', token);
+      console.log('token:', token ? `${token.substring(0, 10)}...` : 'No token');
 
       if (!orderDetails.length) {
         throw new Error('No items in cart.');
@@ -186,9 +208,17 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
       });
 
       console.log('Response Status:', response.status);
-      console.log('Response OK:', response.ok);
+      const responseText = await response.text();
+      console.log('Response Text:', responseText);
 
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Order Creation):', jsonError.message);
+        throw new Error(`Failed to parse response: ${responseText.substring(0, 100)}...`);
+      }
+
       console.log('Response Data:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
@@ -479,7 +509,6 @@ const PaymentScreen = ({ navigation, route }) => { // Add route to props
 
 export default PaymentScreen;
 
-// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -490,7 +519,7 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    display: "flex",
+    display: 'flex',
   },
   headerTitle: {
     fontSize: 16,

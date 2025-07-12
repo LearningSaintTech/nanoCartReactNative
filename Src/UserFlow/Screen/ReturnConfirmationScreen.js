@@ -106,6 +106,7 @@ const ReturnConfirmationScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { backgroundColor: '#fff', flex: 1, padding: 12 },
   header: {
+    marginTop:25,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,

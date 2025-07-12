@@ -1,3 +1,11 @@
+ 
+
+
+
+
+
+
+
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -25,6 +33,7 @@ const CartScreen = ({ navigation }) => {
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
     gst: 0,
     coupon_discount: 0,
@@ -41,29 +50,34 @@ const CartScreen = ({ navigation }) => {
     }
   }, [authToken]);
 
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      setIsCouponApplied(false);
-      setCouponCode('');
-      setInvoiceData(prev => ({ ...prev, coupon_discount: 0 }));
-      console.log('Coupon reset due to cart items change');
-    }
-  }, [cartItems]);
-
+ 
   const fetchCartItems = async () => {
     try {
       const response = await fetch(`${BASE_URL}/usercart`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Cart Response Status:', response.status);
+      console.log('Cart Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Cart):', jsonError.message);
+        throw new Error(`Failed to parse cart response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (response.ok) {
         dispatch(setCartItems(data.data.items));
       } else {
         console.error('Error fetching cart:', data.message);
+        Alert.alert('Error', data.message || 'Failed to fetch cart items');
       }
     } catch (error) {
-      console.error('Error in fetchCartItems:', error);
+      console.error('Error in fetchCartItems:', error.message);
+      Alert.alert('Error', 'Something went wrong while fetching cart items');
     }
   };
 
@@ -84,14 +98,27 @@ const CartScreen = ({ navigation }) => {
         },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Remove Item Response Status:', response.status);
+      console.log('Remove Item Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Remove Item):', jsonError.message);
+        throw new Error(`Failed to parse remove item response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (response.ok) {
         fetchCartItems();
       } else {
         console.error('Failed to remove item:', data.message);
+        Alert.alert('Error', data.message || 'Failed to remove item');
       }
     } catch (error) {
-      console.error('Error removing item:', error);
+      console.error('Error removing item:', error.message);
+      Alert.alert('Error', 'Something went wrong while removing item');
     }
   };
 
@@ -112,17 +139,26 @@ const CartScreen = ({ navigation }) => {
         },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Update Quantity Response Status:', response.status);
+      console.log('Update Quantity Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Update Quantity):', jsonError.message);
+        throw new Error(`Failed to parse update quantity response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (response.ok) {
         fetchCartItems();
       } else {
         console.error('Failed to update quantity:', data.message);
-        // Show error message in a popup
         Alert.alert('Error', data.message || 'Failed to update quantity');
       }
     } catch (error) {
-      console.error('Error updating quantity:', error);
-      // Show generic error message in a popup
+      console.error('Error updating quantity:', error.message);
       Alert.alert('Error', 'Something went wrong while updating quantity');
     }
   };
@@ -152,15 +188,28 @@ const CartScreen = ({ navigation }) => {
         },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Move to Wishlist Response Status:', response.status);
+      console.log('Move to Wishlist Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Wishlist):', jsonError.message);
+        throw new Error(`Failed to parse wishlist response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (response.ok) {
         await handleRemoveItem(cartItem);
         navigation.navigate('Wishlist');
       } else {
         console.error('Failed to move to wishlist:', data.message);
+        Alert.alert('Error', data.message || 'Failed to move to wishlist');
       }
     } catch (error) {
-      console.error('Error moving to wishlist:', error);
+      console.error('Error moving to wishlist:', error.message);
+      Alert.alert('Error', 'Something went wrong while moving to wishlist');
     }
   };
 
@@ -175,9 +224,22 @@ const CartScreen = ({ navigation }) => {
 
   const fetchInvoiceData = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/invoice`);
-      const json = await res.json();
-      console.log('Invoice API response:', json);
+      const res = await fetch(`${BASE_URL}/invoice`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const responseText = await res.text();
+      console.log('Invoice Response Status:', res.status);
+      console.log('Invoice Response Text:', responseText);
+
+      let json;
+      try {
+        json = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Invoice):', jsonError.message);
+        throw new Error(`Failed to parse invoice response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (res.ok && json.success) {
         const invoice = json.data[0].invoice;
         const getLatestValue = key => {
@@ -218,10 +280,25 @@ const CartScreen = ({ navigation }) => {
   };
 
   const applyCoupon = async () => {
+    if (isApplyingCoupon) return;
     if (!couponCode) {
       Alert.alert('Error', 'Please enter a coupon code');
       return;
     }
+
+    const totalPayableWithoutCoupon = (
+      discountedTotal +
+      (discountedTotal * (invoiceData.gst / 100)) +
+      invoiceData.shipping_charge +
+      invoiceData.cod_charges
+    ).toFixed(2);
+
+    if (parseFloat(totalPayableWithoutCoupon) <= 0) {
+      Alert.alert('Error', 'Total payable amount must be greater than zero.');
+      return;
+    }
+
+    setIsApplyingCoupon(true);
     try {
       const response = await fetch(`${BASE_URL}/coupon/apply-user`, {
         method: 'POST',
@@ -229,12 +306,37 @@ const CartScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ couponCode }),
+        body: JSON.stringify({
+          couponCode,
+          totalAmount: parseFloat(totalPayableWithoutCoupon),
+        }),
       });
-      const data = await response.json();
-      console.log('Coupon API response:', data);
+      const responseText = await response.text();
+      console.log('Coupon Response Status:', response.status);
+      console.log('Coupon Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON Parse Error (Coupon):', jsonError.message);
+        throw new Error(`Failed to parse coupon response: ${responseText.substring(0, 100)}...`);
+      }
+
       if (response.ok && data.success) {
         const discountValue = data.data.discountValue || 0;
+
+        if (parseFloat(totalPayableWithoutCoupon) <= discountValue) {
+          Alert.alert(
+            'Error',
+            'Coupon discount cannot be greater than or equal to the total payable amount.'
+          );
+          setInvoiceData(prev => ({ ...prev, coupon_discount: 0 }));
+          setIsCouponApplied(false);
+          console.log('Coupon rejected: discount exceeds total payable');
+          return;
+        }
+
         setInvoiceData(prev => ({
           ...prev,
           coupon_discount: discountValue,
@@ -249,11 +351,21 @@ const CartScreen = ({ navigation }) => {
         console.log('Coupon application failed:', data.message);
       }
     } catch (error) {
-      console.error('Error applying coupon:', error);
+      console.error('Error applying coupon:', error.message);
       Alert.alert('Error', 'Something went wrong while applying coupon');
       setInvoiceData(prev => ({ ...prev, coupon_discount: 0 }));
       setIsCouponApplied(false);
+    } finally {
+      setIsApplyingCoupon(false);
     }
+  };
+
+  const removeCoupon = () => {
+    setIsCouponApplied(false);
+    setCouponCode('');
+    setInvoiceData(prev => ({ ...prev, coupon_discount: 0 }));
+    Alert.alert('Success', 'Coupon removed successfully.');
+    console.log('Coupon removed');
   };
 
   const totalPayable = (
@@ -398,7 +510,9 @@ const CartScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.couponBar}
                 onPress={() => setShowCoupon(prev => !prev)}>
-                <Text style={{ fontWeight: 'bold' }}>Apply Coupon</Text>
+                <Text style={{ fontWeight: 'bold' }}>
+                  {isCouponApplied ? 'Coupon Applied' : 'Apply Coupon'}
+                </Text>
                 <Entypo
                   name={showCoupon ? 'chevron-up' : 'chevron-down'}
                   size={20}
@@ -407,19 +521,33 @@ const CartScreen = ({ navigation }) => {
               </TouchableOpacity>
               {showCoupon && (
                 <View style={styles.couponAccordion}>
-                  <View style={styles.couponInputRow}>
-                    <TextInput
-                      placeholder="Enter your Coupon code"
-                      style={styles.couponInput}
-                      value={couponCode}
-                      onChangeText={setCouponCode}
-                    />
-                    <TouchableOpacity
-                      style={styles.couponApplyBtn}
-                      onPress={applyCoupon}>
-                      <Text style={styles.couponApplyText}>APPLY</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {isCouponApplied ? (
+                    <View style={styles.couponAppliedRow}>
+                      <Text style={styles.couponAppliedText}>
+                        Applied Coupon: {couponCode}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.couponRemoveBtn}
+                        onPress={removeCoupon}>
+                        <Text style={styles.couponRemoveText}>REMOVE</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View style={styles.couponInputRow}>
+                      <TextInput
+                        placeholder="Enter your Coupon code"
+                        style={styles.couponInput}
+                        value={couponCode}
+                        onChangeText={setCouponCode}
+                      />
+                      <TouchableOpacity
+                        style={[styles.couponApplyBtn, isApplyingCoupon && { opacity: 0.6 }]}
+                        onPress={applyCoupon}
+                        disabled={isApplyingCoupon}>
+                        <Text style={styles.couponApplyText}>APPLY</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               )}
             </>
@@ -438,20 +566,20 @@ const CartScreen = ({ navigation }) => {
                 <Text>Discounted Price</Text>
                 <Text>₹{discountedTotal.toFixed(2)}</Text>
               </View>
-              {isCouponApplied && invoiceData.coupon_discount > 0 && (
-                <View style={styles.priceRow}>
-                  <Text style={styles.orange}>Coupon Discount</Text>
-                  <Text style={styles.orange}>
-                    - ₹{invoiceData.coupon_discount.toFixed(2)}
-                  </Text>
-                </View>
-              )}
               <View style={styles.priceRow}>
                 <Text>GST ({invoiceData.gst}%)</Text>
                 <Text>
                   ₹{(discountedTotal * (invoiceData.gst / 100)).toFixed(2)}
                 </Text>
               </View>
+              {isCouponApplied && invoiceData.coupon_discount > 0 && (
+                <View style={styles.priceRow}>
+                  <Text style={styles.orange}>Coupon Discount ({couponCode})</Text>
+                  <Text style={styles.orange}>
+                    - ₹{invoiceData.coupon_discount.toFixed(2)}
+                  </Text>
+                </View>
+              )}
               <View style={styles.priceRow}>
                 <Text>Shipping Charges</Text>
                 <Text>₹{invoiceData.shipping_charge.toFixed(2)}</Text>
@@ -511,7 +639,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  backIcon: { width: 24, height: 24, resizeMode: 'contain', marginRight: 8 },
   headerTitle: {
     marginLeft: 20,
     fontSize: 16,
@@ -668,6 +795,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 1,
   },
+  couponAccordion: {
+    backgroundColor: '#fdf0e7',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    marginTop: -10,
+    marginBottom: 12,
+  },
+  couponInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  couponAppliedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  couponInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    backgroundColor: '#fff',
+  },
+  couponApplyBtn: {
+    backgroundColor: '#f37022',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginLeft: 10,
+    borderRadius: 4,
+  },
+  couponApplyText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  couponAppliedText: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '500',
+  },
+  couponRemoveBtn: {
+    backgroundColor: '#fff',
+    borderColor: '#f37022',
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginLeft: 10,
+    borderRadius: 4,
+  },
+  couponRemoveText: {
+    color: '#f37022',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   priceCard: {
     backgroundColor: '#fff',
     marginTop: 1,
@@ -742,43 +931,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  couponAccordion: {
-    backgroundColor: '#fdf0e7',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderTopWidth: 0,
-    marginTop: -10,
-    marginBottom: 12,
-  },
-  couponInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  couponInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    backgroundColor: '#fff',
-  },
-  couponApplyBtn: {
-    backgroundColor: '#f37022',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginLeft: 10,
-    borderRadius: 4,
-  },
-  couponApplyText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
 });

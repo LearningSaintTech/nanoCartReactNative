@@ -93,7 +93,7 @@ const ProductDetailScreen = () => {
         return;
       }
 
-      const res = await fetch(`${BASE_URL}/itemDetails/${itemId}`, {
+      const res = await fetch(`${BASE_URL}/itemDetails/item/${itemId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
