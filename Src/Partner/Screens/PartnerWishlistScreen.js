@@ -89,7 +89,7 @@ const PartnerWishlistScreen = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={22} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>PARTNER WISHLIST XX</Text>
+          <Text style={styles.headerTitle}>PARTNER WISHLIST</Text>
         </View>
         <View style={styles.rightIcons}>
           <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>

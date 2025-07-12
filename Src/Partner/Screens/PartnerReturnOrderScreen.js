@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { BASE_URL } from '../../config/apiConfig';
+import { useColorScheme } from 'react-native';
 
 const PartnerReturnOrderScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -26,6 +27,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
   const [pickupAddressId, setPickupAddressId] = useState('');
   const [addresses, setAddresses] = useState([]);
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme(); // Detect light or dark mode
 
   const validReturnReasons = [
     'Size too small',
@@ -55,7 +57,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
         },
       });
       const orderData = await orderResponse.json();
-      console.log('Fetched orderData:', JSON.stringify(orderData, null, 2)); // Debug log
+      console.log('Fetched orderData:', JSON.stringify(orderData, null, 2));
       if (!orderData.success) throw new Error(orderData.message || 'Failed to fetch order');
       setOrder(orderData.data.order);
 
@@ -68,7 +70,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
         },
       });
       const addressData = await addressResponse.json();
-      console.log('Fetched addressData:', JSON.stringify(addressData, null, 2)); // Debug log
+      console.log('Fetched addressData:', JSON.stringify(addressData, null, 2));
 
       if (!addressData?.addresses?.addressDetail) {
         throw new Error('Invalid address data structure');
@@ -105,8 +107,8 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
 
   // Handle item detail selection
   const toggleItemDetailSelection = (itemId, color, size, skuId) => {
-    const itemKey = `${itemId}|${color}|${size}|${skuId}`; // Use '|' to handle hyphens in skuId
-    console.log('Constructed itemKey:', itemKey, { itemId, color, size, skuId }); // Debug log
+    const itemKey = `${itemId}|${color}|${size}|${skuId}`;
+    console.log('Constructed itemKey:', itemKey, { itemId, color, size, skuId });
     setSelectedItems((prev) =>
       prev.includes(itemKey)
         ? prev.filter((key) => key !== itemKey)
@@ -117,7 +119,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
   // Parse selected item details
   const parseItemKey = (key) => {
     const [itemId, color, size, skuId] = key.split('|');
-    console.log('Parsed itemKey:', { itemId, color, size, skuId }); // Debug log
+    console.log('Parsed itemKey:', { itemId, color, size, skuId });
     return { itemId, color, size, skuId };
   };
 
@@ -144,7 +146,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
         }),
       });
       const data = await response.json();
-      console.log('Return response:', JSON.stringify(data, null, 2)); // Debug log
+      console.log('Return response:', JSON.stringify(data, null, 2));
       if (!data.success) throw new Error(data.message || 'Failed to initiate return');
       alert('Return request submitted successfully!');
       navigation.goBack();
@@ -239,23 +241,23 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
             <Picker
               selectedValue={returnReason}
               onValueChange={(value) => setReturnReason(value)}
-              style={styles.reasonPicker}
-              itemStyle={styles.pickerItem}
+              style={[styles.reasonPicker, { backgroundColor: '#FFF' }]}
+              itemStyle={[styles.pickerItem, { color: '#000' }]}
             >
               <Picker.Item label="Select a reason" value="" />
               {validReturnReasons.map((reason) => (
-                <Picker.Item key={reason} label={reason} value={reason} />
+                <Picker.Item key={reason} label={reason} value={reason} color="#000" />
               ))}
             </Picker>
           </View>
           <TextInput
-            style={styles.reasonInput}
+            style={[styles.reasonInput, { backgroundColor: '#FFF', color: '#000' }]}
             value={returnSpecificReason}
             onChangeText={setReturnSpecificReason}
             placeholder="Enter specific reason for return (e.g., item is too tight)"
             placeholderTextColor="#666"
             multiline
-            color="#000" // Explicitly set black text
+            textAlignVertical="top"
           />
         </View>
 
@@ -269,8 +271,8 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
               <Picker
                 selectedValue={pickupAddressId}
                 onValueChange={(value) => setPickupAddressId(value)}
-                style={styles.addressPicker}
-                itemStyle={styles.pickerItem}
+                style={[styles.addressPicker, { backgroundColor: '#FFF' }]}
+                itemStyle={[styles.pickerItem, { color: '#000' }]}
               >
                 <Picker.Item label="Select an address" value="" />
                 {addresses.map((addr) => (
@@ -278,12 +280,12 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
                     key={addr._id}
                     label={`${addr.name}, ${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}, ${addr.cityTown}, ${addr.state}, ${addr.pincode}`}
                     value={addr._id}
+                    color="#000"
                   />
                 ))}
               </Picker>
             </View>
           )}
-         
         </View>
 
         {/* Submit Button */}
@@ -393,20 +395,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 10,
-    backgroundColor: '#FFF', // Ensure background doesn't interfere with text color
+    backgroundColor: '#FFF', // Ensure consistent background
   },
   reasonPicker: {
     height: 50,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFF', // Explicit white background
   },
   addressPicker: {
     height: 50,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFF', // Explicit white background
     borderColor: '#D6722F',
   },
   pickerItem: {
     fontSize: 14,
-    color: '#000', // Explicitly set black text for Picker items
+    color: '#000', // Explicit black text for Picker items
     height: 50,
   },
   reasonInput: {
@@ -416,28 +418,14 @@ const styles = StyleSheet.create({
     padding: 12,
     minHeight: 100,
     fontSize: 14,
-    color: '#000', // Explicitly set black text
+    color: '#000', // Explicit black text
+    backgroundColor: '#FFF', // Explicit white background
     textAlignVertical: 'top',
   },
   noAddressText: {
     fontSize: 14,
     color: '#E74C3C',
     marginBottom: 10,
-  },
-  addAddressButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#D6722F',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-  },
-  addAddressText: {
-    color: '#D6722F',
-    fontSize: 14,
-    fontWeight: '600',
   },
   submitButton: {
     backgroundColor: '#D6722F',

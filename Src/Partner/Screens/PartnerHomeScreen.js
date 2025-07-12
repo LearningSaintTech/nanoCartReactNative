@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, ScrollView} from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import PartnerHeader from '../Components/PartnerHeader';
 import PartnerCarouselSlider from '../Components/PartnerCarouselSlider';
 import PartnerPromoBanner from '../Components/PartnerPromoBanner';
@@ -18,17 +18,23 @@ const PartnerHomeScreen = () => {
   console.log('partner HomeScreen images of [partner flow]:', images);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}>
+    <View style={styles.container}>
+      {/* Fixed Header */}
       <PartnerHeader />
-      <PartnerCarouselSlider />
-      <PartnerPromoBanner />
-      <View style={styles.sliderWrapper}>
-        <PartnerCardSlider images={images} />
-      </View>
-      <PartnerTrendingDeals />
-    </ScrollView>
+
+      {/* Scrollable Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <PartnerCarouselSlider />
+        <PartnerPromoBanner />
+        <View style={styles.sliderWrapper}>
+          <PartnerCardSlider images={images} />
+        </View>
+        <PartnerTrendingDeals />
+      </ScrollView>
+    </View>
   );
 };
 
@@ -36,6 +42,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
   },
   contentContainer: {
     paddingBottom: 20,

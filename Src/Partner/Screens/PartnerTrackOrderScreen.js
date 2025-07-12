@@ -1,97 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  Image,
   TouchableOpacity,
   ScrollView,
-  TextInput,
+  StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { Picker } from '@react-native-picker/picker';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useSelector} from 'react-redux';
+import {useWindowDimensions} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { BASE_URL } from '../../config/apiConfig';
+import {BASE_URL} from '../../config/apiConfig';
 
-const PartnerReturnOrderScreen = ({ route, navigation }) => {
-  const { orderId } = route.params;
-  const token = useSelector((state) => state.auth.token);
+const TrackOrderScreen = ({route, navigation}) => {
+  const {orderId} = route.params;
+  const token = useSelector(state => state.auth.token);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [returnReason, setReturnReason] = useState('');
-  const [returnSpecificReason, setReturnSpecificReason] = useState('');
-  const [pickupAddressId, setPickupAddressId] = useState('');
-  const [addresses, setAddresses] = useState([]);
   const insets = useSafeAreaInsets();
+  const {width} = useWindowDimensions();
+  const [isExpanded, setIsExpanded] = useState(false); // State for expansion
 
-  const validReturnReasons = [
-    'Size too small',
-    'Size too big',
-    "Don't like the fit",
-    "Don't like the quality",
-    'Not same as the catalogue',
-    'Product is damaged',
-    'Wrong product is received',
-    'Product arrived too late',
-  ];
+  // Scaling function based on reference width (375px, e.g., iPhone SE)
+  const scale = size => (width / 375) * size;
 
-  // Fetch order details and addresses
-  const fetchData = async () => {
+  // Log insets for debugging
+  console.log('TrackOrderScreen - Safe Area Insets:', insets);
+
+  console.log("this is orderID",orderId);
+
+  // Fetch order details
+  const fetchOrderDetails = async () => {
     try {
       setLoading(true);
       setError(null);
-
       if (!token) throw new Error('No authentication token found');
 
-      // Fetch order
-      const orderResponse = await fetch(`${BASE_URL}/partner/order/${orderId}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${BASE_URL}/partner/order/${orderId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         },
-      });
-      const orderData = await orderResponse.json();
-      console.log('Fetched orderData:', JSON.stringify(orderData, null, 2)); // Debug log
-      if (!orderData.success) throw new Error(orderData.message || 'Failed to fetch order');
-      setOrder(orderData.data.order);
-
-      // Fetch addresses
-      const addressResponse = await fetch(`${BASE_URL}/partner/address/`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const addressData = await addressResponse.json();
-      console.log('Fetched addressData:', JSON.stringify(addressData, null, 2)); // Debug log
-
-      if (!addressData?.addresses?.addressDetail) {
-        throw new Error('Invalid address data structure');
-      }
-
-      const fetchedAddresses = addressData.addresses.addressDetail;
-      setAddresses(fetchedAddresses);
-
-      if (orderData.data.order?.shippingAddressId) {
-        const shippingAddressId = orderData.data.order.shippingAddressId;
-        const matchingAddress = fetchedAddresses.find(
-          (addr) => addr._id === shippingAddressId
+      );
+      console.log('For address', response);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! Status: ${response.status}`,
         );
-        if (matchingAddress) {
-          setPickupAddressId(shippingAddressId);
-        }
       }
+      const responseData = await response.json();
+      console.log('order track', responseData);
+
+      if (!responseData.success) {
+        throw new Error(
+          responseData.message || 'Failed to fetch order details',
+        );
+      }
+
+      setOrder(responseData.data.order);
+      console.log("this is order details",responseData)
     } catch (err) {
-      console.error('Error fetching data:', err.message);
+      console.error('Error fetching order details:', err.message);
       setError(
         err.message.includes('401')
           ? 'Session expired. Please log in again.'
-          : 'Failed to load data. Please check your network and try again.'
+          : 'Failed to load order details. Please check your network and try again.',
       );
       if (err.message.includes('401')) navigation.navigate('Login');
     } finally {
@@ -99,68 +81,106 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [orderId]);
+  // Map order status to UI steps
+  const getStatusSteps = status => {
+    const steps = [
+      {label: 'Processing', completed: false, date: order?.createdAt},
+      {label: 'Confirmed', completed: false, date: null},
+      {label: 'Ready for Dispatch', completed: false, date: null},
+      {label: 'In transit', completed: false, date: null},
+      {label: 'Dispatched', completed: false, date: null},
+      {label: 'Delivered', completed: false, date: order?.deliveredAt},
+    ];
 
-  // Handle item detail selection
-  const toggleItemDetailSelection = (itemId, color, size, skuId) => {
-    const itemKey = `${itemId}|${color}|${size}|${skuId}`; // Use '|' to handle hyphens in skuId
-    console.log('Constructed itemKey:', itemKey, { itemId, color, size, skuId }); // Debug log
-    setSelectedItems((prev) =>
-      prev.includes(itemKey)
-        ? prev.filter((key) => key !== itemKey)
-        : [...prev, itemKey]
+    if (
+      [
+        'Processing',
+        'Confirmed',
+        'Ready for Dispatch',
+        'In transit',
+        'Dispatched',
+        'Delivered',
+      ].includes(status)
+    ) {
+      steps[0].completed = true;
+    }
+    if (
+      [
+        'Confirmed',
+        'Ready for Dispatch',
+        'In transit',
+        'Dispatched',
+        'Delivered',
+      ].includes(status)
+    ) {
+      steps[1].completed = true;
+    }
+    if (
+      ['Ready for Dispatch', 'In transit', 'Dispatched', 'Delivered'].includes(
+        status,
+      )
+    ) {
+      steps[2].completed = true;
+    }
+    if (['In transit', 'Dispatched', 'Delivered'].includes(status)) {
+      steps[3].completed = true;
+    }
+    if (['Dispatched', 'Delivered'].includes(status)) {
+      steps[4].completed = true;
+    }
+    if (status === 'Delivered') {
+      steps[5].completed = true;
+    }
+
+    return steps;
+  };
+
+  // Format date
+  const formatDate = dateString => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    });
+  };
+
+  // Download invoice
+  const handleDownloadInvoice = () => {
+    console.log('Downloading invoice for order:', orderId);
+    // Implement invoice download (e.g., API call to generate PDF)
+  };
+
+  // Check if return is in progress
+  const isReturnInProgress =
+    order?.isOrderReturned && order?.returnInfo?.refundStatus === 'Processing';
+
+  // Check if return is within 7-day window (optional, keeping for reference)
+  const isReturnEligible = () => {
+    if (!order?.deliveredAt) return false;
+    const deliveryDate = new Date(order.deliveredAt);
+    const currentDate = new Date();
+    const returnWindowDays = 7;
+    const maxReturnDate = new Date(deliveryDate);
+    maxReturnDate.setDate(deliveryDate.getDate() + returnWindowDays);
+    return (
+      currentDate <= maxReturnDate &&
+      order.orderStatus === 'Delivered' &&
+      !isReturnInProgress
     );
   };
 
-  // Parse selected item details
-  const parseItemKey = (key) => {
-    const [itemId, color, size, skuId] = key.split('|');
-    console.log('Parsed itemKey:', { itemId, color, size, skuId }); // Debug log
-    return { itemId, color, size, skuId };
-  };
-
-  // Submit return request
-  const handleSubmitReturn = async () => {
-    if (!selectedItems.length) return alert('Please select at least one item to return.');
-    if (!returnReason) return alert('Please select a reason for return.');
-    if (!returnSpecificReason.trim()) return alert('Please provide a specific reason for return.');
-    if (!pickupAddressId) return alert('Please select a pickup address.');
-
-    try {
-      setLoading(true);
-      const reason = `${returnReason}, ${returnSpecificReason.trim()}`;
-      const response = await fetch(`${BASE_URL}/partner/order/return-refund`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          reason: reason,
-          pickupLocationId: pickupAddressId,
-        }),
-      });
-      const data = await response.json();
-      console.log('Return response:', JSON.stringify(data, null, 2)); // Debug log
-      if (!data.success) throw new Error(data.message || 'Failed to initiate return');
-      alert('Return request submitted successfully!');
-      navigation.goBack();
-    } catch (err) {
-      console.error('Return error:', err.message);
-      alert(err.message || 'Failed to submit return request.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [orderId]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#D6722F" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>Loading order details...</Text>
       </View>
     );
   }
@@ -169,7 +189,9 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchOrderDetails}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -184,277 +206,759 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={22} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Return Product</Text>
-      </View>
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.orderId}>Order ID: {order.orderId}</Text>
+  const statusSteps = getStatusSteps(order.orderStatus);
 
-        {/* Select Items */}
-        <View style={styles.section}>
-          <Text style={styles.subTitle}>Select Items to Return</Text>
-          {order.orderProductDetails.map((item) => (
-            <View key={item.itemId._id} style={styles.itemContainer}>
-              <Text style={styles.itemName}>{item.itemId.name || 'Unknown Item'}</Text>
-              {item.orderDetails.map((detail) =>
-                detail.sizeAndQuantity.map((sizeQty, idx) => {
-                  const itemKey = `${item.itemId._id}|${detail.color}|${sizeQty.size}|${sizeQty.skuId}`;
-                  return (
-                    <TouchableOpacity
-                      key={`${detail._id}-${sizeQty.skuId}`}
-                      style={[
-                        styles.itemRow,
-                        selectedItems.includes(itemKey) && styles.itemRowSelected,
-                      ]}
-                      onPress={() =>
-                        toggleItemDetailSelection(item.itemId._id, detail.color, sizeQty.size, sizeQty.skuId)
-                      }
-                    >
-                      <View style={styles.itemDetails}>
-                        <Text style={styles.itemDetail}>Color: {detail.color}</Text>
-                        <Text style={styles.itemDetail}>Size: {sizeQty.size}</Text>
-                        <Text style={styles.itemDetail}>Qty: {sizeQty.quantity}</Text>
-                        <Text style={styles.itemDetail}>SKU: {sizeQty.skuId}</Text>
-                      </View>
-                      <Text style={styles.selectionText}>
-                        {selectedItems.includes(itemKey) ? '✔ Selected' : 'Select'}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
+  // Calculate total quantity for an item
+  const getItemTotalQuantity = item => {
+    return item.orderDetails.reduce(
+      (sum, detail) =>
+        sum + detail.sizeAndQuantity.reduce((q, s) => q + s.quantity, 0),
+      0,
+    );
+  };
+
+  // Calculate savings percentage
+  const calculateSavingsPercentage = (mrp, discountedPrice) => {
+    if (!mrp || !discountedPrice || mrp <= 0) return 0;
+    return Math.round(((mrp - discountedPrice) / mrp) * 100);
+  };
+
+  // Handle order again navigation
+  const handleOrderAgain = () => {
+    if (order.orderProductDetails.length > 0) {
+      navigation.navigate('PartnerProductDetail', {
+        itemId: order.orderProductDetails[0].itemId._id || order.orderProductDetails[0].itemId,
+      });
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar
+        backgroundColor="#FFF"
+        barStyle="dark-content"
+        translucent={false}
+      />
+      <SafeAreaView style={{backgroundColor: '#FFF', flex: 0}}>
+        <View
+          style={[
+            styles.header,
+            {
+              paddingHorizontal: scale(16),
+              paddingVertical: scale(14),
+            },
+          ]}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={scale(22)} color="#000" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, {marginLeft: scale(8)}]}>
+            ORDER TRACKING
+          </Text>
+        </View>
+      </SafeAreaView>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Order Confirmation */}
+        <View
+          style={[
+            styles.section,
+            order.orderStatus === 'In transit' && styles.inTransitSection,
+          ]}>
+          <Text style={styles.statusTitle}>
+            {order.orderStatus === 'Processing'
+              ? '⚙️ Processing'
+              : order.orderStatus === 'Confirmed'
+              ? '✅ Order Confirmed'
+              : order.orderStatus === 'Ready for Dispatch'
+              ? '📋 Ready for Dispatch'
+              : order.orderStatus === 'In transit'
+              ? '🚚 In Transit'
+              : order.orderStatus === 'Dispatched'
+              ? '🚚 Dispatched'
+              : order.orderStatus === 'Delivered'
+              ? '📦 Delivered'
+              : order.orderStatus === 'Order Returned'
+              ? '🔄 Return in Progress'
+              : '❓ Unknown Status'}
+          </Text>
+          <Text style={styles.statusDesc}>
+            {order.orderStatus === 'Processing' &&
+              'Your order is currently being processed.'}
+            {order.orderStatus === 'Confirmed' &&
+              'Your order has been confirmed by our team.'}
+            {order.orderStatus === 'Ready for Dispatch' &&
+              'Your order is ready for dispatch and will be shipped soon.'}
+            {order.orderStatus === 'In transit' &&
+              'Your order is on its way to the delivery address.'}
+            {order.orderStatus === 'Dispatched' &&
+              'Your order has been dispatched from our facility.'}
+            {order.orderStatus === 'Delivered' &&
+              'Your order has been successfully delivered.'}
+            {order.orderStatus === 'Order Returned' &&
+              'A return request has been initiated. Awaiting pickup and processing.'}
+          </Text>
+          <Text style={styles.orderId}>Order ID: {order.orderId}</Text>
+        </View>
+
+        {/* Return Details (if applicable) */}
+        {isReturnInProgress && (
+          <View style={styles.section}>
+            <Text style={styles.subTitle}>Return Details</Text>
+            <View style={styles.returnInfo}>
+              <Text style={styles.returnText}>
+                Return Status: {order.returnInfo?.refundStatus || 'N/A'}
+              </Text>
+              <Text style={styles.returnText}>
+                Reason: {order.returnInfo?.reason || 'N/A'}
+              </Text>
+              <Text style={styles.returnText}>
+                Requested: {formatDate(order.returnInfo?.requestDate)}
+              </Text>
+              <Text style={styles.returnText}>
+                Refund Amount: ₹
+                {order.returnInfo?.refundAmount?.toFixed(2) || 'N/A'}
+              </Text>
+              {order.returnInfo?.pickupLocation && (
+                <Text style={styles.returnText}>
+                  Pickup Address: {order.returnInfo.pickupLocation.name},{' '}
+                  {order.returnInfo.pickupLocation.addressLine1},{' '}
+                  {order.returnInfo.pickupLocation.cityTown},{' '}
+                  {order.returnInfo.pickupLocation.state},{' '}
+                  {order.returnInfo.pickupLocation.pincode}
+                </Text>
               )}
             </View>
-          ))}
-        </View>
-
-        {/* Reason for Return */}
-        <View style={styles.section}>
-          <Text style={styles.subTitle}>Reason for Return</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={returnReason}
-              onValueChange={(value) => setReturnReason(value)}
-              style={styles.reasonPicker}
-              itemStyle={styles.pickerItem}
-            >
-              <Picker.Item label="Select a reason" value="" />
-              {validReturnReasons.map((reason) => (
-                <Picker.Item key={reason} label={reason} value={reason} />
-              ))}
-            </Picker>
+            <TouchableOpacity
+              style={styles.viewDetailsButton}
+              onPress={() =>
+                navigation.navigate('PartnerReturnOrderScreen', {
+                  orderId,
+                  returnType: 'refund',
+                })
+              }>
+              <Text style={styles.viewDetailsText}>View Return Details</Text>
+            </TouchableOpacity>
           </View>
-          <TextInput
-            style={styles.reasonInput}
-            value={returnSpecificReason}
-            onChangeText={setReturnSpecificReason}
-            placeholder="Enter specific reason for return (e.g., item is too tight)"
-            placeholderTextColor="#666"
-            multiline
-            color="#000" // Explicitly set black text
-          />
-        </View>
+        )}
 
-        {/* Pickup Address */}
-        <View style={styles.section}>
-          <Text style={styles.subTitle}>Pickup Address</Text>
-          {addresses.length === 0 ? (
-            <Text style={styles.noAddressText}>No addresses found. Please add an address.</Text>
-          ) : (
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={pickupAddressId}
-                onValueChange={(value) => setPickupAddressId(value)}
-                style={styles.addressPicker}
-                itemStyle={styles.pickerItem}
-              >
-                <Picker.Item label="Select an address" value="" />
-                {addresses.map((addr) => (
-                  <Picker.Item
-                    key={addr._id}
-                    label={`${addr.name}, ${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}, ${addr.cityTown}, ${addr.state}, ${addr.pincode}`}
-                    value={addr._id}
-                  />
-                ))}
-              </Picker>
-            </View>
-          )}
-         
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-          onPress={handleSubmitReturn}
-          disabled={loading}
-        >
-          <Text style={styles.submitButtonText}>
-            {loading ? 'Submitting...' : 'Submit Return Request'}
+        {/* Order Details */}
+        <View style={styles.subSection}>
+          <Text style={[styles.subTitle, styles.beigeTitle]}>
+            Order Details
           </Text>
-        </TouchableOpacity>
+          {order.orderProductDetails.slice(0, isExpanded ? undefined : 1).map((item, index) => (
+            <View key={index} style={styles.orderCard}>
+              <Image
+                source={
+                  item.itemId.image
+                    ? {uri: item.itemId.image}
+                    : {uri: 'https://via.placeholder.com/90'}
+                }
+                style={styles.productImg}
+              />
+              <View style={styles.productInfo}>
+                <Text style={styles.name}>
+                  {item.itemId.name || 'Unknown Item'}
+                </Text>
+                {item.orderDetails.map((detail, idx) => (
+                  <Text key={idx} style={styles.detail}>
+                    Color: {detail.color} | Size:{' '}
+                    {detail.sizeAndQuantity.map(s => s.size).join(', ')}
+                  </Text>
+                ))}
+                <Text style={styles.detail}>
+                  Qty: {getItemTotalQuantity(item)}
+                </Text>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.priceLabel}>MRP </Text>
+                  <Text style={styles.strike}>₹{item.itemId.MRP}</Text>
+                  <Text style={styles.discountedPrice}>
+                    {' '}
+                    ₹{item.itemId.discountedPrice}
+                  </Text>
+                  <Text style={styles.savingsText}>
+                    {calculateSavingsPercentage(
+                      item.itemId.MRP,
+                      item.itemId.discountedPrice,
+                    )}
+                    % OFF
+                  </Text>
+                </View>
+                <Text style={styles.placed}>
+                  Placed on {formatDate(order.createdAt)}
+                </Text>
+              </View>
+            </View>
+          ))}
+          {order.orderProductDetails.length > 1 && (
+            <TouchableOpacity
+              style={styles.viewMoreButton}
+              onPress={() => setIsExpanded(!isExpanded)}>
+              <Text style={styles.viewMoreText}>
+                {isExpanded ? 'VIEW LESS' : 'VIEW MORE'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Other Items */}
+        {order.orderProductDetails.length > 1 && !isExpanded && (
+          <View style={styles.subSection}>
+            <Text style={styles.subTitle}>Other Items in This Order</Text>
+            {order.orderProductDetails.slice(1).map((item, index) => (
+              <View key={index} style={styles.otherItem}>
+                <Image
+                  source={
+                    item.itemId.image
+                      ? {uri: item.itemId.image}
+                      : {uri: 'https://via.placeholder.com/50'}
+                  }
+                  style={styles.otherImg}
+                />
+                <Text style={styles.otherName}>
+                  {item.itemId.name || 'Unknown Item'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Help / Invoice */}
+        <View style={styles.section}>
+          <TouchableOpacity onPress={handleDownloadInvoice}>
+            <Text style={styles.download}>Download Invoice ⬇️</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Order Status */}
+        <View style={styles.subSection}>
+          <Text style={[styles.subTitle, styles.beigeTitle]}>Order Status</Text>
+          <View style={styles.timelineContainer}>
+            {statusSteps.map((step, index) => (
+              <View key={index} style={styles.timelineStep}>
+                <View style={styles.timelineIconContainer}>
+                  <View style={styles.timelineIcon}>
+                    <View
+                      style={[
+                        styles.iconBackground,
+                        step.completed
+                          ? styles.iconBackgroundCompleted
+                          : styles.iconBackgroundPending,
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.iconForeground,
+                        step.completed
+                          ? styles.iconForegroundCompleted
+                          : styles.iconForegroundPending,
+                      ]}
+                    />
+                  </View>
+                  {index < statusSteps.length - 1 && (
+                    <View
+                      style={[
+                        styles.timelineLine,
+                        step.completed && statusSteps[index + 1].completed
+                          ? styles.timelineLineCompleted
+                          : styles.timelineLinePending,
+                      ]}
+                    />
+                  )}
+                </View>
+                <View style={styles.timelineContent}>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      step.completed
+                        ? styles.stepLabelCompleted
+                        : styles.stepLabelPending,
+                    ]}>
+                    {step.label}
+                  </Text>
+                  {step.date && step.completed && (
+                    <Text style={styles.stepDate}>{formatDate(step.date)}</Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        {order.orderStatus === 'Delivered' && (
+          <TouchableOpacity
+            style={styles.returnButton}
+            onPress={() =>
+              navigation.navigate('PartnerReturnOrderScreen', {
+                orderId,
+              })
+            }>
+            <Text style={styles.returnButtonText}>RETURN ORDER</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Delivery Address */}
+          <View style={styles.subSection}>
+            <Text style={[styles.subTitle, styles.beigeTitle]}>
+              Delivery Address
+            </Text>
+            {order.shippingAddress ? (
+              <View>
+                <Text style={styles.addressName}>
+                  {order.shippingAddress.name || 'Unknown'}
+                </Text>
+                <Text style={styles.address}>
+                  {order.shippingAddress.addressLine1 || ''},{' '}
+                  {order.shippingAddress.addressLine2 || ''},{' '}
+                  {order.shippingAddress.cityTown || 'N/A'},{' '}
+                  {order.shippingAddress.state || 'N/A'},{' '}
+                  {order.shippingAddress.pincode || 'N/A'}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.address}>No delivery address available.</Text>
+            )}
+          </View>
+
+        {/* Bill Summary */}
+        <View style={styles.subSection}>
+          <Text style={[styles.subTitle, styles.beigeTitle]}>
+            TOTAL BILL SUMMARY ({order.orderProductDetails.length} items)
+          </Text>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Cart Total Price</Text>
+            <Text style={styles.billValue}>
+              ₹
+              {order.invoice.find(entry => entry.key === 'carttotal')?.values ||
+                '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Discounted Price</Text>
+            <Text style={styles.billValue}>
+              ₹
+              {order.invoice.find(entry => entry.key === 'discountedprice')
+                ?.values || '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Wallet Money</Text>
+            <Text style={styles.billValue}>
+              -₹
+              {order.invoice.find(entry => entry.key === 'walletmoney')
+                ?.values || '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.couponLabel}>COUPON DISCOUNT</Text>
+            <Text style={styles.couponValue}>
+              -₹
+              {order.invoice.find(entry => entry.key === 'coupondiscount')
+                ?.values || '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>COD CHARGES</Text>
+            <Text style={styles.billValue}>
+              ₹
+              {order.invoice.find(entry => entry.key === 'codcharges')
+                ?.values || '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>GST</Text>
+            <Text style={styles.billValue}>
+              ₹
+              {order.invoice.find(entry => entry.key === 'gst')?.values ||
+                '0.00'}
+            </Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Shipping Charges</Text>
+            <Text style={styles.billValue}>
+              {parseFloat(
+                order.invoice.find(entry => entry.key === 'shippingcharges')
+                  ?.values || 0,
+              ) === 0
+                ? 'FREE'
+                : `₹${
+                    order.invoice.find(entry => entry.key === 'shippingcharges')
+                      ?.values || '0.00'
+                  }`}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={[styles.billRow, styles.totalRow]}>
+            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalValue}>
+              ₹{parseFloat(order.totalAmount).toFixed(2)}
+            </Text>
+          </View>
+          <Text style={styles.savings}>
+            HOORAY! YOU ARE SAVING ₹
+            {order.invoice.find(entry => entry.key === 'savings')?.values ||
+              '0.00'}
+            /- WITH THIS ORDER!
+          </Text>
+          <TouchableOpacity style={styles.orderAgainButton} onPress={handleOrderAgain}>
+            <Text style={styles.orderAgainText}>ORDER AGAIN</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Payment */}
+        <View style={styles.section}>
+          <Text style={styles.payment}>
+            Payment Method:{' '}
+            <Text style={styles.bold}>
+              {order.isOnlinePayment
+                ? 'Online'
+                : order.isCodPayment
+                ? 'Cash on Delivery'
+                : order.isChequePayment
+                ? 'Cheque'
+                : order.isWalletPayment
+                ? 'Wallet'
+                : 'Unknown'}
+            </Text>
+          </Text>
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFF',
+  },
+  scrollContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
-    paddingHorizontal: 16,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    paddingBottom: 10,
-  },
-  backButton: {
-    padding: 5,
   },
   headerTitle: {
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
     color: '#333',
-    textAlign: 'center',
+    textAlign: 'left',
     textTransform: 'uppercase',
-  },
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    padding: 10,
-  },
-  orderId: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
   },
   section: {
     backgroundColor: '#FFF',
-    padding: 15,
+    padding: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#EEE',
-    borderRadius: 8,
+  },
+  inTransitSection: {
+    backgroundColor: '#FFF8F0',
+  },
+  subSection: {
+    backgroundColor: '#FFF',
+    padding: 10,
+    marginBottom: 10,
   },
   subTitle: {
     fontSize: 14,
     fontWeight: '700',
     color: '#333',
     marginBottom: 10,
+    textTransform: 'uppercase',
+    backgroundColor: 'transparent',
+    padding: 0,
   },
-  itemContainer: {
-    marginBottom: 10,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderColor: '#EEE',
-    backgroundColor: '#FFF',
-  },
-  itemRowSelected: {
+  beigeTitle: {
     backgroundColor: '#FFF8F0',
+    padding: 5,
   },
-  itemDetails: {
-    flex: 1,
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#D6722F',
   },
-  itemName: {
-    fontSize: 14,
-    fontWeight: '600',
+  statusDesc: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+    lineHeight: 18,
+  },
+  orderId: {
+    fontSize: 12,
     color: '#333',
-    marginBottom: 5,
+    marginTop: 5,
+    fontWeight: '500',
   },
-  itemDetail: {
+  orderCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderRadius: 0,
+    padding: 10,
+    marginBottom: 10,
+    borderWidth: 0,
+  },
+  productImg: {
+    width: 60,
+    height: 60,
+    borderRadius: 0,
+    backgroundColor: '#F0F0F0',
+  },
+  productInfo: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: 'center',
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 2,
+  },
+  detail: {
     fontSize: 12,
     color: '#666',
     marginBottom: 2,
   },
-  selectionText: {
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  strike: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginHorizontal: 4,
+  },
+  discountedPrice: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#D6722F',
+    marginHorizontal: 4,
+  },
+  savingsText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2ECC71',
+    marginLeft: 4,
+  },
+  placed: {
+    fontSize: 12,
+    color: '#666',
+  },
+  viewMoreButton: {
+    borderWidth: 1,
+    borderColor: '#D6722F',
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  viewMoreText: {
+    color: '#D6722F',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  otherItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 0,
+  },
+  otherImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 0,
+    marginRight: 10,
+    backgroundColor: '#F0F0F0',
+  },
+  otherName: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  download: {
+    color: '#D6722F',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 5,
+  },
+  timelineContainer: {
+    marginVertical: 5,
+  },
+  timelineStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+  },
+  timelineIconContainer: {
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  timelineIcon: {
+    width: 20,
+    height: 20,
+    position: 'relative',
+  },
+  iconBackground: {
+    width: 20,
+    height: 20,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    borderRadius: 0,
+  },
+  iconBackgroundCompleted: {
+    backgroundColor: 'rgba(217, 119, 6, 0.3)',
+  },
+  iconBackgroundPending: {
+    backgroundColor: 'rgba(120, 113, 108, 0.3)',
+  },
+  iconForeground: {
+    width: 12,
+    height: 12,
+    position: 'absolute',
+    left: 4,
+    top: 4,
+    borderRadius: 0,
+  },
+  iconForegroundCompleted: {
+    backgroundColor: '#D97706',
+  },
+  iconForegroundPending: {
+    backgroundColor: '#78716C',
+  },
+  timelineLine: {
+    width: 2,
+    height: 30,
+    position: 'absolute',
+    top: 20,
+    left: 9,
+  },
+  timelineLineCompleted: {
+    backgroundColor: '#D6722F',
+  },
+  timelineLinePending: {
+    backgroundColor: 'transparent',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#999',
+  },
+  timelineContent: {
+    flex: 1,
+  },
+  stepLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  stepLabelCompleted: {
+    color: '#D6722F',
+  },
+  stepLabelPending: {
+    color: '#999',
+  },
+  stepDate: {
+    fontSize: 10,
+    color: '#D6722F',
+    marginTop: 2,
+  },
+  returnButton: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  returnButtonText: {
+    color: '#D6722F',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addressName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 2,
+  },
+  address: {
+    fontSize: 12,
+    color: '#333',
+    lineHeight: 18,
+  },
+  billRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  billLabel: {
+    fontSize: 12,
+    color: '#333',
+  },
+  couponLabel: {
+    fontSize: 12,
+    color: '#D6722F',
+  },
+  billValue: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  couponValue: {
+    fontSize: 12,
+    color: '#D6722F',
+    fontWeight: '500',
+  },
+  divider: {
+    height: 0,
+  },
+  totalRow: {
+    paddingVertical: 6,
+  },
+  totalLabel: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '700',
+  },
+  totalValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+  },
+  savings: {
     fontSize: 12,
     color: '#D6722F',
     fontWeight: '600',
+    marginTop: 5,
+    textAlign: 'left',
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 10,
-    backgroundColor: '#FFF', // Ensure background doesn't interfere with text color
-  },
-  reasonPicker: {
-    height: 50,
-    backgroundColor: '#F9F9F9',
-  },
-  addressPicker: {
-    height: 50,
-    backgroundColor: '#F9F9F9',
-    borderColor: '#D6722F',
-  },
-  pickerItem: {
-    fontSize: 14,
-    color: '#000', // Explicitly set black text for Picker items
-    height: 50,
-  },
-  reasonInput: {
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 100,
-    fontSize: 14,
-    color: '#000', // Explicitly set black text
-    textAlignVertical: 'top',
-  },
-  noAddressText: {
-    fontSize: 14,
-    color: '#E74C3C',
-    marginBottom: 10,
-  },
-  addAddressButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#D6722F',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-  },
-  addAddressText: {
-    color: '#D6722F',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  submitButton: {
+  orderAgainButton: {
     backgroundColor: '#D6722F',
-    padding: 15,
+    paddingVertical: 10,
     alignItems: 'center',
-    margin: 10,
-    borderRadius: 8,
-    marginBottom: 20,
+    marginTop: 10,
   },
-  submitButtonDisabled: {
-    backgroundColor: '#F0A500',
-    opacity: 0.7,
-  },
-  submitButtonText: {
+  orderAgainText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+  },
+  payment: {
+    fontSize: 12,
+    color: '#333',
+  },
+  bold: {
+    fontWeight: '600',
+    color: '#D6722F',
   },
   loadingContainer: {
     flex: 1,
@@ -474,22 +978,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   errorText: {
-    color: '#E74C3C',
     fontSize: 14,
-    marginBottom: 10,
+    color: '#E74C3C',
+    marginBottom: 15,
     textAlign: 'center',
   },
   retryButton: {
     backgroundColor: '#D6722F',
     paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingHorizontal: 25,
+    borderRadius: 0,
   },
   retryButtonText: {
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
   },
+  returnInfo: {
+    padding: 10,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 0,
+    marginTop: 5,
+  },
+  returnText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  viewDetailsButton: {
+    borderWidth: 1,
+    borderColor: '#D6722F',
+    borderRadius: 0,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  viewDetailsText: {
+    color: '#D6722F',
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });
 
-export default PartnerReturnOrderScreen;
+export default TrackOrderScreen;

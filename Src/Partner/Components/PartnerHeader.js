@@ -127,7 +127,7 @@ const PartnerHeader = () => {
                 letterSpacing: scale(0.3),
               }}
             >
-              INR {totalBalance.toFixed(2)} {/* Display totalBalance */}
+              INR {totalBalance.toFixed(2)} 
             </Text>
 
             <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
