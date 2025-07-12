@@ -95,14 +95,13 @@ const GenderTabs = () => {
                   styles.tabText,
                   activeTab === category._id && styles.activeTabText,
                 ]}>
-                {/* For {category.name} */}
+                For {category.name}
               </Text>
               {activeTab === category._id && <View style={styles.underline} />}
             </TouchableOpacity>
           )}
         />
       </View>
-
       {/* Subcategory Grid */}
       {loading ? (
         <ActivityIndicator size="large" color="#8B4513" style={styles.loader} />

@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 const SortComponent = ({ onClose, onApplySort, selectedSort }) => {
-  const [currentSort, setCurrentSort] = React.useState(selectedSort || 'popularity');
+  const [currentSort, setCurrentSort] = React.useState(selectedSort || 'latestAddition');
 
   const sortOptions = [
-    { label: 'Latest', value: 'latest' },
+    { label: 'Latest', value: 'latestAddition' },
     { label: 'Popularity', value: 'popularity' },
     { label: 'Price: High to Low', value: 'priceHighToLow' },
     { label: 'Price: Low to High', value: 'priceLowToHigh' },
@@ -18,7 +18,9 @@ const SortComponent = ({ onClose, onApplySort, selectedSort }) => {
   };
 
   const clearSort = () => {
-    setCurrentSort(null); // Reset to no selection
+    setCurrentSort('latestAddition');
+    onApplySort('latestAddition');
+    onClose();
   };
 
   return (
@@ -29,7 +31,7 @@ const SortComponent = ({ onClose, onApplySort, selectedSort }) => {
           <Text style={styles.closeText}>×</Text>
         </TouchableOpacity>
 
-        {sortOptions.map((option) => (
+        {sortOptions.map(option => (
           <TouchableOpacity
             key={option.value}
             style={styles.optionRow}

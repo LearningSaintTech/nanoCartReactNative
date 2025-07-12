@@ -12,7 +12,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {BASE_URL} from '../../config/apiConfig';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const OrderHistoryScreen = () => {
@@ -44,6 +44,8 @@ const OrderHistoryScreen = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        console.log('This is api response ', responseData);
         throw new Error(
           errorData.message || `HTTP error! Status: ${response.status}`,
         );
@@ -52,7 +54,7 @@ const OrderHistoryScreen = () => {
       const responseData = await response.json();
       if (!responseData.success) {
         throw new Error(responseData.message || 'Failed to fetch orders');
-      }
+      }       
 
       const fetchedOrders = responseData.data;
 
@@ -292,7 +294,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 15,
   },
-    header: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,

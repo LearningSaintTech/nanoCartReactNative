@@ -10,12 +10,18 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector,shallowEqual } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 const PartnerHeader = () => {
   const { width, height } = useWindowDimensions();
   const navigation = useNavigation();
-  const cartItems = useSelector((state) => state.cart.items);
+  // const cartItems = useSelector((state) => state.cart.items);
+  const cartItems = useSelector((state) => state.cart.items, shallowEqual);
+  
+
   const token = useSelector((state) => state.auth.token);
 
   // Calculate scaling factor based on a reference width (e.g., 375 for iPhone SE)
@@ -42,6 +48,14 @@ const PartnerHeader = () => {
       navigation.navigate('Login', { fromScreen: 'PartnerHeader' });
     }
   };
+
+useFocusEffect(
+  useCallback(() => {
+    // Log or trigger side-effect when screen gains focus
+    console.log('PartnerHeader focused. Cart Items:', cartItems);
+  }, [cartItems])
+);
+
 
   return (
     <>
@@ -98,7 +112,7 @@ const PartnerHeader = () => {
                 letterSpacing: scale(0.3),
               }}
             >
-              $ 0.0
+              INR 0.0
             </Text>
 
             <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>

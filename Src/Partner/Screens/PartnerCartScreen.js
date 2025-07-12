@@ -14,8 +14,13 @@ import PartnerHeader from '../Components/PartnerHeader';
 import {useSelector, useDispatch} from 'react-redux';
 import {setCartItems, clearCart} from './../../redux/reducers/cartSlice'; // Adjust path as needed
 import {BASE_URL} from '../../config/apiConfig';
+import {useRoute} from '@react-navigation/native';
 
 const PartnerCartScreen = ({navigation}) => {
+  const route = useRoute();
+  const totalPrice = route.params?.totalPrice;
+
+  console.log('this is the total price ', totalPrice);
   console.log(
     'PartnerCartScreen rendered at:',
     new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}),
@@ -188,9 +193,10 @@ const PartnerCartScreen = ({navigation}) => {
           setWalletBalance(data.data.totalBalance || 0);
           console.log('Wallet balance set:', data.data.totalBalance || 0);
         } else {
-          console.error('Failed to fetch wallet balance:', data.message);
+          // console.error('Failed to fetch wallet balance:', data.message);
           setWalletBalance(0);
           console.log('Wallet balance set to 0 due to API error');
+         
         }
       } catch (error) {
         console.error('Error fetching wallet balance:', error.message);
@@ -221,12 +227,6 @@ const PartnerCartScreen = ({navigation}) => {
         const discountedPrice = cartItems.reduce(
           (sum, item) => sum + item.totalPrice,
           0,
-        );
-        console.log(
-          'Calculated cartTotal:',
-          calculatedCartTotal,
-          'discountedPrice:',
-          discountedPrice,
         );
 
         if (
@@ -316,7 +316,13 @@ const PartnerCartScreen = ({navigation}) => {
         }
       } catch (err) {
         console.error('Error fetching invoice:', err.message);
-        const calculatedCartTotal = cartTotal;
+        // const calculatedCartTotal = cartTotal;
+
+        const calculatedCartTotal = cartItems.reduce(
+          (sum, item) => sum + item.itemId.MRP * item.totalQuantity,
+          0,
+        );
+
         const discountedPrice = cartItems.reduce(
           (sum, item) => sum + item.totalPrice,
           0,
@@ -326,17 +332,33 @@ const PartnerCartScreen = ({navigation}) => {
         const codCharges = 0;
         const gstValue = 0;
         const shippingCharges = 0;
+        // const totalAmount =discountedPrice - walletMoney -couponDiscountValue + codCharges + gstValue;
         const totalAmount =
           discountedPrice -
           walletMoney -
-          couponDiscountValue +
-          codCharges +
+          couponDiscountValue +invoiceData.shippingCharges+
+          codCharges + 
           gstValue;
+
+        // const savings =calculatedCartTotal - discountedPrice + couponDiscountValue + walletMoney;
         const savings =
           calculatedCartTotal -
           discountedPrice +
           couponDiscountValue +
           walletMoney;
+
+        // const newInvoiceData = {
+        //   cartTotal: calculatedCartTotal.toFixed(2),
+        //   discountedPrice: discountedPrice.toFixed(2),
+        //   walletMoney: walletMoney.toFixed(2),
+        //   couponDiscount: couponDiscountValue.toFixed(2),
+        //   codCharges: codCharges.toFixed(2),
+        //   gst: gstValue.toFixed(1),
+        //   shippingCharges:
+        //     shippingCharges === 0 ? 'FREE' : `₹${shippingCharges.toFixed(2)}`,
+        //   totalAmount: totalAmount.toFixed(1),
+        //   savings: savings.toFixed(2),
+        // };
 
         const newInvoiceData = {
           cartTotal: calculatedCartTotal.toFixed(2),
@@ -673,31 +695,35 @@ const PartnerCartScreen = ({navigation}) => {
       });
       const data = await response.json();
       console.log('Coupon API response:', JSON.stringify(data, null, 2));
+
       if (response.ok && data.success) {
+        const discountAmount = parseFloat(data?.data?.discountValue) || 0;
+
         setInvoiceData(prev => {
           const newInvoiceData = {
             ...prev,
-            couponDiscount: data.discount.toFixed(2),
+            couponDiscount: discountAmount.toFixed(2),
             totalAmount: (
               parseFloat(prev.discountedPrice) -
               parseFloat(prev.walletMoney) -
-              data.discount +
+              discountAmount +
               parseFloat(prev.codCharges) +
               parseFloat(prev.gst)
             ).toFixed(1),
             savings: (
               parseFloat(prev.cartTotal) -
               parseFloat(prev.discountedPrice) +
-              data.discount +
+              discountAmount +
               parseFloat(prev.walletMoney)
             ).toFixed(2),
           };
-          console.log('Updated invoiceData with coupon:', newInvoiceData);
+          console.log('✅ Updated invoiceData with coupon:', newInvoiceData);
           return newInvoiceData;
         });
+
         Alert.alert(
           'Success',
-          `Coupon applied! ₹${data.discount} discount added.`,
+          `Coupon applied! ₹${discountAmount} discount added.`,
         );
       } else {
         console.error('Failed to apply coupon:', data.message);
@@ -759,7 +785,7 @@ const PartnerCartScreen = ({navigation}) => {
           <View style={styles.dottedLine} />
           <View style={styles.stepContainer}>
             <View style={styles.square} />
-            <Text style={styles.inactiveStep}>ADDRESS</Text>
+            <Text style={styles.inactiveStep}>ADDRESS </Text>
           </View>
           <View style={styles.dottedLine} />
           <View style={styles.stepContainer}>
@@ -994,7 +1020,6 @@ const PartnerCartScreen = ({navigation}) => {
               color="#333"
             />
           </TouchableOpacity>
-
           {couponAccordionOpen && (
             <View style={styles.couponInputContainer}>
               <TextInput
@@ -1016,7 +1041,9 @@ const PartnerCartScreen = ({navigation}) => {
         </View>
 
         <View style={styles.walletContainer}>
-          <Text style={styles.walletTitle}>Use Wallet</Text>
+          <View style={styles.walletContainer}>
+            <Text style={styles.walletTitle}>Use Wallet</Text>
+          </View>
           <View style={styles.couponInputContainer}>
             <TextInput
               placeholder="₹"
@@ -1052,6 +1079,7 @@ const PartnerCartScreen = ({navigation}) => {
           </Text>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Cart Total</Text>
+
             <Text style={styles.priceValue}>₹{invoiceData.cartTotal}</Text>
           </View>
           <View style={styles.priceDetailRow}>
@@ -1072,10 +1100,7 @@ const PartnerCartScreen = ({navigation}) => {
               - ₹{invoiceData.couponDiscount}
             </Text>
           </View>
-          <View style={styles.priceDetailRow}>
-            <Text style={styles.priceLabel}>COD Charges</Text>
-            <Text style={styles.priceValue}>₹{invoiceData.codCharges}</Text>
-          </View>
+
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>GST</Text>
             <Text style={styles.priceValue}>₹{invoiceData.gst}</Text>
@@ -1085,7 +1110,7 @@ const PartnerCartScreen = ({navigation}) => {
             <Text style={styles.priceValue}>{invoiceData.shippingCharges}</Text>
           </View>
           <View style={styles.priceDetailRow}>
-            <Text style={styles.priceLabel}>Total Amount</Text>
+            <Text style={styles.priceLabel}>Total Amount </Text>
             <Text style={styles.priceValue}>₹{invoiceData.totalAmount}</Text>
           </View>
           <Text style={styles.savingsText}>
@@ -1287,9 +1312,9 @@ const styles = StyleSheet.create({
     height: 40,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
     borderRadius: 4,
     paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
   },
   applyBtn: {
     backgroundColor: '#F36F25',
@@ -1308,7 +1333,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginVertical: 8,
     borderRadius: 8,
-    padding: 16,
   },
   walletTitle: {fontSize: 15, fontWeight: '500', color: '#333'},
   walletInput: {
@@ -1365,3 +1389,6 @@ const styles = StyleSheet.create({
 });
 
 export default PartnerCartScreen;
+
+
+

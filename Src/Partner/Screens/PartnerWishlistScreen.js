@@ -48,7 +48,6 @@ const PartnerWishlistScreen = () => {
     if (!token) {
       return;
     }
-
     setLoading(true);
     try {
       const response = await fetch(`${BASE_URL}/partner/wishlist`, {
@@ -58,7 +57,6 @@ const PartnerWishlistScreen = () => {
           'Content-Type': 'application/json',
         },
       });
-
       const data = await response.json();
       if (response.ok) {
         setWishlist(data?.data?.items || []);

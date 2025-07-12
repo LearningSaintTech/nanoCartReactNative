@@ -222,7 +222,7 @@ const MyAccountScreen = () => {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('OrderHistory')}>
-            <Text style={styles.menuText}>Order History</Text>
+            <Text style={styles.menuText}>Order History </Text>
 
             <Icon
               name="chevron-forward"

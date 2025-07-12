@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BASE_URL } from '../../config/apiConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 const PartnerSavedAddressScreen = ({ navigation }) => {
   const token = useSelector(state => state.auth.token);
@@ -19,7 +20,8 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
   const [defaultAddress, setDefaultAddress] = useState(null);
   const [otherAddresses, setOtherAddresses] = useState([]);
 
-  useEffect(() => {
+  useFocusEffect(
+  React.useCallback(() => {
     const fetchAddresses = async () => {
       try {
         const response = await fetch(`${BASE_URL}/partner/address`, {
@@ -33,13 +35,14 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
 
         if (response.ok && json.addresses?.addressDetail?.length > 0) {
           const addresses = json.addresses.addressDetail;
-
           const defaultAddr = addresses.find(addr => addr.isDefault);
           const otherAddr = addresses.filter(addr => !addr.isDefault);
 
           setDefaultAddress(defaultAddr || null);
           setOtherAddresses(otherAddr);
         } else {
+          setDefaultAddress(null);
+          setOtherAddresses([]);
           console.error('No addresses found or invalid response:', json);
         }
       } catch (error) {
@@ -50,7 +53,8 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
     if (token) {
       fetchAddresses();
     }
-  }, [token]);
+  }, [token])
+);
 
   const renderAddressBox = (item) => (
     <TouchableOpacity
@@ -97,7 +101,7 @@ const PartnerSavedAddressScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => navigation.navigate('AddNewAddress')}
+        onPress={() => navigation.navigate('PartnerAddNewAddress')}
       >
         <Text style={styles.addButtonText}>ADD NEW ADDRESS</Text>
       </TouchableOpacity>
@@ -166,9 +170,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
     bottom: 20,
-    width: Dimensions.get('window').width - 40, // Adjusted to account for margins
+    width: Dimensions.get('window').width - 40,
     marginHorizontal: 20,
-    borderRadius: 5, // Added for rounded corners
+    borderRadius: 5, 
   },
   addButtonText: {
     color: '#fff',

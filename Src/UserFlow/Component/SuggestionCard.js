@@ -1,67 +1,161 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import {useSelector} from 'react-redux';
+import {BASE_URL} from '../../config/apiConfig';
+import {useNavigation} from '@react-navigation/native';
 
-const SuggestionCard = ({
-  title,
-  productImage,
-  productName,
-  productDesc,
-  price,
-  oldPrice,
-  discount,
-  rating,
-  reviews,
-  sizes,
-  colors,
-  buttonLabel,
-  onButtonPress,
-}) => {
+const SuggestionCard = () => {
+  const token = useSelector(state => state.auth.token);
+  const navigation = useNavigation();
 
+  const [wishlistItem, setWishlistItem] = useState(null);
+  const [cartItem, setCartItem] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  const fetchWishlist = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/partner/wishlist`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const json = await res.json();
+      const first = json?.data?.items?.[0] || null;
+      setWishlistItem(first);
+    } catch (err) {
+      console.error('Error fetching wishlist:', err);
+    }
+  };
+
+  const fetchCart = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/partner/cart`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const json = await res.json();
+      const first = json?.data?.items?.[0] || null;
+
+      console.log("this is cart item",first);
+      setCartItem(first);
+    } catch (err) {
+      console.error('Error fetching cart:', err);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!token) return;
+      setLoading(true);
+      await Promise.all([fetchWishlist(), fetchCart()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, {alignItems: 'center'}]}>
+        <ActivityIndicator size="small" color="#FF6B00" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-
-      <View style={styles.card}>
-        <Image source={productImage} style={styles.image} />
-
-        <View style={styles.details}>
-          <Text style={styles.name}>{productName}</Text>
-          <Text style={styles.desc}>{productDesc}</Text>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>₹{price}</Text>
-            <Text style={styles.oldPrice}>₹{oldPrice}</Text>
-            <Text style={styles.discount}>Flat {discount}% Off</Text>
-          </View>
-
-          <View style={styles.ratingRow}>
-            <View style={styles.ratingBox}>
-              <Icon name="star" size={10} color="#fff" />
-              <Text style={styles.ratingText}>{rating}</Text>
+    <>
+      {/* ---------- Wishlist Card ---------- */}
+      {wishlistItem && (
+        <View style={styles.container}>
+          <Text style={styles.title}>From your wishlist</Text>
+          <View style={styles.card}>
+            <Image
+              source={{uri: wishlistItem.image}}
+              style={styles.image}
+              resizeMode="cover"
+            />
+            <View style={styles.details}>
+              <Text style={styles.name}>{wishlistItem.itemId.name}</Text>
+              <Text style={styles.desc}>{wishlistItem.itemId.description}</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>
+                  ₹{wishlistItem.itemId.discountedPrice}
+                </Text>
+                <Text style={styles.oldPrice}>₹{wishlistItem.itemId.MRP}</Text>
+                <Text style={styles.discount}>
+                  {wishlistItem.itemId.discountPercentage.toFixed(0)}% Off
+                </Text>
+              </View>
+              <View style={styles.ratingRow}>
+                <View style={styles.ratingBox}>
+                  <Icon name="star" size={10} color="#fff" />
+                  <Text style={styles.ratingText}>4.5</Text>
+                </View>
+                <Text style={styles.review}>79 Ratings & 55 Reviews</Text>
+              </View>
+              <Text style={styles.sizeText}>Color: {wishlistItem.color}</Text>
             </View>
-            <Text style={styles.review}>{reviews}</Text>
           </View>
-
-          <Text style={styles.sizeText}>Available in {sizes.join(', ')}</Text>
-
-          <View style={styles.colorRow}>
-            {colors.map((color, index) => (
-              <View
-                key={index}
-                style={[styles.colorDot, { backgroundColor: color }]}
-              />
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('PartnerWishlist')}>
+            <Text style={styles.buttonText}>VIEW WISHLIST</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      )}
 
-      <TouchableOpacity style={styles.button} onPress={onButtonPress}>
-        <Text style={styles.buttonText}>{buttonLabel}</Text>
-      </TouchableOpacity>
-    </View>
+      {/* ---------- Cart Card ---------- */}
+      {cartItem && (
+        <View style={styles.container}>
+          <Text style={styles.title}>From your cart</Text>
+          <View style={styles.card}>
+            <Image
+              source={{uri: cartItem?.itemId?.image}}
+              style={styles.image}
+              resizeMode="cover"
+              onError={() => console.warn('Image failed to load')}
+            />
+
+            <View style={styles.details}>
+              <Text style={styles.name}>{cartItem?.itemId?.name}</Text>
+              <Text style={styles.desc}>{cartItem?.itemId?.description}</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>₹{cartItem?.itemId?.discountedPrice}</Text>
+                <Text style={styles.oldPrice}>₹{cartItem?.itemId?.MRP}</Text>
+                <Text style={styles.discount}>20% Off</Text>
+              </View>
+              <View style={styles.ratingRow}>
+                <View style={styles.ratingBox}>
+                  <Icon name="star" size={10} color="#fff" />
+                  <Text style={styles.ratingText}>4.5</Text>
+                </View>
+                <Text style={styles.review}>79 Ratings & 55 Reviews</Text>
+              </View>
+              <Text style={styles.sizeText}>
+                Color: {cartItem.defaultColor}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('PartnerCart')}>
+            <Text style={styles.buttonText}>VIEW CART</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
   );
 };
 
@@ -73,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.2,
     shadowRadius: 2,
     padding: 16,
@@ -84,51 +178,25 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 12,
   },
-  card: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  card: {flexDirection: 'row', gap: 12},
   image: {
     width: 100,
     height: 130,
     borderRadius: 4,
     backgroundColor: '#F5F5F5',
   },
-  details: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 4,
-  },
-  desc: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 8,
-  },
+  details: {flex: 1},
+  name: {fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4},
+  desc: {fontSize: 12, color: '#666', marginBottom: 8},
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 8,
   },
-  price: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  oldPrice: {
-    fontSize: 12,
-    color: '#999999',
-    textDecorationLine: 'line-through',
-  },
-  discount: {
-    fontSize: 12,
-    color: '#FF6B00',
-    fontWeight: '500',
-  },
+  price: {fontSize: 14, fontWeight: '600', color: '#333'},
+  oldPrice: {fontSize: 12, color: '#999', textDecorationLine: 'line-through'},
+  discount: {fontSize: 12, color: '#FF6B00', fontWeight: '500'},
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,31 +212,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     gap: 4,
   },
-  ratingText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  review: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  sizeText: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 8,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  colorDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
+  ratingText: {color: '#fff', fontSize: 12, fontWeight: '500'},
+  review: {fontSize: 12, color: '#666'},
+  sizeText: {fontSize: 12, color: '#666', marginBottom: 8},
   button: {
     marginTop: 16,
     borderWidth: 1,
@@ -177,11 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 4,
   },
-  buttonText: {
-    color: '#FF6B00',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+  buttonText: {color: '#FF6B00', fontSize: 14, fontWeight: '500'},
 });
 
 export default SuggestionCard;

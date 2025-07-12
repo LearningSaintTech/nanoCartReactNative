@@ -10,10 +10,17 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import {BASE_URL} from '../../config/apiConfig';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useRoute} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
+import {useCallback} from 'react';
 
-const PartnerDeliveryAddressScreen = ({navigation, route}) => {
+const PartnerDeliveryAddressScreen = ({navigation}) => {
   const token = useSelector(state => state.auth.token);
+  const route = useRoute();
+  const navigationData = route.params;
+
+  console.log('This is navigation data ', navigationData.invoiceData);
   const [address, setAddress] = useState(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
   const [invoiceData, setInvoiceData] = useState({
@@ -38,6 +45,44 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
   } = route.params || {};
 
   // Set initial invoiceData with passed values
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchAddress = async () => {
+        if (!token) {
+          console.warn('No token available, skipping fetchAddress');
+          setLoadingAddress(false);
+          return;
+        }
+        try {
+          console.log('Fetching address with token:', token);
+          const response = await fetch(`${BASE_URL}/partner/address`, {
+            method: 'GET',
+            headers: {Authorization: `Bearer ${token}`},
+          });
+          const json = await response.json();
+
+          if (response.ok && json.addresses?.addressDetail?.length > 0) {
+            const defaultAddress =
+              json.addresses.addressDetail.find(a => a.isDefault) ||
+              json.addresses.addressDetail[0];
+            setAddress(defaultAddress);
+          } else {
+            console.warn('No addresses found');
+            Alert.alert('No Address', 'Please add an address to proceed.');
+          }
+        } catch (err) {
+          console.error('Error fetching address:', err.message);
+          Alert.alert('Error', 'Failed to load address. Please try again.');
+        } finally {
+          setLoadingAddress(false);
+        }
+      };
+
+      fetchAddress();
+    }, [token]),
+  );
+
   useEffect(() => {
     setInvoiceData(prev => ({...prev, ...passedInvoiceData}));
   }, [passedInvoiceData]);
@@ -65,37 +110,36 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
   );
 
   useEffect(() => {
-    const fetchAddress = async () => {
-      if (!token) {
-        console.warn('No token available, skipping fetchAddress');
-        setLoadingAddress(false);
-        return;
-      }
-      try {
-        console.log('Fetching address with token:', token);
-        const response = await fetch(`${BASE_URL}/partner/address`, {
-          method: 'GET',
-          headers: {Authorization: `Bearer ${token}`},
-        });
-
-        const json = await response.json();
-        console.log('Address API response:', JSON.stringify(json, null, 2));
-        if (response.ok && json.addresses?.addressDetail?.length > 0) {
-          const defaultAddress =
-            json.addresses.addressDetail.find(a => a.isDefault) ||
-            json.addresses.addressDetail[0];
-          setAddress(defaultAddress);
-        } else {
-          console.warn('No addresses found');
-          Alert.alert('No Address', 'Please add an address to proceed.');
-        }
-      } catch (err) {
-        console.error('Error fetching address:', err.message);
-        Alert.alert('Error', 'Failed to load address. Please try again.');
-      } finally {
-        setLoadingAddress(false);
-      }
-    };
+    // const fetchAddress = async () => {
+    //   if (!token) {
+    //     console.warn('No token available, skipping fetchAddress');
+    //     setLoadingAddress(false);
+    //     return;
+    //   }
+    //   try {
+    //     console.log('Fetching address with token:', token);
+    //     const response = await fetch(`${BASE_URL}/partner/address`, {
+    //       method: 'GET',
+    //       headers: {Authorization: `Bearer ${token}`},
+    //     });
+    //     const json = await response.json();
+    //     // console.log('Address API response:', JSON.stringify(json, null, 2));
+    //     if (response.ok && json.addresses?.addressDetail?.length > 0) {
+    //       const defaultAddress =
+    //         json.addresses.addressDetail.find(a => a.isDefault) ||
+    //         json.addresses.addressDetail[0];
+    //       setAddress(defaultAddress);
+    //     } else {
+    //       console.warn('No addresses found');
+    //       Alert.alert('No Address', 'Please add an address to proceed.');
+    //     }
+    //   } catch (err) {
+    //     console.error('Error fetching address:', err.message);
+    //     Alert.alert('Error', 'Failed to load address. Please try again.');
+    //   } finally {
+    //     setLoadingAddress(false);
+    //   }
+    // };
 
     const fetchInvoiceData = async () => {
       if (!token) {
@@ -109,7 +153,7 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
           headers: {Authorization: `Bearer ${token}`},
         });
         const json = await res.json();
-        console.log('Invoice API response:', JSON.stringify(json, null, 2));
+        // console.log('Invoice API response:', JSON.stringify(json, null, 2));
 
         if (
           res.ok &&
@@ -218,7 +262,6 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
       }
     };
 
-    fetchAddress();
     fetchInvoiceData();
   }, [token, cartItems, appliedWalletAmount, couponDiscount]);
 
@@ -270,11 +313,11 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
-        <Icon name="arrow-back" size={22} color="#000" />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>PARTNER DELIVERY ADDRESS </Text>
-    </View>
+        <TouchableOpacity onPress={() => navigation.navigate('PartnerHome')}>
+          <Icon name="arrow-back" size={22} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>PARTNER DELIVERY ADDRESS </Text>
+      </View>
 
       <View style={styles.stepRow}>
         <View style={styles.stepContainer}>
@@ -387,7 +430,7 @@ const PartnerDeliveryAddressScreen = ({navigation, route}) => {
             <View style={styles.savingBox}>
               <Text style={styles.savingText}>
                 {parseFloat(invoiceData.savings) > 0
-                  ? `Hooray! You are saving ₹${invoiceData.savings}/- with this order!`
+                  ? `Hooray! You are saving ₹${invoiceData.savings}/-with this order!`
                   : 'No additional savings applied.'}
               </Text>
             </View>
@@ -484,7 +527,6 @@ const styles = StyleSheet.create({
   },
   addAddressText: {color: '#fff', fontWeight: '600', fontSize: 14},
   card: {
-    marginHorizontal: 12,
     marginBottom: 16,
     borderRadius: 8,
     overflow: 'hidden',

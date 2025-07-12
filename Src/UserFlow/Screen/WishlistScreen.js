@@ -141,7 +141,6 @@ const WishlistScreen = () => {
         onRequestClose={() => setSortModalVisible(false)}>
         <SortComponent onClose={() => setSortModalVisible(false)} />
       </Modal>
-
       {/*  Not Logged In Modal */}
       <Modal visible={showLoginModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
