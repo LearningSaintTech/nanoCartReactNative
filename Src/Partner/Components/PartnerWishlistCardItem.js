@@ -8,6 +8,8 @@ import {
   Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { BASE_URL } from '../../config/apiConfig';
 
 const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
@@ -43,7 +45,7 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
       const data = await response.json();
       console.log('✅ Partner Wishlist Remove Response:', data);
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         Alert.alert('Success', 'Item removed from wishlist.');
         onRemove(); // Trigger the callback to reload the wishlist
       } else {
@@ -85,10 +87,15 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
       <Image source={{ uri: dummyProduct.image }} style={styles.image} />
 
       <TouchableOpacity style={styles.heartIcon} onPress={handleHeartPress}>
-        <Image
-          source={require('../../assets/icon/heart.png')}
+        {/* Option 1: Using react-native-vector-icons for a filled red heart */}
+       <Ionicons name="heart" size={18} color="#FF0000" />
+
+        
+        {/* Option 2: Using an image asset (uncomment if you have a red filled heart asset) */}
+        {/* <Image
+          source={require('../../assets/icon/heart-filled.png')}
           style={{ width: 18, height: 18 }}
-        />
+        /> */}
       </TouchableOpacity>
 
       <Text numberOfLines={1} style={styles.title}>
@@ -96,7 +103,6 @@ const PartnerWishlistCardItem = ({ item, navigation, onRemove }) => {
       </Text>
 
       <Text style={styles.subtitle}>{dummyProduct.description}</Text>
-
       <View style={styles.priceRow}>
         <Text style={styles.mrp}>MRP ₹{dummyProduct.MRP}</Text>
         <Text style={styles.price}>₹{dummyProduct.discountedPrice}</Text>

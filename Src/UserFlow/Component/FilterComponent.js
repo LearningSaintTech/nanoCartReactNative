@@ -66,7 +66,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
         setLoading(true);
         setError(null);
 
-        const apiUrl = 'http://10.203.52.142:4000/api/filter';
+        const apiUrl = `${BASE_URL}/filter`;
         console.log(`[${getTimestamp()}] 🌐 [FilterComponent] Fetching filters from: ${apiUrl}`);
 
         const response = await fetch(apiUrl, {

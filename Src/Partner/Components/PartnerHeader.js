@@ -1,39 +1,38 @@
-import React, { useState, useCallback } from 'react';
+import React, {useState, useCallback} from 'react';
 import {
   View,
   Image,
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  SafeAreaView,
-  StatusBar,
-  Platform,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useSelector, shallowEqual } from 'react-redux';
-import { BASE_URL } from '../../config/apiConfig';
-
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {useSelector, shallowEqual} from 'react-redux';
+import {BASE_URL} from '../../config/apiConfig';
 const PartnerHeader = () => {
-  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const {width} = useWindowDimensions();
   const navigation = useNavigation();
-  const cartItems = useSelector((state) => state.cart.items, shallowEqual);
-  const token = useSelector((state) => state.auth.token);
-  const [totalBalance, setTotalBalance] = useState(0); // State for totalBalance
+  const cartItems = useSelector(state => state.cart.items, shallowEqual);
+  const token = useSelector(state => state.auth.token);
+  const [totalBalance, setTotalBalance] = useState(0);
 
-  // Calculate scaling factor based on a reference width (e.g., 375 for iPhone SE)
-  const scale = (size) => (width / 375) * size;
+  const scale = size => Math.min(Math.max(width / 375, 0.8), 1.2) * size;
 
-  // Calculate total cart count
   const totalCartCount = cartItems.reduce((sum, item) => {
     const count = item.orderDetails.reduce(
       (colorSum, colorObj) =>
-        colorSum + colorObj.sizeAndQuantity.reduce((sizeSum, s) => sizeSum + s.quantity, 0),
-      0
+        colorSum +
+        colorObj.sizeAndQuantity.reduce(
+          (sizeSum, s) => sizeSum + s.quantity,
+          0,
+        ),
+      0,
     );
     return sum + count;
   }, 0);
 
-  // Fetch wallet data when component gains focus
   useFocusEffect(
     useCallback(() => {
       const fetchWalletData = async () => {
@@ -45,15 +44,18 @@ const PartnerHeader = () => {
           const response = await fetch(`${BASE_URL}/wallet`, {
             method: 'GET',
             headers: {
-              Authorization: `Bearer ${token}`, // Include token in headers
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           });
           const data = await response.json();
           if (response.ok && data.success) {
-            setTotalBalance(data.data.totalBalance); // Update state with totalBalance
+            setTotalBalance(data.data.totalBalance);
           } else {
-            console.error('Failed to fetch wallet data:', data.message || 'Unknown error');
+            console.error(
+              'Failed to fetch wallet data:',
+              data.message || 'Unknown error',
+            );
           }
         } catch (error) {
           console.error('Error fetching wallet data:', error.message);
@@ -61,128 +63,108 @@ const PartnerHeader = () => {
       };
 
       fetchWalletData();
-      console.log('PartnerHeader focused. Cart Items:', cartItems);
-    }, [token, cartItems])
+    }, [token]),
   );
 
   const handleCartPress = () => {
     if (token) {
       navigation.navigate('PartnerCart');
     } else {
-      navigation.navigate('Login', { fromScreen: 'PartnerHeader' });
+      navigation.navigate('Login', {fromScreen: 'PartnerHeader'});
     }
   };
 
   return (
-    <>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#fff"
-        translucent={false}
-      />
-      <SafeAreaView style={{ backgroundColor: '#fff', flex: 0 }}>
+    <SafeAreaView style={{backgroundColor: '#fff'}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: scale(16),
+          paddingVertical: scale(14),
+          // paddingTop: insets.top,
+          backgroundColor: '#fff',
+          width: '100%',
+          borderBottomWidth: 1,
+          borderBottomColor: '#EEEEEE',
+        }}>
+        <View style={{flex: 1, maxWidth: scale(150)}}>
+          <Image
+            source={require('../../assets/icon/logo.png')}
+            style={{
+              width: scale(130),
+              height: scale(40),
+              resizeMode: 'contain',
+            }}
+          />
+        </View>
         <View
           style={{
             flexDirection: 'row',
-            justifyContent: 'space-between',
             alignItems: 'center',
-            paddingHorizontal: scale(16),
-            paddingVertical: scale(14),
-            backgroundColor: '#fff',
-            width: '100%',
-            borderBottomWidth: 1,
-            borderBottomColor: '#EEEEEE',
-            minHeight: scale(60),
-            ...Platform.select({
-              android: { paddingTop: StatusBar.currentHeight || scale(10) },
-            }),
-          }}
-        >
-          {/* Logo */}
-          <View style={{ flex: 1, maxWidth: scale(150) }}>
+            gap: scale(20),
+            maxWidth: scale(200),
+          }}>
+          <Text
+            style={{
+              fontWeight: '500',
+              fontSize: scale(16),
+              color: '#333333',
+              letterSpacing: scale(0.3),
+            }}>
+            {/* INR {totalBalance.toFixed(2)} */}
+            INR
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PartnerSearch')}>
             <Image
-              source={require('../../assets/icon/logo.png')}
+              source={require('../../assets/icon/SearchIcon.png')}
               style={{
-                width: scale(130),
-                height: scale(40),
+                width: scale(24),
+                height: scale(24),
                 resizeMode: 'contain',
               }}
             />
-          </View>
-
-          {/* Right side icons */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: scale(20),
-              maxWidth: scale(200),
-            }}
-          >
-            <Text
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleCartPress}
+            style={{position: 'relative'}}>
+            <Image
+              source={require('../../assets/icon/CartIcon.png')}
               style={{
-                fontWeight: '500',
-                fontSize: scale(16),
-                color: '#333333',
-                letterSpacing: scale(0.3),
+                width: scale(26),
+                height: scale(26),
+                resizeMode: 'contain',
               }}
-            >
-              INR {totalBalance.toFixed(2)} 
-            </Text>
-
-            <TouchableOpacity onPress={() => navigation.navigate('PartnerSearch')}>
-              <Image
-                source={require('../../assets/icon/SearchIcon.png')}
+            />
+            {totalCartCount > 0 && (
+              <View
                 style={{
-                  width: scale(24),
-                  height: scale(24),
-                  resizeMode: 'contain',
-                }}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleCartPress}
-              style={{ position: 'relative' }}
-            >
-              <Image
-                source={require('../../assets/icon/CartIcon.png')}
-                style={{
-                  width: scale(26),
-                  height: scale(26),
-                  resizeMode: 'contain',
-                }}
-              />
-              {totalCartCount > 0 && (
-                <View
+                  position: 'absolute',
+                  top: scale(-6),
+                  right: scale(-8),
+                  backgroundColor: '#F36F25',
+                  borderRadius: scale(10),
+                  width: scale(18),
+                  height: scale(18),
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text
                   style={{
-                    position: 'absolute',
-                    top: scale(-6),
-                    right: scale(-8),
-                    backgroundColor: '#F36F25',
-                    borderRadius: scale(10),
-                    width: scale(18),
-                    height: scale(18),
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: '#fff',
-                      fontSize: scale(10),
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {totalCartCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+                    color: '#fff',
+                    fontSize: scale(10),
+                    fontWeight: 'bold',
+                  }}>
+                  {totalCartCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </>
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -71,8 +71,14 @@ const PartnerWishlistScreen = () => {
   };
 
   useEffect(() => {
-    fetchWishlist();
-  }, []);
+    // Fetch wishlist when the screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchWishlist();
+    });
+
+    // Cleanup the listener when the component unmounts
+    return unsubscribe;
+  }, [navigation, token]);
 
   const handleCartPress = () => {
     if (token) {

@@ -1079,7 +1079,7 @@ const PartnerSearchCategoryScreen = () => {
             ) : (
               <SuggestionCard
                 title="Searching from wishlist?"
-                productImage={{ uri: wishlistItem.url }}
+                productImage={{ uri: wishlistItem.itemId.image }}
                 productName={wishlistItem.itemId.name}
                 productDesc={wishlistItem.itemId.description}
                 price={wishlistItem.itemId.discountedPrice}
@@ -1095,7 +1095,7 @@ const PartnerSearchCategoryScreen = () => {
                 colors={[wishlistItem.color]}
                 buttonLabel="VIEW WISHLIST"
                 onButtonPress={() => {
-                  navigation.navigate('Wishlist');
+                  navigation.navigate('PartnerWishlist');
                   console.log('ℹ️ Navigating to Wishlist from suggestion card');
                 }}
               />
@@ -1135,7 +1135,7 @@ const PartnerSearchCategoryScreen = () => {
                 colors={[cartItem.color]}
                 buttonLabel="VIEW CART"
                 onButtonPress={() => {
-                  navigation.navigate('Cart');
+                  navigation.navigate('PartnerCart');
                   console.log('ℹ️ Navigating to Cart from suggestion card');
                 }}
               />

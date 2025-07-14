@@ -6,7 +6,6 @@ import {store, persistor} from './Src/redux/store';
 import {PersistGate} from 'redux-persist/integration/react';
 import {Provider, useDispatch, useSelector} from 'react-redux';
 import {setCartItems} from './Src/redux/reducers/cartSlice';
-
 // Screens
 import SplashScreen from './Src/UserFlow/Screen/SplashScreen';
 import LoginScreen from './Src/UserFlow/Screen/LoginScreen';

@@ -15,6 +15,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import {setCartItems, clearCart} from './../../redux/reducers/cartSlice';
 import {BASE_URL} from '../../config/apiConfig';
 import {useRoute} from '@react-navigation/native';
+import { addToWishlist } from '../../redux/reducers/wishlistSlice';
 
 const PartnerCartScreen = ({navigation}) => {
   const route = useRoute();
@@ -49,8 +50,7 @@ const PartnerCartScreen = ({navigation}) => {
   });
   const [stockData, setStockData] = useState({});
 
-
-console.log("this is invoice data",invoiceData)
+  console.log('this is invoice data', invoiceData);
 
   const dispatch = useDispatch();
   const token = useSelector(state => state.auth.token);
@@ -219,7 +219,7 @@ console.log("this is invoice data",invoiceData)
         console.log('Fetching invoice data with token:', token);
         const res = await fetch(`${BASE_URL}/invoice`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         });
         const json = await res.json();
         console.log('Invoice API response:', JSON.stringify(json, null, 2));
@@ -252,7 +252,8 @@ console.log("this is invoice data",invoiceData)
               : 0;
           };
 
-          const walletMoney = getLatestValue('wallet money') || appliedWalletAmount;
+          const walletMoney =
+            getLatestValue('wallet money') || appliedWalletAmount;
           const couponDiscountValue = getLatestValue('coupon discount') || 0;
           const codCharges = getLatestValue('cod charges') || 0;
           const gstValue = getLatestValue('gst') || 0;
@@ -409,220 +410,125 @@ console.log("this is invoice data",invoiceData)
     }
   };
 
-  // const handleQuantityChange = async (
-  //   itemId,
-  //   color,
-  //   size,
-  //   newQuantity,
-  //   itemIndex,
-  // ) => {
-  //   console.log('handleQuantityChange called:', {
-  //     itemId,
-  //     color,
-  //     size,
-  //     newQuantity,
-  //     itemIndex,
-  //   });
-  //   const itemStockData = stockData[itemId];
-  //   if (itemStockData) {
-  //     const colorData = itemStockData.find(c => c.color === color);
-  //     if (colorData) {
-  //       const sizeData = colorData.sizes.find(s => s.size === size);
-  //       if (sizeData && newQuantity > sizeData.stock) {
-  //         console.log(
-  //           `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
-  //         );
-  //         Alert.alert(
-  //           'Error',
-  //           `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
-  //         );
-  //         return;
-  //       }
-  //     }
-  //   }
-
-  //   try {
-  //     const updatedCartItems = [...cartItems];
-  //     const item = updatedCartItems[itemIndex];
-  //     const updatedOrderDetails = item.orderDetails.map(colorObj => {
-  //       if (colorObj.color === color) {
-  //         return {
-  //           ...colorObj,
-  //           sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => {
-  //             if (sizeObj.size === size) {
-  //               return {...sizeObj, quantity: newQuantity};
-  //             }
-  //             return sizeObj;
-  //           }),
-  //         };
-  //       }
-  //       return colorObj;
-  //     });
-
-  //     const payload = {
-  //       itemId,
-  //       orderDetails: updatedOrderDetails.map(colorObj => ({
-  //         color: colorObj.color,
-  //         sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => ({
-  //           size: sizeObj.size,
-  //           quantity:
-  //             sizeObj.size === size && colorObj.color === color
-  //               ? newQuantity
-  //               : sizeObj.quantity,
-  //           skuId: sizeObj.skuId,
-  //         })),
-  //       })),
-  //     };
-  //     console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
-  //     const response = await fetch(`${BASE_URL}/partner/cart/update`, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify(payload),
-  //     });
-
-  //     const data = await response.json();
-  //     console.log('Cart update API response:', JSON.stringify(data, null, 2));
-  //     if (!response.ok) {
-  //       console.error('Failed to update cart:', data.message);
-  //       Alert.alert('Error', 'Failed to update the quantity.');
-  //     } else {
-  //       const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
-  //         method: 'GET',
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       });
-  //       const cartData = await cartResponse.json();
-  //       console.log(
-  //         'Updated cart API response:',
-  //         JSON.stringify(cartData, null, 2),
-  //       );
-  //       if (
-  //         cartResponse.ok &&
-  //         cartData.success &&
-  //         Array.isArray(cartData.data.items)
-  //       ) {
-  //         dispatch(setCartItems(cartData.data.items));
-  //         console.log(
-  //           'Dispatched setCartItems with updated cart:',
-  //           cartData.data.items,
-  //         );
-  //       } else {
-  //         console.error('Failed to fetch updated cart:', cartData.message);
-  //         Alert.alert('Error', 'Failed to refresh cart after quantity update.');
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Error updating quantity:', error.message);
-  //     Alert.alert('Error', 'An error occurred while updating the quantity.');
-  //   }
-  // };
-
-
-
-const handleQuantityChange = async (itemId, color, size, newQuantity, itemIndex) => {
-  console.log('handleQuantityChange called:', {
+  const handleQuantityChange = async (
     itemId,
     color,
     size,
     newQuantity,
     itemIndex,
-  });
+  ) => {
+    console.log('handleQuantityChange called:', {
+      itemId,
+      color,
+      size,
+      newQuantity,
+      itemIndex,
+    });
 
-  const item = cartItems[itemIndex];
-  const currentColorObj = item.orderDetails.find(obj => obj.color === color);
-  const currentSizeObj = currentColorObj.sizeAndQuantity.find(obj => obj.size === size);
-  const currentQuantity = currentSizeObj.quantity;
-  const action = newQuantity > currentQuantity ? 'increase' : 'decrease';
+    const item = cartItems[itemIndex];
+    const currentColorObj = item.orderDetails.find(obj => obj.color === color);
+    const currentSizeObj = currentColorObj.sizeAndQuantity.find(
+      obj => obj.size === size,
+    );
+    const currentQuantity = currentSizeObj.quantity;
+    const action = newQuantity > currentQuantity ? 'increase' : 'decrease';
 
-  if (newQuantity < 0) {
-    console.log('Cannot decrease quantity below 0');
-    Alert.alert('Error', 'Quantity cannot be less than 0.');
-    return;
-  }
+    if (newQuantity < 0) {
+      console.log('Cannot decrease quantity below 0');
+      Alert.alert('Error', 'Quantity cannot be less than 0.');
+      return;
+    }
 
-  const itemStockData = stockData[itemId];
-  if (itemStockData) {
-    const colorData = itemStockData.find(c => c.color === color);
-    if (colorData) {
-      const sizeData = colorData.sizes.find(s => s.size === size);
-      if (sizeData && newQuantity > sizeData.stock) {
-        console.log(
-          `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
-        );
+    const itemStockData = stockData[itemId];
+    if (itemStockData) {
+      const colorData = itemStockData.find(c => c.color === color);
+      if (colorData) {
+        const sizeData = colorData.sizes.find(s => s.size === size);
+        if (sizeData && newQuantity > sizeData.stock) {
+          console.log(
+            `Quantity ${newQuantity} exceeds stock ${sizeData.stock} for size ${size} in ${color}`,
+          );
+          Alert.alert(
+            'Error',
+            `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
+          );
+          return;
+        }
+      }
+    }
+
+    try {
+      const payload = {itemId, color, size, action};
+      console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
+
+      const response = await fetch(`${BASE_URL}/partner/cart/update-quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // Log the raw response
+      const responseText = await response.text();
+      console.log('Raw API response:', responseText);
+      console.log('Response status:', response.status);
+
+      // Attempt to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError.message);
+        console.error('Response was:', responseText);
         Alert.alert(
           'Error',
-          `Quantity cannot exceed available stock (${sizeData.stock}) for size ${size} in ${color}.`,
+          'Invalid response from server. Please try again later.',
         );
         return;
       }
+
+      console.log('Parsed API response:', JSON.stringify(data, null, 2));
+
+      if (!response.ok) {
+        console.error('Failed to update cart:', data.message);
+        Alert.alert('Error', data.message || 'Failed to update the quantity.');
+        return;
+      }
+
+      const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const cartData = await cartResponse.json();
+      console.log(
+        'Updated cart API response:',
+        JSON.stringify(cartData, null, 2),
+      );
+
+      if (
+        cartResponse.ok &&
+        cartData.success &&
+        Array.isArray(cartData.data.items)
+      ) {
+        dispatch(setCartItems(cartData.data.items));
+        console.log(
+          'Dispatched setCartItems with updated cart:',
+          cartData.data.items,
+        );
+      } else {
+        console.error('Failed to fetch updated cart:', cartData.message);
+        Alert.alert('Error', 'Failed to refresh cart after quantity update.');
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error.message);
+      Alert.alert('Error', 'An error occurred while updating the quantity.');
     }
-  }
-
-  try {
-    const payload = { itemId, color, size, action };
-    console.log('Quantity update payload:', JSON.stringify(payload, null, 2));
-
-    const response = await fetch(`${BASE_URL}/partner/cart/update-quantity`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    // Log the raw response
-    const responseText = await response.text();
-    console.log('Raw API response:', responseText);
-    console.log('Response status:', response.status);
-
-    // Attempt to parse as JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (jsonError) {
-      console.error('JSON parse error:', jsonError.message);
-      console.error('Response was:', responseText);
-      Alert.alert('Error', 'Invalid response from server. Please try again later.');
-      return;
-    }
-
-    console.log('Parsed API response:', JSON.stringify(data, null, 2));
-
-    if (!response.ok) {
-      console.error('Failed to update cart:', data.message);
-      Alert.alert('Error', data.message || 'Failed to update the quantity.');
-      return;
-    }
-
-    const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    const cartData = await cartResponse.json();
-    console.log('Updated cart API response:', JSON.stringify(cartData, null, 2));
-
-    if (cartResponse.ok && cartData.success && Array.isArray(cartData.data.items)) {
-      dispatch(setCartItems(cartData.data.items));
-      console.log('Dispatched setCartItems with updated cart:', cartData.data.items);
-    } else {
-      console.error('Failed to fetch updated cart:', cartData.message);
-      Alert.alert('Error', 'Failed to refresh cart after quantity update.');
-    }
-  } catch (error) {
-    console.error('Error updating quantity:', error.message);
-    Alert.alert('Error', 'An error occurred while updating the quantity.');
-  }
-};
-
+  };
 
   const handleRemoveItem = async (item, itemIndex) => {
     console.log(
@@ -679,49 +585,150 @@ const handleQuantityChange = async (itemId, color, size, newQuantity, itemIndex)
     }
   };
 
-  const handleMoveToWishlist = async (item, itemIndex) => {
-    console.log(
-      'handleMoveToWishlist called for item:',
-      item.itemId.name,
-      'at index:',
-      itemIndex,
+
+const handleMoveToWishlist = async (item, itemIndex) => {
+  console.log(
+    'handleMoveToWishlist called for item:',
+    item.itemId.name,
+    'at index:',
+    itemIndex,
+  );
+
+  // Check for token
+  if (!token) {
+    console.warn('No token available, cannot move to wishlist');
+    Alert.alert(
+      'Authentication Required',
+      'Please log in to move items to the wishlist.',
+      [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
     );
+    return;
+  }
+
+  try {
+    // Step 1: Add item to wishlist
+    const wishlistPayload = {
+      itemId: item.itemId._id,
+      color: item.orderDetails[0]?.color || 'default',
+    };
+    console.log('Move to wishlist payload:', JSON.stringify(wishlistPayload, null, 2));
+    const wishlistResponse = await fetch(`${BASE_URL}/partner/wishlist/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(wishlistPayload),
+    });
+
+    // Log raw response for debugging
+    const wishlistResponseText = await wishlistResponse.text();
+    console.log('Wishlist API raw response:', wishlistResponseText);
+    console.log('Wishlist API response status:', wishlistResponse.status);
+
+    // Parse response as JSON
+    let wishlistData;
     try {
-      const payload = {
-        itemId: item.itemId._id,
-        color: item.orderDetails[0]?.color || 'default',
-      };
-      console.log(
-        'Move to wishlist payload:',
-        JSON.stringify(payload, null, 2),
-      );
-      const response = await fetch(`${BASE_URL}/partner/wishlist/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      console.log('Wishlist API response:', JSON.stringify(data, null, 2));
-      if (response.ok) {
-        Alert.alert(
-          'Success',
-          `${item.itemId.name} has been moved to the wishlist.`,
-        );
-      } else {
-        console.error('Failed to move item to wishlist:', data.message);
-        Alert.alert('Error', 'Failed to move the item to the wishlist.');
-      }
-    } catch (error) {
-      console.error('Error moving item to wishlist:', error.message);
+      wishlistData = JSON.parse(wishlistResponseText);
+    } catch (jsonError) {
+      console.error('Wishlist API JSON parse error:', jsonError.message);
+      Alert.alert('Error', 'Invalid response from server. Please try again.');
+      return;
+    }
+
+    if (!wishlistResponse.ok || !wishlistData.success) {
+      console.error('Failed to add to wishlist:', wishlistData.message || 'Unknown error');
+      Alert.alert('Error', wishlistData.message || 'Failed to add item to wishlist.');
+      return;
+    }
+
+    // Dispatch wishlist item to Redux
+    console.log('Wishlist item added successfully:', wishlistData.data);
+    dispatch(addToWishlist(wishlistData.data));
+
+    // Step 2: Navigate to PartnerWishlist
+    console.log('Navigating to PartnerWishlist');
+    try {
+      navigation.navigate('PartnerWishlist');
+      console.log('Navigation to PartnerWishlist executed');
+    } catch (navError) {
+      console.error('Navigation error:', navError.message);
+      Alert.alert('Error', 'Failed to navigate to wishlist. Please try again.');
+      return;
+    }
+
+    // Step 3: Remove item from cart
+    const cartRemovePayload = {
+      itemId: item.itemId._id,
+      orderDetails: item.orderDetails.map(colorObj => ({
+        color: colorObj.color,
+        sizeAndQuantity: colorObj.sizeAndQuantity.map(sizeObj => ({
+          size: sizeObj.size,
+          quantity: sizeObj.quantity,
+          skuId: sizeObj.skuId,
+        })),
+      })),
+    };
+    console.log('Remove item from cart payload:', JSON.stringify(cartRemovePayload, null, 2));
+    const cartRemoveResponse = await fetch(`${BASE_URL}/partner/cart/removeitem`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(cartRemovePayload),
+    });
+
+    const cartRemoveData = await cartRemoveResponse.json();
+    console.log('Cart remove API response:', JSON.stringify(cartRemoveData, null, 2));
+
+    if (!cartRemoveResponse.ok || !cartRemoveData.success) {
+      console.error('Failed to remove item from cart:', cartRemoveData.message);
       Alert.alert(
-        'Error',
-        'An error occurred while moving the item to the wishlist.',
+        'Warning',
+        'Item added to wishlist, but failed to remove from cart: ' +
+          (cartRemoveData.message || 'Unknown error'),
+      );
+      // Continue execution since wishlist addition and navigation succeeded
+    } else {
+      // Step 4: Update local cart state
+      const updatedCartItems = cartItems.filter((_, idx) => idx !== itemIndex);
+      dispatch(setCartItems(updatedCartItems));
+      console.log(
+        'Dispatched setCartItems after moving to wishlist, new cartItems:',
+        updatedCartItems,
       );
     }
-  };
+
+    // Step 5: Show success message
+    Alert.alert(
+      'Success',
+      `${item.itemId.name} has been moved to the wishlist.`,
+    );
+
+    // Step 6: Refresh cart data
+    const cartResponse = await fetch(`${BASE_URL}/partner/cart`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const cartData = await cartResponse.json();
+    console.log('Updated cart API response:', JSON.stringify(cartData, null, 2));
+
+    if (cartResponse.ok && cartData.success && Array.isArray(cartData.data.items)) {
+      dispatch(setCartItems(cartData.data.items));
+      console.log('Dispatched setCartItems with updated cart:', cartData.data.items);
+    } else {
+      console.error('Failed to fetch updated cart:', cartData.message || 'Unknown error');
+      Alert.alert('Warning', 'Failed to refresh cart after moving to wishlist.');
+    }
+  } catch (error) {
+    console.error('Error in handleMoveToWishlist:', error.message);
+    Alert.alert('Error', 'An error occurred while moving the item to the wishlist.');
+  }
+};
 
   const handleApplyWallet = () => {
     console.log('handleApplyWallet called with walletAmount:', walletAmount);
@@ -839,7 +846,9 @@ const handleQuantityChange = async (itemId, color, size, newQuantity, itemIndex)
               discountAmount +
               parseFloat(prev.codCharges) +
               parseFloat(prev.gst) +
-              (prev.shippingCharges === 'FREE' ? 0 : parseFloat(prev.shippingCharges.replace('₹', '')))
+              (prev.shippingCharges === 'FREE'
+                ? 0
+                : parseFloat(prev.shippingCharges.replace('₹', '')))
             ).toFixed(1),
             savings: (
               parseFloat(prev.cartTotal) -
@@ -916,7 +925,7 @@ const handleQuantityChange = async (itemId, color, size, newQuantity, itemIndex)
           <View style={styles.dottedLine} />
           <View style={styles.stepContainer}>
             <View style={styles.square} />
-            <Text style={styles.inactiveStep}>ADDRESS </Text>
+            <Text style={styles.inactiveStep}>ADDRESS</Text>
           </View>
           <View style={styles.dottedLine} />
           <View style={styles.stepContainer}>
