@@ -136,7 +136,7 @@ const PartnerRegisterScreen = ({navigation}) => {
     // Step 3: API Call
     try {
       console.log('Sending registration request...');
-      const res = await fetch(`${BASE_URL}/auth/partner/signup1`, {
+      const res = await fetch(`${BASE_URL}/auth/partner/signup`, {
         method: 'POST',
         // headers: {
         //   'Content-Type': 'multipart/form-data',

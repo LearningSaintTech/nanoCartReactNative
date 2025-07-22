@@ -8,9 +8,12 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { BASE_URL } from '../../config/apiConfig';
+import { useColorScheme } from 'react-native';
 
 const PartnerReturnOrderScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -23,6 +26,8 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
   const [returnSpecificReason, setReturnSpecificReason] = useState('');
   const [pickupAddressId, setPickupAddressId] = useState('');
   const [addresses, setAddresses] = useState([]);
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme(); // Detect light or dark mode
 
   const validReturnReasons = [
     'Size too small',
@@ -44,7 +49,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
       if (!token) throw new Error('No authentication token found');
 
       // Fetch order
-      const orderResponse = await fetch(`${BASE_URL}/partner/order/order/${orderId}`, {
+      const orderResponse = await fetch(`${BASE_URL}/partner/order/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -52,7 +57,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
         },
       });
       const orderData = await orderResponse.json();
-      console.log('Fetched orderData:', JSON.stringify(orderData, null, 2)); // Debug log
+      console.log('Fetched orderData:', JSON.stringify(orderData, null, 2));
       if (!orderData.success) throw new Error(orderData.message || 'Failed to fetch order');
       setOrder(orderData.data.order);
 
@@ -65,7 +70,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
         },
       });
       const addressData = await addressResponse.json();
-      console.log('Fetched addressData:', JSON.stringify(addressData, null, 2)); // Debug log
+      console.log('Fetched addressData:', JSON.stringify(addressData, null, 2));
 
       if (!addressData?.addresses?.addressDetail) {
         throw new Error('Invalid address data structure');
@@ -102,8 +107,8 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
 
   // Handle item detail selection
   const toggleItemDetailSelection = (itemId, color, size, skuId) => {
-    const itemKey = `${itemId}|${color}|${size}|${skuId}`; // Use '|' to handle hyphens in skuId
-    console.log('Constructed itemKey:', itemKey, { itemId, color, size, skuId }); // Debug log
+    const itemKey = `${itemId}|${color}|${size}|${skuId}`;
+    console.log('Constructed itemKey:', itemKey, { itemId, color, size, skuId });
     setSelectedItems((prev) =>
       prev.includes(itemKey)
         ? prev.filter((key) => key !== itemKey)
@@ -114,7 +119,7 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
   // Parse selected item details
   const parseItemKey = (key) => {
     const [itemId, color, size, skuId] = key.split('|');
-    console.log('Parsed itemKey:', { itemId, color, size, skuId }); // Debug log
+    console.log('Parsed itemKey:', { itemId, color, size, skuId });
     return { itemId, color, size, skuId };
   };
 
@@ -127,52 +132,23 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
 
     try {
       setLoading(true);
-      for (const itemKey of selectedItems) {
-        const { itemId, color, size, skuId } = parseItemKey(itemKey);
-        // Validate skuId
-        const productDetail = order.orderProductDetails.find(
-          (detail) => detail.itemId._id === itemId
-        );
-        const orderDetail = productDetail?.orderDetails.find(
-          (detail) =>
-            detail.color.toLowerCase() === color.toLowerCase() &&
-            detail.sizeAndQuantity.some(
-              (sizeQty) =>
-                sizeQty.size.toLowerCase() === size.toLowerCase() &&
-                sizeQty.skuId === skuId
-            )
-        );
-        if (!orderDetail) {
-          const availableSkus = productDetail?.orderDetails
-            .filter((detail) => detail.color.toLowerCase() === color.toLowerCase())
-            .flatMap((detail) => detail.sizeAndQuantity.map((sizeQty) => sizeQty.skuId)) || [];
-          throw new Error(
-            `Invalid item selection. Available skuIds for ${color} (size: ${size}): ${availableSkus.join(', ')}`
-          );
-        }
-        console.log('Submitting return for:', { orderId, itemId, color, size, skuId }); // Debug log
-        const response = await fetch(`${BASE_URL}/partner/order/return`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId,
-            itemId,
-            color,
-            size,
-            skuId,
-            returnReason,
-            returnSpecificReason,
-            pickupLocationId: pickupAddressId,
-          }),
-        });
-        const data = await response.json();
-        console.log('Return response:', JSON.stringify(data, null, 2)); // Debug log
-        if (!data.success) throw new Error(data.message || `Failed to initiate return for item ${itemId}`);
-      }
-      alert('Return request(s) submitted successfully!');
+      const reason = `${returnReason}, ${returnSpecificReason.trim()}`;
+      const response = await fetch(`${BASE_URL}/partner/order/return-refund`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          reason: reason,
+          pickupLocationId: pickupAddressId,
+        }),
+      });
+      const data = await response.json();
+      console.log('Return response:', JSON.stringify(data, null, 2));
+      if (!data.success) throw new Error(data.message || 'Failed to initiate return');
+      alert('Return request submitted successfully!');
       navigation.goBack();
     } catch (err) {
       console.error('Return error:', err.message);
@@ -211,128 +187,154 @@ const PartnerReturnOrderScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Initiate Return</Text>
-      <Text style={styles.orderId}>Order ID: {order.orderId}</Text>
-
-      {/* Select Items */}
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Select Items to Return</Text>
-        {order.orderProductDetails.map((item) => (
-          <View key={item.itemId._id} style={styles.itemContainer}>
-            <Text style={styles.itemName}>{item.itemId.name || 'Unknown Item'}</Text>
-            {item.orderDetails.map((detail) => (
-              detail.sizeAndQuantity.map((sizeQty, idx) => {
-                const itemKey = `${item.itemId._id}|${detail.color}|${sizeQty.size}|${sizeQty.skuId}`;
-                return (
-                  <TouchableOpacity
-                    key={`${detail._id}-${sizeQty.skuId}`}
-                    style={[
-                      styles.itemRow,
-                      selectedItems.includes(itemKey) && styles.itemRowSelected,
-                    ]}
-                    onPress={() => toggleItemDetailSelection(item.itemId._id, detail.color, sizeQty.size, sizeQty.skuId)}
-                  >
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemDetail}>Color: {detail.color}</Text>
-                      <Text style={styles.itemDetail}>Size: {sizeQty.size}</Text>
-                      <Text style={styles.itemDetail}>Qty: {sizeQty.quantity}</Text>
-                      <Text style={styles.itemDetail}>SKU: {sizeQty.skuId}</Text>
-                    </View>
-                    <Text style={styles.selectionText}>
-                      {selectedItems.includes(itemKey) ? '✔ Selected' : 'Select'}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            ))}
-          </View>
-        ))}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-back" size={22} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Return Product</Text>
       </View>
+      <ScrollView style={styles.scrollContainer}>
+        <Text style={styles.orderId}>Order ID: {order.orderId}</Text>
 
-      {/* Reason for Return */}
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Reason for Return</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={returnReason}
-            onValueChange={(value) => setReturnReason(value)}
-            style={styles.reasonPicker}
-            itemStyle={styles.pickerItem}
-          >
-            <Picker.Item label="Select a reason" value="" />
-            {validReturnReasons.map((reason) => (
-              <Picker.Item key={reason} label={reason} value={reason} />
-            ))}
-          </Picker>
+        {/* Select Items */}
+        <View style={styles.section}>
+          <Text style={styles.subTitle}>Select Items to Return</Text>
+          {order.orderProductDetails.map((item) => (
+            <View key={item.itemId._id} style={styles.itemContainer}>
+              <Text style={styles.itemName}>{item.itemId.name || 'Unknown Item'}</Text>
+              {item.orderDetails.map((detail) =>
+                detail.sizeAndQuantity.map((sizeQty, idx) => {
+                  const itemKey = `${item.itemId._id}|${detail.color}|${sizeQty.size}|${sizeQty.skuId}`;
+                  return (
+                    <TouchableOpacity
+                      key={`${detail._id}-${sizeQty.skuId}`}
+                      style={[
+                        styles.itemRow,
+                        selectedItems.includes(itemKey) && styles.itemRowSelected,
+                      ]}
+                      onPress={() =>
+                        toggleItemDetailSelection(item.itemId._id, detail.color, sizeQty.size, sizeQty.skuId)
+                      }
+                    >
+                      <View style={styles.itemDetails}>
+                        <Text style={styles.itemDetail}>Color: {detail.color}</Text>
+                        <Text style={styles.itemDetail}>Size: {sizeQty.size}</Text>
+                        <Text style={styles.itemDetail}>Qty: {sizeQty.quantity}</Text>
+                        <Text style={styles.itemDetail}>SKU: {sizeQty.skuId}</Text>
+                      </View>
+                      <Text style={styles.selectionText}>
+                        {selectedItems.includes(itemKey) ? '✔ Selected' : 'Select'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </View>
+          ))}
         </View>
-        <TextInput
-          style={styles.reasonInput}
-          value={returnSpecificReason}
-          onChangeText={setReturnSpecificReason}
-          placeholder="Enter specific reason for return (e.g., item is too tight)"
-          placeholderTextColor="#999"
-          multiline
-        />
-      </View>
 
-      {/* Pickup Address */}
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Pickup Address</Text>
-        {addresses.length === 0 ? (
-          <Text style={styles.noAddressText}>No addresses found. Please add an address.</Text>
-        ) : (
+        {/* Reason for Return */}
+        <View style={styles.section}>
+          <Text style={styles.subTitle}>Reason for Return</Text>
           <View style={styles.pickerContainer}>
             <Picker
-              selectedValue={pickupAddressId}
-              onValueChange={(value) => setPickupAddressId(value)}
-              style={styles.addressPicker}
-              itemStyle={styles.pickerItem}
+              selectedValue={returnReason}
+              onValueChange={(value) => setReturnReason(value)}
+              style={[styles.reasonPicker, { backgroundColor: '#FFF' }]}
+              itemStyle={[styles.pickerItem, { color: '#000' }]}
             >
-              <Picker.Item label="Select an address" value="" />
-              {addresses.map((addr) => (
-                <Picker.Item
-                  key={addr._id}
-                  label={`${addr.name}, ${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}, ${addr.cityTown}, ${addr.state}, ${addr.pincode}`}
-                  value={addr._id}
-                />
+              <Picker.Item label="Select a reason" value="" />
+              {validReturnReasons.map((reason) => (
+                <Picker.Item key={reason} label={reason} value={reason} color="#000" />
               ))}
             </Picker>
           </View>
-        )}
-        <TouchableOpacity
-          style={styles.addAddressButton}
-          onPress={() => navigation.navigate('AddAddressScreen')}
-        >
-          <Text style={styles.addAddressText}>Add New Address</Text>
-        </TouchableOpacity>
-      </View>
+          <TextInput
+            style={[styles.reasonInput, { backgroundColor: '#FFF', color: '#000' }]}
+            value={returnSpecificReason}
+            onChangeText={setReturnSpecificReason}
+            placeholder="Enter specific reason for return (e.g., item is too tight)"
+            placeholderTextColor="#666"
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
 
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-        onPress={handleSubmitReturn}
-        disabled={loading}
-      >
-        <Text style={styles.submitButtonText}>
-          {loading ? 'Submitting...' : 'Submit Return Request'}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Pickup Address */}
+        <View style={styles.section}>
+          <Text style={styles.subTitle}>Pickup Address</Text>
+          {addresses.length === 0 ? (
+            <Text style={styles.noAddressText}>No addresses found. Please add an address.</Text>
+          ) : (
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={pickupAddressId}
+                onValueChange={(value) => setPickupAddressId(value)}
+                style={[styles.addressPicker, { backgroundColor: '#FFF' }]}
+                itemStyle={[styles.pickerItem, { color: '#000' }]}
+              >
+                <Picker.Item label="Select an address" value="" />
+                {addresses.map((addr) => (
+                  <Picker.Item
+                    key={addr._id}
+                    label={`${addr.name}, ${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}, ${addr.cityTown}, ${addr.state}, ${addr.pincode}`}
+                    value={addr._id}
+                    color="#000"
+                  />
+                ))}
+              </Picker>
+            </View>
+          )}
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSubmitReturn}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? 'Submitting...' : 'Submit Return Request'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    paddingBottom: 10,
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  scrollContainer: {
     flex: 1,
     backgroundColor: '#FFF',
     padding: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 5,
   },
   orderId: {
     fontSize: 12,
@@ -393,19 +395,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 10,
+    backgroundColor: '#FFF', // Ensure consistent background
   },
   reasonPicker: {
     height: 50,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFF', // Explicit white background
   },
   addressPicker: {
     height: 50,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFF', // Explicit white background
     borderColor: '#D6722F',
   },
   pickerItem: {
     fontSize: 14,
-    color: '#333',
+    color: '#000', // Explicit black text for Picker items
     height: 50,
   },
   reasonInput: {
@@ -415,7 +418,8 @@ const styles = StyleSheet.create({
     padding: 12,
     minHeight: 100,
     fontSize: 14,
-    color: '#333',
+    color: '#000', // Explicit black text
+    backgroundColor: '#FFF', // Explicit white background
     textAlignVertical: 'top',
   },
   noAddressText: {
@@ -423,27 +427,13 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
     marginBottom: 10,
   },
-  addAddressButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#D6722F',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-  },
-  addAddressText: {
-    color: '#D6722F',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   submitButton: {
     backgroundColor: '#D6722F',
     padding: 15,
     alignItems: 'center',
     margin: 10,
     borderRadius: 8,
+    marginBottom: 20,
   },
   submitButtonDisabled: {
     backgroundColor: '#F0A500',

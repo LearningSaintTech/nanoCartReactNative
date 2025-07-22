@@ -48,7 +48,6 @@ const PartnerWishlistScreen = () => {
     if (!token) {
       return;
     }
-
     setLoading(true);
     try {
       const response = await fetch(`${BASE_URL}/partner/wishlist`, {
@@ -58,7 +57,6 @@ const PartnerWishlistScreen = () => {
           'Content-Type': 'application/json',
         },
       });
-
       const data = await response.json();
       if (response.ok) {
         setWishlist(data?.data?.items || []);
@@ -73,8 +71,14 @@ const PartnerWishlistScreen = () => {
   };
 
   useEffect(() => {
-    fetchWishlist();
-  }, []);
+    // Fetch wishlist when the screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchWishlist();
+    });
+
+    // Cleanup the listener when the component unmounts
+    return unsubscribe;
+  }, [navigation, token]);
 
   const handleCartPress = () => {
     if (token) {

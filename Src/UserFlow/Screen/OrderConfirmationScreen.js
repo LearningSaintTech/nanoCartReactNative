@@ -104,9 +104,6 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
     <ScrollView style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-      
-
-
       <SafeAreaView style={{ backgroundColor: '#fff', flex: 0 }}>
               <View style={[styles.header, {  paddingHorizontal: scale(16), paddingVertical: scale(12) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -154,7 +151,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           {recommendations.map((item) => (
             <View key={item.id} style={styles.recommendCard}>
               <Image source={item.image} style={styles.recommendImage} />
-              <TouchableOpacity style={styles.shopNow}>
+              <TouchableOpacity onPress={()=>navigation.navigate('UserHome')} style={styles.shopNow}>
                 <Text style={styles.shopNowText}>{item.label}</Text>
               </TouchableOpacity>
             </View>

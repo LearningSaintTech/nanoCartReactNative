@@ -370,10 +370,10 @@ const ProductDetailScreen = () => {
                 />
               ))}
             </View>
-            <View style={styles.shareContainer}>
+            {/* <View style={styles.shareContainer}>
               <Text style={styles.shareText}>SHARE</Text>
               <Feather name="share-2" size={16} color="black" style={{ marginLeft: 5 }} />
-            </View>
+            </View> */}
           </View>
         </View>
 

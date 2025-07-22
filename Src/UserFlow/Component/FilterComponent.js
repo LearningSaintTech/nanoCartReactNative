@@ -66,7 +66,7 @@ const FilterComponent = ({ onClose, onApplyFilters, subCategoryId, initialFilter
         setLoading(true);
         setError(null);
 
-        const apiUrl = 'http://192.168.1.89:4000/api/filter';
+        const apiUrl = 'https:api.maahi.lifestyle/api/filter';
         console.log(`[${getTimestamp()}] 🌐 [FilterComponent] Fetching filters from: ${apiUrl}`);
 
         const response = await fetch(apiUrl, {

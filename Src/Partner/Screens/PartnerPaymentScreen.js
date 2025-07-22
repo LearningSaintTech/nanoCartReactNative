@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,14 @@ import {
   Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 import * as ImagePicker from 'react-native-image-picker';
-import { BASE_URL } from '../../config/apiConfig';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {BASE_URL} from '../../config/apiConfig';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import { clearCart } from '../../redux/reducers/cartSlice';
 
-const PartnerPaymentScreen = ({ navigation, route }) => {
-  const token = useSelector((state) => state.auth.token);
+const PartnerPaymentScreen = ({navigation, route}) => {
+  const token = useSelector(state => state.auth.token);
   const [address, setAddress] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('COD');
   const [isCODSelected, setIsCODSelected] = useState(true);
@@ -67,37 +68,50 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
     cartItems: JSON.stringify(cartItems, null, 2),
   });
 
-  const calculateTotalQty = (orderDetails) =>
+  const calculateTotalQty = orderDetails =>
     orderDetails.reduce(
       (total, colorObj) =>
-        total + colorObj.sizeAndQuantity.reduce((sum, s) => sum + s.quantity, 0),
-      0
+        total +
+        colorObj.sizeAndQuantity.reduce((sum, s) => sum + s.quantity, 0),
+      0,
     );
 
-  const cartTotal = cartItems.reduce((sum, item) => {
-    if (!item.itemId?.MRP || !item.orderDetails) {
-      console.warn('Invalid cart item:', item);
-      return sum;
-    }
-    return sum + calculateTotalQty(item.orderDetails) * parseFloat(item.itemId.MRP);
-  }, 0).toFixed(2);
+  const cartTotal = cartItems
+    .reduce((sum, item) => {
+      if (!item.itemId?.MRP || !item.orderDetails) {
+        console.warn('Invalid cart item:', item);
+        return sum;
+      }
+      return (
+        sum + calculateTotalQty(item.orderDetails) * parseFloat(item.itemId.MRP)
+      );
+    }, 0)
+    .toFixed(2);
 
-  const discountedPrice = cartItems.reduce((sum, item) => {
-    if (!item.totalPrice) {
-      console.warn('Invalid cart item totalPrice:', item);
-      return sum;
-    }
-    return sum + parseFloat(item.totalPrice);
-  }, 0).toFixed(2);
+  const discountedPrice = cartItems
+    .reduce((sum, item) => {
+      if (!item.totalPrice) {
+        console.warn('Invalid cart item totalPrice:', item);
+        return sum;
+      }
+      return sum + parseFloat(item.totalPrice);
+    }, 0)
+    .toFixed(2);
 
   const totalAmount = React.useMemo(() => {
-    const couponDiscountValue = parseFloat(couponDiscount || invoiceData.couponDiscount || '0.00');
-    const walletAmount = parseFloat(appliedWalletAmount || invoiceData.walletMoney || '0.00');
+    const couponDiscountValue = parseFloat(
+      couponDiscount || invoiceData.couponDiscount || '0.00',
+    );
+    const walletAmount = parseFloat(
+      appliedWalletAmount || invoiceData.walletMoney || '0.00',
+    );
     const shippingCharge =
       invoiceData.shippingCharges === 'FREE'
         ? 0
         : parseFloat(invoiceData.shippingCharges.replace('₹', '') || '0.00');
-    const codCharge = isCODSelected ? parseFloat(invoiceData.codCharges || '0.00') : 0;
+    const codCharge = isCODSelected
+      ? parseFloat(invoiceData.codCharges || '0.00')
+      : 0;
     const gstAmount = parseFloat(invoiceData.gst || '0.00');
     return (
       parseFloat(discountedPrice) -
@@ -107,7 +121,13 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       shippingCharge +
       codCharge
     ).toFixed(2);
-  }, [discountedPrice, invoiceData, isCODSelected, appliedWalletAmount, couponDiscount]);
+  }, [
+    discountedPrice,
+    invoiceData,
+    isCODSelected,
+    appliedWalletAmount,
+    couponDiscount,
+  ]);
 
   const savings = (
     parseFloat(cartTotal) -
@@ -117,17 +137,31 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
   ).toFixed(2);
 
   useEffect(() => {
-    setInvoiceData((prev) => ({
+    setInvoiceData(prev => ({
       ...prev,
       cartTotal,
       discountedPrice,
-      walletMoney: parseFloat(appliedWalletAmount || prev.walletMoney || '0.00').toFixed(2),
-      couponDiscount: parseFloat(couponDiscount || prev.couponDiscount || '0.00').toFixed(2),
-      codCharges: isCODSelected ? parseFloat(prev.codCharges || '0.00').toFixed(2) : '0.00',
+      walletMoney: parseFloat(
+        appliedWalletAmount || prev.walletMoney || '0.00',
+      ).toFixed(2),
+      couponDiscount: parseFloat(
+        couponDiscount || prev.couponDiscount || '0.00',
+      ).toFixed(2),
+      codCharges: isCODSelected
+        ? parseFloat(prev.codCharges || '0.00').toFixed(2)
+        : '0.00',
       totalAmount,
       savings,
     }));
-  }, [cartTotal, discountedPrice, isCODSelected, appliedWalletAmount, couponDiscount, totalAmount, savings]);
+  }, [
+    cartTotal,
+    discountedPrice,
+    isCODSelected,
+    appliedWalletAmount,
+    couponDiscount,
+    totalAmount,
+    savings,
+  ]);
 
   useEffect(() => {
     const fetchAddress = async () => {
@@ -139,12 +173,14 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         console.log('Fetching address with token:', token);
         const response = await fetch(`${BASE_URL}/partner/address`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {Authorization: `Bearer ${token}`},
         });
         const json = await response.json();
         console.log('Address API response:', JSON.stringify(json, null, 2));
         if (response.ok && json.addresses?.addressDetail?.length > 0) {
-          const defaultAddress = json.addresses.addressDetail.find((a) => a.isDefault) || json.addresses.addressDetail[0];
+          const defaultAddress =
+            json.addresses.addressDetail.find(a => a.isDefault) ||
+            json.addresses.addressDetail[0];
           setAddress(defaultAddress);
         } else {
           console.warn('No addresses found');
@@ -164,7 +200,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       mediaType: 'photo',
       quality: 1,
     };
-    ImagePicker.launchImageLibrary(options, (response) => {
+    ImagePicker.launchImageLibrary(options, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
@@ -193,15 +229,16 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         throw new Error('Shipping address is required');
       }
 
-      const orderProductDetails = cartItems.map((item) => {
+      const orderProductDetails = cartItems.map(item => {
         if (!item.itemId?._id || !item.totalPrice || !item.orderDetails) {
           throw new Error(`Invalid cart item: ${JSON.stringify(item)}`);
         }
         return {
-          itemId: typeof item.itemId === 'string' ? item.itemId : item.itemId._id,
-          orderDetails: item.orderDetails.map((detail) => ({
+          itemId:
+            typeof item.itemId === 'string' ? item.itemId : item.itemId._id,
+          orderDetails: item.orderDetails.map(detail => ({
             color: detail.color,
-            sizeAndQuantity: detail.sizeAndQuantity.map((sizeQty) => ({
+            sizeAndQuantity: detail.sizeAndQuantity.map(sizeQty => ({
               size: sizeQty.size,
               quantity: sizeQty.quantity,
               skuId: sizeQty.skuId,
@@ -213,15 +250,38 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       });
 
       const transformedInvoice = [
-        { key: 'cartTotal', values: cartTotal },
-        { key: 'discountedPrice', values: discountedPrice },
-        { key: 'walletMoney', values: parseFloat(appliedWalletAmount || invoiceData.walletMoney || '0.00').toFixed(2) },
-        { key: 'couponDiscount', values: parseFloat(couponDiscount || invoiceData.couponDiscount || '0.00').toFixed(2) },
-        { key: 'codCharges', values: isCODSelected ? parseFloat(invoiceData.codCharges || '0.00').toFixed(2) : '0.00' },
-        { key: 'gst', values: parseFloat(invoiceData.gst || '0.00').toFixed(2) },
-        { key: 'shippingCharges', values: invoiceData.shippingCharges === 'FREE' ? '0.00' : parseFloat(invoiceData.shippingCharges.replace('₹', '') || '0.00').toFixed(2) },
-        { key: 'totalAmount', values: totalAmount },
-        { key: 'savings', values: savings },
+        {key: 'cartTotal', values: cartTotal},
+        {key: 'discountedPrice', values: discountedPrice},
+        {
+          key: 'walletMoney',
+          values: parseFloat(
+            appliedWalletAmount || invoiceData.walletMoney || '0.00',
+          ).toFixed(2),
+        },
+        {
+          key: 'couponDiscount',
+          values: parseFloat(
+            couponDiscount || invoiceData.couponDiscount || '0.00',
+          ).toFixed(2),
+        },
+        {
+          key: 'codCharges',
+          values: isCODSelected
+            ? parseFloat(invoiceData.codCharges || '0.00').toFixed(2)
+            : '0.00',
+        },
+        {key: 'gst', values: parseFloat(invoiceData.gst || '0.00').toFixed(2)},
+        {
+          key: 'shippingCharges',
+          values:
+            invoiceData.shippingCharges === 'FREE'
+              ? '0.00'
+              : parseFloat(
+                  invoiceData.shippingCharges.replace('₹', '') || '0.00',
+                ).toFixed(2),
+        },
+        {key: 'totalAmount', values: totalAmount},
+        {key: 'savings', values: savings},
       ];
 
       const shippingAddressId = address._id;
@@ -238,12 +298,18 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       }
 
       const formData = new FormData();
-      formData.append('orderProductDetails', JSON.stringify(orderProductDetails));
+      formData.append(
+        'orderProductDetails',
+        JSON.stringify(orderProductDetails),
+      );
       formData.append('invoice', JSON.stringify(transformedInvoice));
       formData.append('shippingAddressId', shippingAddressId);
       formData.append('totalAmount', parseFloat(totalAmount).toFixed(2));
       formData.append('isWalletPayment', isWalletPayment);
-      formData.append('walletAmountUsed', parseFloat(appliedWalletAmount || '0.00').toFixed(2));
+      formData.append(
+        'walletAmountUsed',
+        parseFloat(appliedWalletAmount || '0.00').toFixed(2),
+      );
       formData.append('isCodPayment', isCodPayment);
       formData.append('isChequePayment', isChequePayment);
       formData.append('isOnlinePayment', false);
@@ -276,12 +342,15 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       const data = await response.json();
       console.log('Order creation response:', JSON.stringify(data, null, 2));
       if (response.ok && data.success) {
-        return { success: true, data: data.data };
+        return {success: true, data: data.data};
       }
       throw new Error(data.message || 'Failed to create order');
     } catch (error) {
       console.error('Error creating order:', error.message);
-      return { success: false, message: 'Error creating order: ' + error.message };
+      return {
+        success: false,
+        message: 'Error creating order: ' + error.message,
+      };
     } finally {
       setIsLoading(false);
     }
@@ -292,7 +361,6 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       Alert.alert('Error', 'Your cart is empty. Add items to proceed.');
       return;
     }
-
     if (!address) {
       Alert.alert('Error', 'Please select a delivery address.');
       return;
@@ -305,10 +373,10 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
 
     const orderResult = await createOrder();
     if (orderResult.success) {
-      // setOrderId(orderResult.data.orderId || '#N/A');
-      // setIsModalVisible(true);
-          navigation.navigate('PartnnerHome');
-
+      setOrderId(orderResult.data.orderId || '#N/A');
+      setIsModalVisible(true);
+      dispatch(clearCart());
+      // navigation.navigate('PartnerOrderConfirmation');
     } else {
       Alert.alert('Error', orderResult.message || 'Failed to create order');
     }
@@ -318,8 +386,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
     setIsModalVisible(false);
     navigation.navigate('PartnnerHome');
   };
-
-  const toggleSection = (section) => {
+  const toggleSection = section => {
     setExpandedSection(expandedSection === section ? null : section);
     if (section === 'Cheque') {
       setSelectedPaymentMethod('Cheque');
@@ -337,11 +404,12 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
   if (!token) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Authentication Required. Please log in.</Text>
+        <Text style={styles.errorText}>
+          Authentication Required. Please log in.
+        </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Login')}
-          style={styles.backBtn}
-        >
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go to Login</Text>
         </TouchableOpacity>
       </View>
@@ -351,8 +419,12 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
   if (!totalItems || !Array.isArray(cartItems) || !cartItems.length) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: Cart details are missing. Please return to the previous screen.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <Text style={styles.errorText}>
+          Error: Cart details are missing. Please return to the previous screen.
+        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}>
           <Text style={styles.backBtnText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -360,12 +432,12 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
   }
 
   return (
-   <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>PAYMENT </Text>
+        <Text style={styles.headerTitle}>PAYMENT</Text>
       </View>
 
       <View style={styles.stepRow}>
@@ -391,39 +463,61 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
             <Text style={styles.deliverToLabel}>Deliver to:</Text>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
-              style={styles.changeButton}
-            >
+              style={styles.changeButton}>
               <Text style={styles.changeText}>CHANGE</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.deliverToName}>{address?.name || 'Loading...'}</Text>
-          <Text style={styles.deliverToAddress}>{address ? `${address.cityTown}, ${address.pincode}` : ''}</Text>
+          <Text style={styles.deliverToName}>
+            {address?.name || 'Loading...'}
+          </Text>
+          <Text style={styles.deliverToAddress}>
+            {address ? `${address.cityTown}, ${address.pincode}` : ''}
+          </Text>
           <Text style={styles.deliverToAddress}>{address?.state}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Payment Options</Text>
 
         <View style={styles.paymentOption}>
-          <TouchableOpacity style={styles.paymentOptionRow} onPress={handleCODSelect}>
-            <View style={[styles.radio, isCODSelected && styles.radioSelected]} />
+          <TouchableOpacity
+            style={styles.paymentOptionRow}
+            onPress={handleCODSelect}>
+            <View
+              style={[styles.radio, isCODSelected && styles.radioSelected]}
+            />
             <Text style={styles.paymentOptionText}>Cash on Delivery (COD)</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.accordionHeader} onPress={() => toggleSection('Cheque')}>
-          <Text style={styles.accordionTitle}>Cheque / Cash Deposit / RTGS</Text>
-          <Icon name={expandedSection === 'Cheque' ? 'chevron-up' : 'chevron-down'} size={20} color="#000" />
+        <TouchableOpacity
+          style={styles.accordionHeader}
+          onPress={() => toggleSection('Cheque')}>
+          <Text style={styles.accordionTitle}>
+            Cheque / Cash Deposit / RTGS
+          </Text>
+          <Icon
+            name={expandedSection === 'Cheque' ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color="#000"
+          />
         </TouchableOpacity>
 
         {expandedSection === 'Cheque' && (
           <View style={styles.accordionContent}>
-            <TouchableOpacity style={styles.uploadButton} onPress={pickChequeImage}>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={pickChequeImage}>
               <Text style={styles.uploadButtonText}>Upload Cheque Image</Text>
             </TouchableOpacity>
             {chequeImage && (
               <View style={styles.imagePreview}>
-                <Image source={{ uri: chequeImage.uri }} style={styles.chequeImage} />
-                <TouchableOpacity style={styles.removeImageButton} onPress={() => setChequeImage(null)}>
+                <Image
+                  source={{uri: chequeImage.uri}}
+                  style={styles.chequeImage}
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => setChequeImage(null)}>
                   <Icon name="close-circle" size={24} color="#FF4444" />
                 </TouchableOpacity>
               </View>
@@ -432,25 +526,35 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         )}
 
         <View style={styles.priceBox}>
-          <Text style={styles.priceHeading}>Price Details ({totalItems} items)</Text>
+          <Text style={styles.priceHeading}>
+            Price Details ({totalItems} items)
+          </Text>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Cart Total</Text>
-            <Text style={[styles.priceValue, styles.strike]}>₹{invoiceData.cartTotal}</Text>
+            <Text style={[styles.priceValue, styles.strike]}>
+              ₹{invoiceData.cartTotal}
+            </Text>
           </View>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Discounted Price</Text>
-            <Text style={styles.priceValue}>₹{invoiceData.discountedPrice}</Text>
+            <Text style={styles.priceValue}>
+              ₹{invoiceData.discountedPrice}
+            </Text>
           </View>
           {parseFloat(invoiceData.walletMoney) > 0 && (
             <View style={styles.priceDetailRow}>
               <Text style={styles.priceLabel}>Wallet Money</Text>
-              <Text style={[styles.priceValue, styles.discountText]}>- ₹{invoiceData.walletMoney}</Text>
+              <Text style={[styles.priceValue, styles.discountText]}>
+                - ₹{invoiceData.walletMoney}
+              </Text>
             </View>
           )}
           {parseFloat(invoiceData.couponDiscount) > 0 && (
             <View style={styles.priceDetailRow}>
               <Text style={styles.priceLabel}>Coupon Discount</Text>
-              <Text style={[styles.priceValue, styles.discountText]}>- ₹{invoiceData.couponDiscount}</Text>
+              <Text style={[styles.priceValue, styles.discountText]}>
+                - ₹{invoiceData.couponDiscount}
+              </Text>
             </View>
           )}
           <View style={styles.priceDetailRow}>
@@ -467,7 +571,9 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.priceDetailRow}>
             <Text style={styles.priceLabel}>Total Amount</Text>
-            <Text style={[styles.priceValue, styles.totalValue]}>₹{invoiceData.totalAmount}</Text>
+            <Text style={[styles.priceValue, styles.totalValue]}>
+              ₹{invoiceData.totalAmount}
+            </Text>
           </View>
           <Text style={styles.savingsText}>
             {parseFloat(invoiceData.savings) > 0
@@ -485,8 +591,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
       <TouchableOpacity
         style={[styles.continueBtn, isLoading && styles.continueBtnDisabled]}
         onPress={handleContinuePayment}
-        disabled={isLoading}
-      >
+        disabled={isLoading}>
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -498,8 +603,7 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
         visible={isModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+        onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Order Confirmed!</Text>
@@ -507,19 +611,26 @@ const PartnerPaymentScreen = ({ navigation, route }) => {
               Your order is confirmed. Here is your order ID:{' '}
               <Text style={styles.modalOrderId}>{orderId}</Text>
             </Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleModalOk}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleModalOk}>
               <Text style={styles.modalButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-   </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  errorText: { fontSize: 16, color: '#ff0000', textAlign: 'center', marginTop: 20 },
+  container: {flex: 1, backgroundColor: '#fff'},
+  errorText: {
+    fontSize: 16,
+    color: '#ff0000',
+    textAlign: 'center',
+    marginTop: 20,
+  },
   backBtn: {
     backgroundColor: '#F36F25',
     paddingVertical: 12,
@@ -528,9 +639,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 20,
   },
-  backBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '600', marginLeft: 10, color: '#333' },
+  backBtnText: {color: '#fff', fontWeight: '600', fontSize: 16},
+  header: {padding: 16, flexDirection: 'row', alignItems: 'center'},
+  headerTitle: {fontSize: 16, fontWeight: '600', marginLeft: 10, color: '#333'},
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -538,7 +649,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 16,
   },
-  stepContainer: { alignItems: 'center', flexDirection: 'row' },
+  stepContainer: {alignItems: 'center', flexDirection: 'row'},
   square: {
     width: 8,
     height: 8,
@@ -547,7 +658,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginRight: 8,
   },
-  activeSquare: { borderColor: '#D6722F', backgroundColor: '#D6722F' },
+  activeSquare: {borderColor: '#D6722F', backgroundColor: '#D6722F'},
   dottedLine: {
     flex: 1,
     height: 1,
@@ -556,33 +667,42 @@ const styles = StyleSheet.create({
     borderColor: '#666',
     marginHorizontal: 4,
   },
-  activeStep: { color: '#D6722F', fontWeight: 'bold', fontSize: 11 },
-  content: { paddingHorizontal: 16, paddingBottom: 80 },
+  activeStep: {color: '#D6722F', fontWeight: 'bold', fontSize: 11},
+  content: {paddingHorizontal: 16, paddingBottom: 80},
   deliverBox: {
     backgroundColor: '#FDF6F1',
     padding: 15,
     borderRadius: 6,
     marginBottom: 16,
   },
-  deliverRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  deliverToLabel: { color: '#000', fontWeight: '600', fontSize: 14 },
-  deliverToName: { fontSize: 14, fontWeight: '600', color: '#000' },
-  deliverToAddress: { fontSize: 12, color: '#666' },
+  deliverRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  deliverToLabel: {color: '#000', fontWeight: '600', fontSize: 14},
+  deliverToName: {fontSize: 14, fontWeight: '600', color: '#000'},
+  deliverToAddress: {fontSize: 12, color: '#666'},
   changeButton: {
     backgroundColor: '#F36F25',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 4,
   },
-  changeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginVertical: 12 },
+  changeText: {color: '#fff', fontSize: 12, fontWeight: '600'},
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginVertical: 12,
+  },
   paymentOption: {
     backgroundColor: '#FDF6F1',
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
   },
-  paymentOptionRow: { flexDirection: 'row', alignItems: 'center' },
+  paymentOptionRow: {flexDirection: 'row', alignItems: 'center'},
   radio: {
     width: 20,
     height: 20,
@@ -591,8 +711,8 @@ const styles = StyleSheet.create({
     borderColor: '#F36F25',
     marginRight: 12,
   },
-  radioSelected: { backgroundColor: '#F36F25' },
-  paymentOptionText: { fontSize: 14, color: '#333', fontWeight: '500' },
+  radioSelected: {backgroundColor: '#F36F25'},
+  paymentOptionText: {fontSize: 14, color: '#333', fontWeight: '500'},
   accordionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -602,7 +722,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
   },
-  accordionTitle: { fontSize: 14, fontWeight: '500', color: '#333' },
+  accordionTitle: {fontSize: 14, fontWeight: '500', color: '#333'},
   accordionContent: {
     backgroundColor: '#FDF6F1',
     padding: 16,
@@ -615,24 +735,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 4,
   },
-  uploadButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  imagePreview: { marginTop: 12, position: 'relative', alignItems: 'center' },
-  chequeImage: { width: 200, height: 100, borderRadius: 4 },
-  removeImageButton: { position: 'absolute', top: -10, right: -10 },
+  uploadButtonText: {color: '#fff', fontSize: 14, fontWeight: '600'},
+  imagePreview: {marginTop: 12, position: 'relative', alignItems: 'center'},
+  chequeImage: {width: 200, height: 100, borderRadius: 4},
+  removeImageButton: {position: 'absolute', top: -10, right: -10},
   priceBox: {
     backgroundColor: '#FDF6F1',
     padding: 12,
     marginVertical: 12,
     borderRadius: 8,
   },
-  priceHeading: { fontWeight: 'bold', marginBottom: 12, fontSize: 16, color: '#333' },
-  priceDetailRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4 },
-  priceLabel: { fontSize: 14, color: '#333' },
-  priceValue: { fontSize: 14, color: '#333' },
-  strike: { textDecorationLine: 'line-through' },
-  discountText: { color: '#28a745' },
-  totalValue: { fontWeight: '600' },
-  savingsText: { color: '#28a745', fontSize: 14, marginTop: 8 },
+  priceHeading: {
+    fontWeight: 'bold',
+    marginBottom: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  priceDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+  },
+  priceLabel: {fontSize: 14, color: '#333'},
+  priceValue: {fontSize: 14, color: '#333'},
+  strike: {textDecorationLine: 'line-through'},
+  discountText: {color: '#28a745'},
+  totalValue: {fontWeight: '600'},
+  savingsText: {color: '#28a745', fontSize: 14, marginTop: 8},
   paymentMethod: {
     backgroundColor: '#FDF6F1',
     flexDirection: 'row',
@@ -641,8 +770,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginVertical: 12,
   },
-  paymentText: { fontWeight: '500', fontSize: 14, color: '#333' },
-  paymentMode: { fontSize: 14, fontWeight: '600', color: '#333' },
+  paymentText: {fontWeight: '500', fontSize: 14, color: '#333'},
+  paymentMode: {fontSize: 14, fontWeight: '600', color: '#333'},
   continueBtn: {
     backgroundColor: '#F36F25',
     paddingVertical: 14,
@@ -654,8 +783,8 @@ const styles = StyleSheet.create({
     right: 16,
     borderRadius: 8,
   },
-  continueBtnDisabled: { backgroundColor: '#ccc' },
-  continueText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  continueBtnDisabled: {backgroundColor: '#ccc'},
+  continueText: {color: '#fff', fontSize: 14, fontWeight: 'bold'},
   modalContainer: {
     flex: 1,
     justifyContent: 'center',

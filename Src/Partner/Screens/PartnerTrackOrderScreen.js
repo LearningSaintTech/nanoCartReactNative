@@ -23,6 +23,7 @@ const TrackOrderScreen = ({route, navigation}) => {
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
   const {width} = useWindowDimensions();
+  const [isExpanded, setIsExpanded] = useState(false); // State for expansion
 
   // Scaling function based on reference width (375px, e.g., iPhone SE)
   const scale = size => (width / 375) * size;
@@ -30,7 +31,7 @@ const TrackOrderScreen = ({route, navigation}) => {
   // Log insets for debugging
   console.log('TrackOrderScreen - Safe Area Insets:', insets);
 
-  console.log("this is order",order);
+  console.log("this is orderID",orderId);
 
   // Fetch order details
   const fetchOrderDetails = async () => {
@@ -40,7 +41,7 @@ const TrackOrderScreen = ({route, navigation}) => {
       if (!token) throw new Error('No authentication token found');
 
       const response = await fetch(
-        `${BASE_URL}/partner/order/order/${orderId}`,
+        `${BASE_URL}/partner/order/${orderId}`,
         {
           method: 'GET',
           headers: {
@@ -222,6 +223,15 @@ const TrackOrderScreen = ({route, navigation}) => {
     return Math.round(((mrp - discountedPrice) / mrp) * 100);
   };
 
+  // Handle order again navigation
+  const handleOrderAgain = () => {
+    if (order.orderProductDetails.length > 0) {
+      navigation.navigate('PartnerProductDetail', {
+        itemId: order.orderProductDetails[0].itemId._id || order.orderProductDetails[0].itemId,
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -239,7 +249,7 @@ const TrackOrderScreen = ({route, navigation}) => {
             },
           ]}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('PartnerOrderHistory')}>
+            onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={scale(22)} color="#000" />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, {marginLeft: scale(8)}]}>
@@ -337,7 +347,7 @@ const TrackOrderScreen = ({route, navigation}) => {
           <Text style={[styles.subTitle, styles.beigeTitle]}>
             Order Details
           </Text>
-          {order.orderProductDetails.map((item, index) => (
+          {order.orderProductDetails.slice(0, isExpanded ? undefined : 1).map((item, index) => (
             <View key={index} style={styles.orderCard}>
               <Image
                 source={
@@ -381,13 +391,19 @@ const TrackOrderScreen = ({route, navigation}) => {
               </View>
             </View>
           ))}
-          <TouchableOpacity style={styles.viewMoreButton}>
-            <Text style={styles.viewMoreText}>VIEW MORE</Text>
-          </TouchableOpacity>
+          {order.orderProductDetails.length > 1 && (
+            <TouchableOpacity
+              style={styles.viewMoreButton}
+              onPress={() => setIsExpanded(!isExpanded)}>
+              <Text style={styles.viewMoreText}>
+                {isExpanded ? 'VIEW LESS' : 'VIEW MORE'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Other Items */}
-        {order.orderProductDetails.length > 1 && (
+        {order.orderProductDetails.length > 1 && !isExpanded && (
           <View style={styles.subSection}>
             <Text style={styles.subTitle}>Other Items in This Order</Text>
             {order.orderProductDetails.slice(1).map((item, index) => (
@@ -586,7 +602,7 @@ const TrackOrderScreen = ({route, navigation}) => {
               '0.00'}
             /- WITH THIS ORDER!
           </Text>
-          <TouchableOpacity style={styles.orderAgainButton}>
+          <TouchableOpacity style={styles.orderAgainButton} onPress={handleOrderAgain}>
             <Text style={styles.orderAgainText}>ORDER AGAIN</Text>
           </TouchableOpacity>
         </View>
@@ -1005,4 +1021,3 @@ const styles = StyleSheet.create({
 });
 
 export default TrackOrderScreen;
-

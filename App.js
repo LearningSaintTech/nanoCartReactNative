@@ -160,7 +160,7 @@ const MainNavigator = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const endpoint = role === "Partner" ? 'http://192.168.1.89:4000/api/partner/cart' : 'http://192.168.1.89:4000/api/usercart';
+        const endpoint = role === "Partner" ? 'https:api.maahi.lifestyle/api/partner/cart' : 'https:api.maahi.lifestyle/api/usercart';
         const response = await fetch(endpoint, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },

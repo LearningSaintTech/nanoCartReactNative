@@ -342,7 +342,7 @@ const TrackOrderScreen = ({ route, navigation }) => {
 
         {/* Action Buttons */}
         {order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && order.orderStatus !== 'Returned' && (
-          <TouchableOpacity style={styles.orderAgain}>
+          <TouchableOpacity onPress={()=> navigation.navigate('UserHome')} style={styles.orderAgain}>
             <Text style={styles.orderAgainText}>ORDER AGAIN</Text>
           </TouchableOpacity>
         )}

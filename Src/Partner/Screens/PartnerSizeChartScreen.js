@@ -22,13 +22,14 @@ const PartnerSizeChartScreen = () => {
   // Scaling function based on reference width (375px, e.g., iPhone SE)
   const scale = (size) => (width / 375) * size;
 
-  // Log insets for debugging
+  // Log insets and sizeChart for debugging
   console.log('PartnerSizeChartScreen - Safe Area Insets:', insets);
+  console.log('PartnerSizeChartScreen - Size Chart Data:', sizeChart);
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={{ backgroundColor: '#fff', flex: 0 }}>
-        <View style={[styles.header, {  paddingHorizontal: scale(16), paddingVertical: scale(12) }]}>
+        <View style={[styles.header, { paddingHorizontal: scale(16), paddingVertical: scale(12) }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={scale(22)} color="#333" />
           </TouchableOpacity>
@@ -57,16 +58,14 @@ const PartnerSizeChartScreen = () => {
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={styles.tableHeaderText}>Size</Text>
-            <Text style={styles.tableHeaderText}>Chest</Text>
-            <Text style={styles.tableHeaderText}>Shoulder</Text>
             <Text style={styles.tableHeaderText}>Length</Text>
+            <Text style={styles.tableHeaderText}>Width</Text>
           </View>
           {sizeChart.map((row, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={styles.tableCell}>{row.size}</Text>
-              <Text style={styles.tableCell}>{row[unit]?.chest}</Text>
-              <Text style={styles.tableCell}>{row[unit]?.shoulder}</Text>
-              <Text style={styles.tableCell}>{row[unit]?.length}</Text>
+              <Text style={styles.tableCell}>{row[unit]?.length || '-'}</Text>
+              <Text style={styles.tableCell}>{row[unit]?.width || '-'}</Text>
             </View>
           ))}
         </View>
